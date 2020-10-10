@@ -1,0 +1,701 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import struct
+import logging
+import socket
+import datetime
+from itertools import zip_longest
+from .translate_error import *
+from .low_level_com import LLLSV2Com
+
+"""
+# Prototype for a Python 3 LSV2 library
+This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about said files.
+Most of this library is based on the work of tfischer73 and his Eclipse plugin. https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any documentation beside the plugin some parts are based on re-engineering and might therefore be not correct.
+Everything related to PLC or unknown/untested System functions was left out as these function might compromise the control.
+"""
+
+class LSV2(object):
+    """Implementation of the LSV2 protocol used to communicate with certain CNC controls.
+       This is just a test implementation that will get worked into a complete Python library. It
+       has only been tested with a programming station for the TNC 640 with software version
+       340595 8 SP1.
+       No tests on real machines have been made so far."""
+
+    # const for login
+    LOGIN_INSPECT = 'INSPECT' # nur lesende Funktionen ausführbar
+    LOGIN_DIAG = 'DIAGNOSTICS' # Logbuch / Recover
+    LOGIN_PLCDEBUG = 'PLCDEBUG' # Schreibender PLC
+    LOGIN_FILETRANSFER = 'FILE' # Dateisystem
+    LOGIN_MONITOR = 'MONITOR' # TNC Fernbedienung und Screendump
+    LOGIN_DSP = 'DSP' # DSP Funktionen
+    LOGIN_DNC = 'DNC' # DNC-Funktionen
+    LOGIN_SCOPE = 'OSZI' # Remote Scope
+    LOGIN_STREAMAXES = 'STREAMAXES' # Streamen von Achsdaten
+    LOGIN_FILEPLC = 'FILEPLC' # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
+    LOGIN_FILESYS = 'FILESYS' # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
+
+    # known lsv2 telegrams
+    COMMAND_A_LG = 'A_LG' # used to gain access to certain parts of the control, followed by a logon name and an optional password
+    COMMAND_A_LO = 'A_LO' # used to drop access to certain parts of the control, followed by an optional logon name
+
+    COMMAND_C_CC = 'C_CC' # used to set system commands
+    COMMAND_C_DC = 'C_DC' # change the working directory for future file operations, followed by a null terminated string
+    # COMMAND_C_DS = 'C_DS' # found via bruteforce test, purpose unknown!
+    COMMAND_C_DD = 'C_DD' # delete a directory, followed by a null terminated string
+    COMMAND_C_DM = 'C_DM' # create a new directory, followed by a null terminated string
+    # COMMAND_C_EK = 'C_EK' # found via bruteforce test, purpose unknown!
+    # COMMAND_C_FA = 'C_FA' # found via bruteforce test, purpose unknown!
+    COMMAND_C_FC = 'C_FC' # local file copy from current directory, filename + null + target path + null, found via wireshark
+    COMMAND_C_FD = 'C_FD' # delete a file, followed by a null terminated string
+    COMMAND_C_FL = 'C_FL' # send a file to the control, followed by a null terminated with the filename string
+    COMMAND_C_FR = 'C_FR' # move local file from current directory, filename + null + target path + null, found via wireshark
+    # COMMAND_C_GC = 'C_GC' # found via bruteforce test, purpose unknown!
+    # COMMAND_C_LK = 'C_LK' # found via bruteforce test, purpose unknown!
+    # COMMAND_C_MB = 'C_MB' # found via bruteforce test, purpose unknown!
+    # COMMAND_C_MC = 'C_MC' # found via bruteforce test, purpose unknown! -> Timeout and Control hangs!
+    # COMMAND_C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
+    # COMMAND_C_ST = 'C_ST' # found via bruteforce test, purpose unknown!
+    # COMMAND_C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
+
+    # COMMAND_R_CI = 'R_CI' # found via bruteforce test, purpose unknown!
+    COMMAND_R_DI = 'R_DI' # directory info - read info about the selected directory
+    COMMAND_R_DR = 'R_DR' # get info about directory content
+    # COMMAND_R_DS = 'R_DS' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_DT = 'R_DT' # found via bruteforce test, purpose unknown!
+    COMMAND_R_FI = 'R_FI' # file info - read info about a file, followed by a null terminated string
+    COMMAND_R_FL = 'R_FL' # load a file from the control, followed by a null terminated with the filename string
+    # COMMAND_R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_MB = 'R_MB' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_MC = 'R_MC' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
+    # COMMAND_R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
+    COMMAND_R_PR = 'R_PR' # read parameter from the control
+    COMMAND_R_RI = 'R_RI' # read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)
+    # COMMAND_R_ST = 'R_ST' # found via bruteforce test, purpose unknown!
+    COMMAND_R_VR = 'R_VR' # read general info about the control itself
+
+    # known lsv2 responses
+    RESPONSE_T_OK = 'T_OK' # signals that the last transaction was completed, no additional data is sent?
+    RESPONSE_T_ER = 'T_ER' # signals that An error occurred during the last transaction, followed by An error code?
+    RESPONSE_T_FD = 'T_FD' # signals that all file data has been sent and the transfer is finished
+    RESPONSE_T_BD = 'T_BD' # signals that An error occurred during the file transfer, it is followed by more data
+
+    RESPONSE_M_CC = 'M_CC' # signals that a poeration some king of operation was completed that took some time to complete, ??? response to C_CC??
+
+    RESPONSE_S_DI = 'S_DI' # signals that the command R_DI was accepted, it is followed by more data
+    RESPONSE_S_DR = 'S_DR' # ??? signals that the command R_DR was accepted, it is followed by more data
+    RESPONSE_S_FI = 'S_FI' # signals that the command R_FI was accepted, it is followed by more data
+    RESPONSE_S_FL = 'S_FL' # used to transfer blocks of file data to the control, signals that the command R_FL was accepted, it is followed by more data
+    #RESPONSE_S_IN = 'S_IN' # found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
+    RESPONSE_S_PR = 'S_PR' # signals that the command R_PR and the parameter was accepted, it is followed by more data
+    RESPONSE_S_RI = 'S_RI' # signals that the command R_RI was accepted, it is followed by more data
+    #RESPONSE_S_ST = 'S_ST' # found via bruteforce test, signals that the command R_ST was accepted, purpose unknown!
+    RESPONSE_S_VR = 'S_VR' # signals that the command R_VR was accepted, it is followed by more data
+
+    COMMAND_R_VR_TYPE_CONTROL = 1
+    COMMAND_R_VR_TYPE_NC_VERSION = 2
+    COMMAND_R_VR_TYPE_PLC_VERSION = 3
+    COMMAND_R_VR_TYPE_OPTIONS = 4
+    COMMAND_R_VR_TYPE_ID = 5
+    COMMAND_R_VR_TYPE_RELEASE_TYPE = 6
+    COMMAND_R_VR_TYPE_SPLC_VERSION = 7
+
+    # const for telegram C_CC / SetSysCmd
+    SYSCMD_RESET_TNC = 1
+    SYSCMD_STOP_TIMEUPDATE = 2
+    SYSCMD_SET_BUF1024 = 3
+    SYSCMD_SET_BUF512 = 4
+    SYSCMD_SET_BUF2048 = 5
+    SYSCMD_SET_BUF3072 = 6
+    SYSCMD_SET_BUF4096 = 7
+    SYSCMD_RESET_DNC = 8
+    SYSCMD_RESET_LSV2 = 9 # not implemented
+    SYSCMD_UPDATE_TNCOPT = 10
+    SYSCMD_PUSH_PRESET_INTO_LOG = 11
+    SYSCMD_SCREENDUMP = 12
+    SYSCMD_ACTIVATE_PLCPGM = 13 # cmdpara: file name
+    SYSCMD_OBSERVE_ADD_FILE = 15 # cmdpara: file name
+    SYSCMD_OBSERVE_REMOVE_FILE = 16 # cmdpara: file name
+    SYSCMD_OBSERVE_REMOVE_ALL = 17
+    SYSCMD_ACTIVATE_MFSK = 18
+    SYSCMD_SECURE_FILE_SEND = 19 # C_FL: T_FD wird mit Antworttelegramm (T_OK/T_ER) quittiert
+    SYSCMD_DELETE_TABLE_ENTRY = 20
+    SYSCMD_GENERATE_OP_LOG = 27 # tell control to generate operations log file, followed by filename and start time and date
+
+    # const for relegram R_RI
+    R_INFO_SELECTED_PGM = 24
+    R_INFO_PGM_STATE = 26
+
+    # known program states
+    PGM_STATE_STARTED = 0
+    PGM_STATE_STOPPED = 1
+    PGM_STATE_FINISHED = 2
+    PGM_STATE_CANCELLED = 3
+    PGM_STATE_INTERRUPTED = 4
+    PGM_STATE_ERROR = 5
+    PGM_STATE_ERROR_CLEARED = 6
+    PGM_STATE_IDLE = 7
+    PGM_STATE_UNDEFINED = 8
+
+
+    # known modes for command R_DR
+    COMMAND_R_DR_MODE_SINGLE = 0x00 # mode switch for command R_DR to only read one entry at a time
+    COMMAND_R_DR_MODE_MULTI = 0x01 # mode switch for command R_DR to only read multiple entries at a time, needs larger telegram size
+    COMMAND_R_DR_MODE_DRIVES = 0x02 # mode switch for command R_DR to read drive information
+
+    def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
+        """init object variables and create socket"""
+
+        self._llcom = LLLSV2Com(hostname, port, timeout)
+
+        self._buffer_size = LLLSV2Com.DEFAULT_BUFFER_SIZE
+        self._active_logins = list()
+
+        if safe_mode:
+            logging.info('safe mode is active, login and system commands are restricted')
+            self._known_logins = (LSV2.LOGIN_INSPECT, LSV2.LOGIN_FILETRANSFER)
+            self._known_sys_cmd = (LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512, LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096,
+                                   LSV2.SYSCMD_SECURE_FILE_SEND, LSV2.SYSCMD_GENERATE_OP_LOG)
+        else:
+            logging.info('safe mode is off, login and system commands are not restricted. Use with caution!')
+            self._known_logins = (LSV2.LOGIN_INSPECT, LSV2.LOGIN_DIAG, LSV2.LOGIN_PLCDEBUG, LSV2.LOGIN_FILETRANSFER, LSV2.LOGIN_MONITOR, LSV2.LOGIN_DSP,
+                                  LSV2.LOGIN_DNC, LSV2.LOGIN_SCOPE, LSV2.LOGIN_STREAMAXES, LSV2.LOGIN_FILEPLC, LSV2.LOGIN_FILESYS)
+            self._known_sys_cmd = (LSV2.SYSCMD_RESET_TNC, LSV2.SYSCMD_STOP_TIMEUPDATE, LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512,
+                                   LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096, LSV2.SYSCMD_SECURE_FILE_SEND,
+                                   LSV2.SYSCMD_RESET_DNC, LSV2.SYSCMD_RESET_LSV2, LSV2.SYSCMD_UPDATE_TNCOPT, LSV2.SYSCMD_PUSH_PRESET_INTO_LOG,
+                                   LSV2.SYSCMD_SCREENDUMP, LSV2.SYSCMD_ACTIVATE_PLCPGM, LSV2.SYSCMD_OBSERVE_ADD_FILE, LSV2.SYSCMD_OBSERVE_REMOVE_FILE,
+                                   LSV2.SYSCMD_OBSERVE_REMOVE_ALL, LSV2.SYSCMD_ACTIVATE_MFSK, LSV2.SYSCMD_SECURE_FILE_SEND, LSV2.SYSCMD_DELETE_TABLE_ENTRY)
+
+        self._versions = None
+        self._sys_par = None
+
+
+
+    def connect(self):
+        """connect to control"""
+        self._llcom.connect()
+        self._configure_connection()
+
+
+    def disconnect(self):
+        """logout of all open logins and close connection"""
+
+        self.logout(login=None)
+
+        self._llcom.disconnect()
+        logging.debug('Connection to host closed')
+
+
+    def _send_recive(self, command, expected_response, payload=None):
+        response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
+
+        if response in expected_response:
+            if content is not None and len(content) > 0:
+                logging.info('command {} executed successfully, received {} with {} bytes payload'.format(command, response, len(content)))
+                return content
+            else:
+                logging.info('command {} executed successfully, received {} without any payload'.format(command, response))
+                return True
+        elif response in LSV2.RESPONSE_T_ER:
+            byte_1, byte_2, = struct.unpack('!BB', content)
+            error_text = get_error_text(type=byte_1, code=byte_2)
+            logging.warning('T_ER received, an error occurred the execution of command {}: {}'.format(command, error_text))
+        else:
+            logging.error('recived unexpected response {} to command {}. response code {}'.format(response, command, content))
+            raise Exception('recived unexpected response {}'.format(response))
+        return False
+
+    def _send_recive_block(self, command, expected_response, payload=None):
+        response_buffer = list()
+        response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
+
+        if response in LSV2.RESPONSE_T_ER:
+            byte_1, byte_2, = struct.unpack('!BB', content)
+            error_text = get_error_text(type=byte_1, code=byte_2)
+            logging.warning('T_ER received, an error occurred starting block read for command {}: {}'.format(command, error_text))
+        elif response not in expected_response:
+            logging.error('recived unexpected response {} block read for command {}. response code {}'.format(response, command, content))
+            raise Exception('recived unexpected response {}'.format(response))
+        else:
+            while response in expected_response:
+                response_buffer.append(content)
+                response, content = self._llcom.telegram(LSV2.RESPONSE_T_OK, buffer_size=self._buffer_size)
+
+        return response_buffer
+
+    def _configure_connection(self):
+        """This function sets up the communication parameters for file transfer. The buffer size is set based on the capabilitys of the control."""
+        self.login(login=LSV2.LOGIN_INSPECT)
+        control_type = self.get_versions()['Control']
+        max_block_length = self.get_system_parameter()['Max_Block_Length']
+        logging.info('setting connection settings for {} and block length {}'.format(control_type, max_block_length))
+
+        self.set_system_command(LSV2.SYSCMD_SET_BUF512)
+
+        if max_block_length >= 4096:
+            if self.set_system_command(LSV2.SYSCMD_SET_BUF4096):
+                self._buffer_size = 4096
+            else: raise Exception('error in communication')
+        elif 3072 <= max_block_length < 4096:
+            if self.set_system_command(LSV2.SYSCMD_SET_BUF3072):
+                self._buffer_size = 3072
+            else: raise Exception('error in communication')
+        elif 2048 <= max_block_length < 3072:
+            if self.set_system_command(LSV2.SYSCMD_SET_BUF2048):
+                self._buffer_size = 2048
+            else: raise Exception('error in communication')
+        elif 1024 <= max_block_length < 2048:
+            if self.set_system_command(LSV2.SYSCMD_SET_BUF1024):
+                self._buffer_size = 1024
+            else: raise Exception('error in communication')
+        elif 512 <= max_block_length < 1024:
+            if self.set_system_command(LSV2.SYSCMD_SET_BUF512):
+                self._buffer_size = 512
+            else: raise Exception('error in communication')
+        elif 256 <= max_block_length < 512:
+            self._buffer_size = 256
+        else:
+            raise Exception('unknown buffer size')
+
+        if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
+            raise Exception('error in communication')
+        self.login(login=LSV2.LOGIN_FILETRANSFER)
+        logging.info('successfully configured connection parameters and basic logins. selected buffer size is {}'.format(self._buffer_size))
+
+
+    def login(self, login, password=None):
+        """some functions require certain access levels, to elevate this level a logon has to be performed. some levels require a password"""
+        if login in self._active_logins:
+            logging.debug('login already active')
+            return True
+
+        if login in self._known_logins:
+            payload = bytearray()
+            payload.extend(map(ord, login))
+            payload.append(0x00) # terminate string
+            if password is not None:
+                payload.extend(map(ord, password))
+                payload.append(0x00) # terminate string
+
+            result = self._send_recive(LSV2.COMMAND_A_LG, LSV2.RESPONSE_T_OK, payload)
+
+            if result is True:
+                logging.info('login executed successfully for login {}'.format(login))
+                return True
+            else:
+                logging.error('an error occurred during login for login {}'.format(login))
+        else:
+            logging.warning('unknown or unsupported login')
+        return False
+
+    def logout(self, login=None):
+        """drop access rights. if no user is supplied all active accrss rights are dropped."""
+        if login in self._known_logins or login is None:
+            logging.debug('logout for login {}'.format(login))
+            if login in self._active_logins or login is None:
+                payload = bytearray()
+                if login is not None:
+                    payload.extend(map(ord, login))
+                    payload.append(0x00)
+
+                result = self._send_recive(LSV2.COMMAND_A_LO, LSV2.RESPONSE_T_OK, payload)
+
+                if result is True:
+                    logging.info('logout executed successfully for login {}'.format(login))
+                    return True
+                else:
+                    logging.error('an error occurred during logout for login {}'.format(login))
+            else:
+                logging.info('login {} was not active, logout not necessary'.format(login))
+                return True
+        else:
+            logging.warning('unknown or unsupported user')
+        return False
+
+    def set_system_command(self, command, parameter=None):
+        """execute a system command on the control. command is one self._known_sys_cmd. If necessary additinal parameters can be supplied"""
+        if command in self._known_sys_cmd:
+            payload = bytearray()
+            payload.extend(struct.pack('!H', command))
+            if parameter is not None:
+                payload.extend(map(ord, parameter))
+                payload.append(0x00) # terminate string
+            result = self._send_recive(LSV2.COMMAND_C_CC, LSV2.RESPONSE_T_OK, payload)
+            if result:
+                return True
+            else:
+                raise Exception('an error occurred while executing a system command')
+        else:
+            raise Exception('unknown or unsupported system command')
+        return False
+
+    def get_system_parameter(self, force=False):
+        """receive system parameters from the control and pares them to a dict."""
+        if self._sys_par is not None and force is False:
+            logging.debug('version info already in memory, return previous values')
+            return self._sys_par
+        else:
+            result = self._send_recive(command=LSV2.COMMAND_R_PR, expected_response=LSV2.RESPONSE_S_PR)
+            if result:
+                message_length = len(result)
+                info_list = list()
+                # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
+                if message_length == 120: # programming station?
+                    info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
+                elif message_length == 124: # real machine? not tested!
+                    raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
+                else:
+                    raise ValueError('unexpected length {} of message content {}'.format(message_length, result))
+                sys_par = dict()
+                sys_par['Marker_Start'] = info_list[0]
+                sys_par['Markers'] = info_list[1]
+                sys_par['Input_Start'] = info_list[2]
+                sys_par['Inputs'] = info_list[3]
+                sys_par['Output_Start'] = info_list[4]
+                sys_par['Outputs'] = info_list[5]
+                sys_par['Counter_Start'] = info_list[6]
+                sys_par['Counters'] = info_list[7]
+                sys_par['Timer_Start'] = info_list[8]
+                sys_par['Timers'] = info_list[9]
+                sys_par['Word_Start'] = info_list[10]
+                sys_par['Words'] = info_list[11]
+                sys_par['String_Start'] = info_list[12]
+                sys_par['Strings'] = info_list[13]
+                sys_par['String_Length'] = info_list[14]
+                sys_par['Input_Word_Start'] = info_list[22]
+                sys_par['Input Words'] = info_list[23]
+                sys_par['Output_Word_Start'] = info_list[24]
+                sys_par['Output_Words'] = info_list[25]
+                sys_par['LSV2_Version'] = info_list[30]
+                sys_par['LSV2_Version_Flags'] = info_list[31]
+                sys_par['Max_Block_Length'] = info_list[32]
+                sys_par['HDH_Bin_Version'] = info_list[33]
+                sys_par['HDH_Bin_Revision'] = info_list[34]
+                sys_par['ISO_Bin_Version'] = info_list[35]
+                sys_par['ISO_Bin_Revision'] = info_list[36]
+                sys_par['HardwareVersion'] = info_list[37]
+                sys_par['LSV2_Version_Flags_Ex'] = info_list[38]
+                sys_par['Max_Trace_Line'] = info_list[39]
+                sys_par['Scope_Channels'] = info_list[40]
+                sys_par['PW_Encryption_Key'] = info_list[41]
+                logging.debug('got system parameters: {}'.format(sys_par))
+                self._sys_par = sys_par
+                return self._sys_par
+            else:
+                logging.error('an error occurred while querying system parameters')
+                return False
+
+    def get_versions(self, force=False):
+        """get version information from the control and return as dictionary"""
+        if self._versions is not None and force is False:
+            logging.debug('version info already in memory, return previous values')
+        else:
+            info_data = dict()
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_CONTROL))
+            if result:
+                info_data['Control'] = result.strip(b'\x00').decode('utf-8')
+            else:
+                raise Exception('Could not read version information from control')
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_NC_VERSION))
+            if result:
+                info_data['NC_Version'] = result.strip(b'\x00').decode('utf-8')
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_PLC_VERSION))
+            if result:
+                info_data['PLC_Version'] = result.strip(b'\x00').decode('utf-8')
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_OPTIONS))
+            if result:
+                info_data['Options'] = result.strip(b'\x00').decode('utf-8')
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_ID))
+            if result:
+                info_data['ID'] = result.strip(b'\x00').decode('utf-8')
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_RELEASE_TYPE))
+            if result:
+                info_data['Release_Type'] = result.strip(b'\x00').decode('utf-8')
+
+            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack('!B', LSV2.COMMAND_R_VR_TYPE_SPLC_VERSION))
+            if result:
+                info_data['SPLC_Version'] = result.strip(b'\x00').decode('utf-8')
+
+            logging.debug('got version info: {}'.format(info_data))
+            self._versions = info_data
+
+        return self._versions
+
+    def get_program_status(self):
+        """reads status of the currently active program.
+           See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1"""
+        self.login(login=LSV2.LOGIN_DNC)
+
+        payload = bytearray()
+        payload.extend(struct.pack('!H', self.R_INFO_PGM_STATE))
+
+        result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        if result:
+            pgm_state = struct.unpack('!H', result)[0]
+            logging.debug('succesfully read state of active program: {}'.format(self.get_program_status_text(pgm_state)))
+            return pgm_state
+        else:
+            logging.error('an error occurred while querying program state')
+            return False
+
+    def get_program_status_text(self, code):
+        return {LSV2.PGM_STATE_STARTED: 'Program started',
+            LSV2.PGM_STATE_STOPPED: 'Program stopped',
+            LSV2.PGM_STATE_FINISHED: 'Program finished',
+            LSV2.PGM_STATE_CANCELLED: 'Program cancelled',
+            LSV2.PGM_STATE_INTERRUPTED: 'Program interrupted by user',
+            LSV2.PGM_STATE_ERROR: 'Program interrupted with error',
+            LSV2.PGM_STATE_ERROR_CLEARED: 'Program interrupted with error, error was cleared',
+            LSV2.PGM_STATE_IDLE: 'No Program running',
+            LSV2.PGM_STATE_UNDEFINED: 'Program state undefined'}.get(code, 'Unknown Program state')
+
+    def get_selected_program(self):
+        """reads the path of the currently active program.
+           See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1"""
+        self.login(login=LSV2.LOGIN_DNC)
+
+        payload = bytearray()
+        payload.extend(struct.pack('!H', self.R_INFO_SELECTED_PGM))
+
+        result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload=payload)
+        if result:
+            pgm_path = result.decode().strip('\x00').replace('\\', '/')
+            logging.debug('succesfully read path of active program: {}'.format(pgm_path))
+            return pgm_path
+        else:
+            logging.error('an error occurred while querying active program state')
+            return False
+
+    def get_directory_info(self):
+        """get information on the current working directory"""
+        result = self._send_recive(LSV2.COMMAND_R_DI, LSV2.RESPONSE_S_DI)
+        if result:
+            dir_info = dict()
+            dir_info['Free Size'] = struct.unpack('!L', result[:4])
+
+            attribute_list = list()
+            for i in range(4, len(result[4:128]), 4):
+                attr = result[i:i + 4].decode().strip('\x00')
+                if len(attr) > 0:
+                    attribute_list.append(attr)
+
+            dir_info['Attributs'] = attribute_list
+            dir_info['unknown'] = result[128:164]
+            dir_info['Path'] = result[164:].decode().strip('\x00').replace('\\', '/')
+            #TODO decode rest of directory information
+            logging.debug('succesfully received directory information {}'.format(dir_info))
+
+            return dir_info
+        else:
+            logging.error('an error occurred while querying directory info')
+            return False
+
+    def change_directory(self, remote_directory):
+        """change the current working directoyon the control"""
+        dir_path = remote_directory.replace('\\', '/')
+        payload = bytearray()
+        payload.extend(map(ord, dir_path))
+        payload.append(0x00)
+        result = self._send_recive(LSV2.COMMAND_C_DC, LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('changed working directory to {}'.format(dir_path))
+            return True
+        else:
+            logging.error('an error occurred while changing directory')
+            return False
+
+    def get_file_info(self, remote_file_path):
+        """get information about the file and return the information as a dict"""
+        file_path = remote_file_path.replace('\\', '/')
+        payload = bytearray()
+        payload.extend(map(ord, file_path))
+        payload.append(0x00)
+
+        result = self._send_recive(LSV2.COMMAND_R_FI, LSV2.RESPONSE_S_FI, payload=payload)
+        if result:
+            file_info = dict()
+            file_info['Size'] = struct.unpack('!L', result[:4])[0]
+            file_info['Timestamp'] = datetime.datetime.fromtimestamp(struct.unpack('!L', result[4:8])[0])
+            file_info['Name'] = result[12:].decode().strip('\x00').replace('\\', '/')
+            file_info['unknown'] = struct.unpack('!L', result[8:12])[0]
+            #TODO decode unknown file information in content (byte 9-12)
+            logging.debug('succesfully received file information {}'.format(file_info))
+            return file_info
+        else:
+            logging.warning('an error occurred while querying file info this might also indicate that it does not exist {}'.format(remote_file_path))
+            return False
+
+    def get_directory_content(self):
+        """get content of current working directory"""
+        dir_content = list()
+        payload = bytearray()
+        payload.append(self.COMMAND_R_DR_MODE_SINGLE)
+
+        result = self._send_recive_block(LSV2.COMMAND_R_DR, LSV2.RESPONSE_S_DR, payload)
+        logging.debug('received {} entries for directory content information'.format(len(result)))
+        for entry in result:
+            file_info = dict()
+            file_info['Size'] = struct.unpack('!L', entry[:4])[0]
+            file_info['Timestamp'] = datetime.datetime.fromtimestamp(struct.unpack('!L', entry[4:8])[0])
+            file_info['Name'] = entry[12:].decode().strip('\x00').replace('\\', '/')
+            file_info['unknown'] = struct.unpack('!L', entry[8:12])[0]
+            dir_content.append(file_info)
+        logging.debug('succesfully received directory information {}'.format(dir_content))
+        return dir_content
+
+    def get_drive_info(self):
+        """get content of current working directory"""
+        drives_list = list()
+        payload = bytearray()
+        payload.append(self.COMMAND_R_DR_MODE_DRIVES)
+
+        result = self._send_recive_block(LSV2.COMMAND_R_DR, LSV2.RESPONSE_S_DR, payload)
+        logging.debug('received {} packet of for drive information'.format(len(result)))
+        for entry in result:
+            info_list = entry.split(b':\x00')
+            for drive in info_list[:-1]:
+                drive_info = dict()
+                drive_name = drive[12:].decode().strip('\x00')
+                drive_info['Name'] = drive_name + ':/'
+                drive_info['unknown'] = drive
+                drives_list.append(drive_info)
+
+        logging.debug('succesfully received drive information {}'.format(drives_list))
+        return drives_list
+
+    def make_directory(self, dir_path):
+        """create directory on control. split path into separate parts and iterate over every segment.
+        starting from the base check each segment and create the directory if necessary"""
+        path_parts = dir_path.replace('\\', '/').split('/') # convert path to unix style
+        path_to_check = ''
+        for part in path_parts:
+            path_to_check += part + '/'
+            if self.get_file_info(path_to_check) is False: # no file info -> does not exist and has to be created
+                payload = bytearray()
+                payload.extend(map(ord, path_to_check))
+                payload.append(0x00) # terminate string
+                result = self._send_recive(command=LSV2.COMMAND_C_DM, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
+                if result:
+                    logging.debug('Directory created succesfully')
+                else:
+                    raise Exception('an error occurred while changing directory {}'.format(dir_path))
+            else:
+                logging.debug('nothing to do as this segment already exists')
+        return True
+
+    def delete_empty_directory(self, dir_path):
+        """deleta a directory on the control, only works if it is empty"""
+        dir_path = dir_path.replace('\\', '/')
+        payload = bytearray()
+        payload.extend(map(ord, dir_path))
+        payload.append(0x00)
+        result = self._send_recive(command=LSV2.COMMAND_C_DD, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('succesfully deleted folder {}'.format(dir_path))
+            return True
+        else:
+            logging.warning('an error occurred while deleting directory {}, this might also indicate that it it does not exist'.format(dir_path))
+            return False
+
+    def delete_file(self, file_path):
+        """delete a file on control"""
+        file_path = file_path.replace('\\', '/')
+        payload = bytearray()
+        payload.extend(map(ord, file_path))
+        payload.append(0x00)
+        result = self._send_recive(command=LSV2.COMMAND_C_FD, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('succesfully deleted file {}'.format(file_path))
+            return True
+        else:
+            logging.warning('an error occurred while deleting file {}, this might also indicate that it it does not exist'.format(file_path))
+            return False
+
+    def copy_local_file(self, source_path, target_path):
+        """copy a file on control"""
+        source_path = source_path.replace('\\', '/')
+        target_path = target_path.replace('\\', '/')
+
+        if '/' in source_path:
+            # change directory
+            source_file_name = source_path.split('/')[-1]
+            source_folder = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_folder):
+                raise Exception('could not open the source directoy')
+        else:
+            source_file_name = source_path
+            source_folder = '.'
+
+        if target_path.endswith('/'):
+            target_path += source_file_name
+
+        payload = bytearray()
+        payload.extend(map(ord, source_file_name))
+        payload.append(0x00)
+        payload.extend(map(ord, target_path))
+        payload.append(0x00)
+        logging.debug('prepare to copy file {} from {} to {}'.format(source_file_name, source_folder, target_path))
+        result = self._send_recive(command=LSV2.COMMAND_C_FC, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('succesfully copied file {}'.format(source_path))
+            return True
+        else:
+            logging.warning('an error occurred copying file {} to {}'.format(source_path, target_path))
+            return False
+
+    def move_local_file(self, source_path, target_path):
+        """move a file on control"""
+        source_path = source_path.replace('\\', '/')
+        target_path = target_path.replace('\\', '/')
+
+        if '/' in source_path:
+            source_file_name = source_path.split('/')[-1]
+            source_folder = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_folder):
+                raise Exception('could not open the source directoy')
+        else:
+            source_file_name = source_path
+            source_folder = '.'
+
+        if target_path.endswith('/'):
+            target_path += source_file_name
+
+        payload = bytearray()
+        payload.extend(map(ord, source_file_name))
+        payload.append(0x00)
+        payload.extend(map(ord, target_path))
+        payload.append(0x00)
+        logging.debug('prepare to move file {} from {} to {}'.format(source_file_name, source_folder, target_path))
+        result = self._send_recive(command=LSV2.COMMAND_C_FR, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('succesfully moved file {}'.format(source_path))
+            return True
+        else:
+            logging.warning('an error occurred moving file {} to {}'.format(source_path, target_path))
+            return False
+
+    def _test_command(self, command_string, payload=None):
+        """check commands for validity"""
+        response, content = self._llcom.telegram(command_string, payload, buffer_size=self._buffer_size)
+        if content is None:
+            response_length = -1
+        else:
+            response_length = len(content)
+        if response in LSV2.RESPONSE_T_ER:
+            if len(content) == 2:
+                byte_1, byte_2, = struct.unpack('!BB', content)
+                error_text = get_error_text(type=byte_1, code=byte_2)
+            else:
+                error_text = 'Unknown Error Number {}'.format(content)
+        else:
+            error_text = 'NONE'
+        return 'sent {} payload {} received {} message_length {} content {} error text : {}'.format(command_string, payload, response, response_length, content, error_text)
