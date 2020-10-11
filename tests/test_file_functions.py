@@ -34,7 +34,6 @@ def test_remote_file_functions():
     assert lsv2.make_directory('TNC:/nc_prog/pyLSV2_test') == True
     assert lsv2.change_directory('TNC:/nc_prog/pyLSV2_test') == True
 
-
     assert lsv2.copy_local_file(source_path='TNC:/nc_prog/$mdi.h', target_path='TNC:/nc_prog/pyLSV2_test/') == True
     assert lsv2.get_file_info('TNC:/nc_prog/pyLSV2_test/$mdi.h') != False
 

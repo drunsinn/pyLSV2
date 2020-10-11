@@ -4,7 +4,8 @@ import struct
 import logging
 import socket
 import datetime
-from itertools import zip_longest
+#from itertools import zip_longest
+from pathlib import Path
 from .translate_error import *
 from .low_level_com import LLLSV2Com
 
@@ -21,6 +22,10 @@ class LSV2(object):
        has only been tested with a programming station for the TNC 640 with software version
        340595 8 SP1.
        No tests on real machines have been made so far."""
+
+    DRIVE_TNC = 'TNC:'
+    DRIVE_TNC = 'PLC:'
+    DRIVE_LOG = 'LOG:'
 
     # const for login
     LOGIN_INSPECT = 'INSPECT' # nur lesende Funktionen ausführbar
@@ -140,11 +145,12 @@ class LSV2(object):
     PGM_STATE_IDLE = 7
     PGM_STATE_UNDEFINED = 8
 
-
     # known modes for command R_DR
     COMMAND_R_DR_MODE_SINGLE = 0x00 # mode switch for command R_DR to only read one entry at a time
     COMMAND_R_DR_MODE_MULTI = 0x01 # mode switch for command R_DR to only read multiple entries at a time, needs larger telegram size
     COMMAND_R_DR_MODE_DRIVES = 0x02 # mode switch for command R_DR to read drive information
+
+    C_FL_MODE_BINARY = 0x01 # is set by TNCcmd, seems to work for all filetypes
 
     def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
         """init object variables and create socket"""
@@ -475,8 +481,11 @@ class LSV2(object):
             logging.error('an error occurred while querying active program state')
             return False
 
-    def get_directory_info(self):
+    def get_directory_info(self, remote_directory=None):
         """get information on the current working directory"""
+        if remote_directory is not None and not self.change_directory(remote_directory):
+            logging.error('could not change current directory to read directory info for {}'.format(remote_directory))
+
         result = self._send_recive(LSV2.COMMAND_R_DI, LSV2.RESPONSE_S_DI)
         if result:
             dir_info = dict()
@@ -488,7 +497,7 @@ class LSV2(object):
                 if len(attr) > 0:
                     attribute_list.append(attr)
 
-            dir_info['Attributs'] = attribute_list
+            dir_info['Dir_Attributs'] = attribute_list
             dir_info['unknown'] = result[128:164]
             dir_info['Path'] = result[164:].decode().strip('\x00').replace('\\', '/')
             #TODO decode rest of directory information
@@ -514,7 +523,7 @@ class LSV2(object):
             return False
 
     def get_file_info(self, remote_file_path):
-        """get information about the file and return the information as a dict"""
+        """get information about the file or folder? and return the information as a dict"""
         file_path = remote_file_path.replace('\\', '/')
         payload = bytearray()
         payload.extend(map(ord, file_path))
@@ -526,8 +535,7 @@ class LSV2(object):
             file_info['Size'] = struct.unpack('!L', result[:4])[0]
             file_info['Timestamp'] = datetime.datetime.fromtimestamp(struct.unpack('!L', result[4:8])[0])
             file_info['Name'] = result[12:].decode().strip('\x00').replace('\\', '/')
-            file_info['unknown'] = struct.unpack('!L', result[8:12])[0]
-            #TODO decode unknown file information in content (byte 9-12)
+            file_info['Attributs'] = struct.unpack('!L', result[8:12])[0]
             logging.debug('succesfully received file information {}'.format(file_info))
             return file_info
         else:
@@ -547,7 +555,7 @@ class LSV2(object):
             file_info['Size'] = struct.unpack('!L', entry[:4])[0]
             file_info['Timestamp'] = datetime.datetime.fromtimestamp(struct.unpack('!L', entry[4:8])[0])
             file_info['Name'] = entry[12:].decode().strip('\x00').replace('\\', '/')
-            file_info['unknown'] = struct.unpack('!L', entry[8:12])[0]
+            file_info['Attributs'] = struct.unpack('!L', entry[8:12])[0]
             dir_content.append(file_info)
         logging.debug('succesfully received directory information {}'.format(dir_content))
         return dir_content
@@ -682,6 +690,89 @@ class LSV2(object):
         else:
             logging.warning('an error occurred moving file {} to {}'.format(source_path, target_path))
             return False
+
+    def send_file(self, local_path, remote_path, override_file=False):
+        '''send file to the control, parameter override_file allowes replacing an existing file'''
+        local_file = Path(local_path)
+
+        if not local_file.is_file():
+            logging.error('the supplied path {} did not resolve to a file'.format(local_file))
+            raise Exception('local file does not exist! {}'.format(local_file))
+
+        remote_path = remote_path.replace('\\', '/')
+
+        if '/' in remote_path:
+            if remote_path.endswith('/'): # no filename given
+                remote_file_name = local_file.name
+                remote_folder = remote_path
+            else:
+                remote_file_name = remote_path.split('/')[-1]
+                remote_folder = remote_path.rstrip(remote_file_name)
+                if not self.change_directory(remote_directory=remote_folder):
+                    raise Exception('could not open the source directoy {}'.format(remote_folder))
+        else:
+            remote_file_name = remote_path
+            remote_folder = self.get_directory_info()['Path'] # get pwd
+        remote_folder = remote_folder.rstrip('/')
+
+        if not self.get_directory_info(remote_folder):
+            logging.debug('remote path does not exist, create folder(s)')
+            self.make_directory(remote_folder)
+
+        remote_info = self.get_file_info(remote_folder + '/' + remote_file_name)
+
+        if remote_info:
+            logging.debug('remote path exists and points to files')
+            if override_file:
+                if not self.delete_file(remote_folder + '/' + remote_file_name):
+                    raise Exception('something went wrong while deleting file {}'.format(remote_folder + '/' + remote_file_name))
+            else:
+                logging.warning('remote file already exists, override was not set')
+                return False
+
+        logging.debug('ready to send file from {} to {}'.format(local_file, remote_folder + '/' + remote_file_name))
+
+        payload = bytearray()
+        payload.extend(map(ord, remote_folder + '/' + remote_file_name))
+        payload.append(0x00)
+        payload.append(LSV2.C_FL_MODE_BINARY)
+        response, content = self._llcom.telegram(LSV2.COMMAND_C_FL, payload, buffer_size=self._buffer_size)
+
+        if response in self.RESPONSE_T_OK:
+            with local_file.open('rb') as lf:
+                while True:
+                    buffer = lf.read(self._buffer_size - 10)  # use current buffer size but reduce by 10 to make shure it fits together with command and size
+                    if not buffer:
+                        # finished reading file
+                        break
+
+                    response, content = self._llcom.telegram(LSV2.RESPONSE_S_FL, buffer, buffer_size=self._buffer_size)
+                    if response in self.RESPONSE_T_OK:
+                        pass
+                    elif response in self.RESPONSE_T_ER:
+                        byte_1, byte_2, = struct.unpack('!BB', content)
+                        error_text = translate_error.get_error_text(type=byte_1, code=byte_2)
+                        logging.error('an error occurred while loading a block of data control: {}'.format(error_text))
+                        return False
+                    else:
+                        logging.error('could not send data with error {}'.format(response))
+                        return False
+
+            #signal that no more data is beeing sent
+            if not self._send_recive(command=LSV2.RESPONSE_T_FD, expected_response=LSV2.RESPONSE_T_OK, payload=None):
+                logging.error('could not send end of file with error')
+                return False
+
+        elif response in self.RESPONSE_T_ER:
+            byte_1, byte_2, = struct.unpack('!BB', content)
+            error_text = translate_error.get_error_text(type=byte_1, code=byte_2)
+            logging.error('an error occurred while loading a file to the control: {}'.format(error_text))
+            return False
+        else:
+            logging.error('could not send file with error {}'.format(response))
+            return False
+        return True
+
 
     def _test_command(self, command_string, payload=None):
         """check commands for validity"""
