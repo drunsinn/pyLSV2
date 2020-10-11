@@ -194,6 +194,11 @@ class LSV2(object):
         self._llcom.disconnect()
         logging.debug('Connection to host closed')
 
+    def _decode_error(self, content):
+        byte_1, byte_2, = struct.unpack('!BB', telegram_content)
+        error_text = get_error_text(type=byte_1, code=byte_2)
+        logging.warning('T_ER received, an error occurred during the execution of the fast command: {}'.format(error_text))
+        return error_text
 
     def _send_recive(self, command, expected_response, payload=None):
         response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
@@ -206,9 +211,7 @@ class LSV2(object):
                 logging.info('command {} executed successfully, received {} without any payload'.format(command, response))
                 return True
         elif response in LSV2.RESPONSE_T_ER:
-            byte_1, byte_2, = struct.unpack('!BB', content)
-            error_text = get_error_text(type=byte_1, code=byte_2)
-            logging.warning('T_ER received, an error occurred the execution of command {}: {}'.format(command, error_text))
+            self._decode_error(content)
         else:
             logging.error('recived unexpected response {} to command {}. response code {}'.format(response, command, content))
             raise Exception('recived unexpected response {}'.format(response))
@@ -219,9 +222,7 @@ class LSV2(object):
         response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
 
         if response in LSV2.RESPONSE_T_ER:
-            byte_1, byte_2, = struct.unpack('!BB', content)
-            error_text = get_error_text(type=byte_1, code=byte_2)
-            logging.warning('T_ER received, an error occurred starting block read for command {}: {}'.format(command, error_text))
+            self._decode_error(content)
         elif response not in expected_response:
             logging.error('recived unexpected response {} block read for command {}. response code {}'.format(response, command, content))
             raise Exception('recived unexpected response {}'.format(response))
@@ -750,9 +751,7 @@ class LSV2(object):
                     if response in self.RESPONSE_T_OK:
                         pass
                     elif response in self.RESPONSE_T_ER:
-                        byte_1, byte_2, = struct.unpack('!BB', content)
-                        error_text = translate_error.get_error_text(type=byte_1, code=byte_2)
-                        logging.error('an error occurred while loading a block of data control: {}'.format(error_text))
+                        self._decode_error(content)
                         return False
                     else:
                         logging.error('could not send data with error {}'.format(response))
@@ -764,9 +763,7 @@ class LSV2(object):
                 return False
 
         elif response in self.RESPONSE_T_ER:
-            byte_1, byte_2, = struct.unpack('!BB', content)
-            error_text = translate_error.get_error_text(type=byte_1, code=byte_2)
-            logging.error('an error occurred while loading a file to the control: {}'.format(error_text))
+            self._decode_error(content)
             return False
         else:
             logging.error('could not send file with error {}'.format(response))
