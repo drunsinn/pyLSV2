@@ -1,4 +1,4 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-from .pyLSV2 import LSV2
+"""A pure Python3 implementation of the LSV2 protocol"""
+from pyLSV2 import LSV2

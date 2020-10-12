@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""error code definitions and decodeing"""
 
 #Error map
 LSV2_ERROR_T_ER_BAD_FORMAT = 20
@@ -81,9 +82,9 @@ LSV2_ERROR_T_BD_FD = 200
 LSV2_ERROR_T_USER_ERROR = 255
 
 
-def get_error_text(type, code, language=None):
+def get_error_text(error_type, error_code):
     """parse the error code and return the error message."""
-    if type != 1:
+    if error_type != 1:
         raise Exception('unknown first bit in error message')
     return {LSV2_ERROR_T_ER_BAD_FORMAT: 'Formatfehler im Telegramm',
         LSV2_ERROR_T_ER_UNEXPECTED_TELE: 'gesendetes Telegram passt nicht zum Protokoll',
@@ -161,4 +162,4 @@ def get_error_text(type, code, language=None):
         LSV2_ERROR_T_BD_CANCELLED: 'Übertragung vom Benutzer abgebrochen',
         LSV2_ERROR_T_BD_OSZI_OVERRUN: 'Datenüberlauf (Baudrate zu niedrig)',
         LSV2_ERROR_T_BD_FD: 'Blockübertragung beendet (eigentlich kein Fehler)',
-        LSV2_ERROR_T_USER_ERROR: 'Fehlernummer, wenn ein Fehlertelegramm der Fehlerkasse 2 ( benutzerdefinierter Klarschriftfehler) empfangen wurde'}.get(code, 'Unknown Error code')
+        LSV2_ERROR_T_USER_ERROR: 'Fehlernummer, wenn ein Fehlertelegramm der Fehlerkasse 2 ( benutzerdefinierter Klarschriftfehler) empfangen wurde'}.get(error_code, 'Unknown Error code')
