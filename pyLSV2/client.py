@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import struct
-import logging
-import socket
-import datetime
-#from itertools import zip_longest
-from pathlib import Path
-from .translate_error import *
-from .low_level_com import LLLSV2Com
-
-"""
-# Prototype for a Python 3 LSV2 library
+"""Python 3 LSV2 library
 This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about said files.
 Most of this library is based on the work of tfischer73 and his Eclipse plugin. https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any documentation beside the plugin some parts are based on re-engineering and might therefore be not correct.
 Everything related to PLC or unknown/untested System functions was left out as these function might compromise the control.
 """
+import struct
+import logging
+import datetime
+from pathlib import Path
+from .translate_error import get_error_text
+from .low_level_com import LLLSV2Com
 
-class LSV2(object):
+
+class LSV2():
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls.
        This is just a test implementation that will get worked into a complete Python library. It
        has only been tested with a programming station for the TNC 640 with software version
        340595 8 SP1.
-       No tests on real machines have been made so far."""
+       No tests on real machines have been made so far!"""
 
     DRIVE_TNC = 'TNC:'
     DRIVE_TNC = 'PLC:'
@@ -178,67 +175,76 @@ class LSV2(object):
         self._versions = None
         self._sys_par = None
 
-
-
     def connect(self):
         """connect to control"""
         self._llcom.connect()
         self._configure_connection()
 
-
     def disconnect(self):
         """logout of all open logins and close connection"""
-
         self.logout(login=None)
-
         self._llcom.disconnect()
         logging.debug('Connection to host closed')
 
-    def _decode_error(self, content):
-        byte_1, byte_2, = struct.unpack('!BB', telegram_content)
-        error_text = get_error_text(type=byte_1, code=byte_2)
-        logging.warning('T_ER received, an error occurred during the execution of the fast command: {}'.format(error_text))
+    @staticmethod
+    def _decode_error(content):
+        """decode error codes to text"""
+        byte_1, byte_2, = struct.unpack('!BB', content)
+        error_text = get_error_text(byte_1, byte_2)
+        logging.warning('T_ER received, an error occurred during the execution of the fast command: %s', error_text)
         return error_text
 
     def _send_recive(self, command, expected_response, payload=None):
+        """takes a command and payload, sends it to the control and checks
+            if the response is as expected. Returns content if not an error"""
         response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
 
         if response in expected_response:
             if content is not None and len(content) > 0:
-                logging.info('command {} executed successfully, received {} with {} bytes payload'.format(command, response, len(content)))
+                logging.info('command %s executed successfully, received %s with %d bytes payload', command, response, len(content))
                 return content
-            else:
-                logging.info('command {} executed successfully, received {} without any payload'.format(command, response))
-                return True
+            logging.info('command %s executed successfully, received %s without any payload', command, response)
+            return True
         elif response in LSV2.RESPONSE_T_ER:
             self._decode_error(content)
         else:
-            logging.error('recived unexpected response {} to command {}. response code {}'.format(response, command, content))
-            raise Exception('recived unexpected response {}'.format(response))
+            logging.error('recived unexpected response %s to command %s. response code %s', response, command, content)
         return False
 
     def _send_recive_block(self, command, expected_response, payload=None):
+        """takes a command and payload, sends it to the control and continues reading
+            until the expected response is recived."""
         response_buffer = list()
         response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
 
         if response in LSV2.RESPONSE_T_ER:
             self._decode_error(content)
         elif response not in expected_response:
-            logging.error('recived unexpected response {} block read for command {}. response code {}'.format(response, command, content))
+            logging.error('recived unexpected response %s block read for command %s. response code %s', response, command, content)
             raise Exception('recived unexpected response {}'.format(response))
         else:
             while response in expected_response:
                 response_buffer.append(content)
                 response, content = self._llcom.telegram(LSV2.RESPONSE_T_OK, buffer_size=self._buffer_size)
-
         return response_buffer
+
+    def _send_recive_ack(self, command, payload=None):
+        """sends command and pyload to control, returns True on T_OK"""
+        response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
+        if response in LSV2.RESPONSE_T_OK:
+            return True
+        elif response in LSV2.RESPONSE_T_ER:
+            self._decode_error(content)
+        else:
+            logging.error('recived unexpected response %s to command %s. response code %s', response, command, content)
+        return False
 
     def _configure_connection(self):
         """This function sets up the communication parameters for file transfer. The buffer size is set based on the capabilitys of the control."""
         self.login(login=LSV2.LOGIN_INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
-        logging.info('setting connection settings for {} and block length {}'.format(control_type, max_block_length))
+        logging.info('setting connection settings for %s and block length %s', control_type, max_block_length)
 
         self.set_system_command(LSV2.SYSCMD_SET_BUF512)
 
@@ -270,8 +276,7 @@ class LSV2(object):
         if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
             raise Exception('error in communication')
         self.login(login=LSV2.LOGIN_FILETRANSFER)
-        logging.info('successfully configured connection parameters and basic logins. selected buffer size is {}'.format(self._buffer_size))
-
+        logging.info('successfully configured connection parameters and basic logins. selected buffer size is %d', self._buffer_size)
 
     def login(self, login, password=None):
         """some functions require certain access levels, to elevate this level a logon has to be performed. some levels require a password"""
@@ -279,44 +284,39 @@ class LSV2(object):
             logging.debug('login already active')
             return True
 
-        if login in self._known_logins:
-            payload = bytearray()
-            payload.extend(map(ord, login))
+        if login not in self._known_logins:
+            logging.error('unknown or unsupported login')
+            return False
+
+        payload = bytearray()
+        payload.extend(map(ord, login))
+        payload.append(0x00) # terminate string
+        if password is not None:
+            payload.extend(map(ord, password))
             payload.append(0x00) # terminate string
-            if password is not None:
-                payload.extend(map(ord, password))
-                payload.append(0x00) # terminate string
 
-            result = self._send_recive(LSV2.COMMAND_A_LG, LSV2.RESPONSE_T_OK, payload)
+        if not self._send_recive_ack(LSV2.COMMAND_A_LG, payload):
+            logging.error('an error occurred during login for login %s', login)
+            return False
 
-            if result is True:
-                logging.info('login executed successfully for login {}'.format(login))
-                return True
-            else:
-                logging.error('an error occurred during login for login {}'.format(login))
-        else:
-            logging.warning('unknown or unsupported login')
-        return False
+        logging.info('login executed successfully for login %s', login)
+        return True
 
     def logout(self, login=None):
         """drop access rights. if no user is supplied all active accrss rights are dropped."""
         if login in self._known_logins or login is None:
-            logging.debug('logout for login {}'.format(login))
+            logging.debug('logout for login %s', login)
             if login in self._active_logins or login is None:
                 payload = bytearray()
                 if login is not None:
                     payload.extend(map(ord, login))
                     payload.append(0x00)
 
-                result = self._send_recive(LSV2.COMMAND_A_LO, LSV2.RESPONSE_T_OK, payload)
-
-                if result is True:
-                    logging.info('logout executed successfully for login {}'.format(login))
+                if self._send_recive_ack(LSV2.COMMAND_A_LO, payload):
+                    logging.info('logout executed successfully for login %s', login)
                     return True
-                else:
-                    logging.error('an error occurred during logout for login {}'.format(login))
             else:
-                logging.info('login {} was not active, logout not necessary'.format(login))
+                logging.info('login %s was not active, logout not necessary', login)
                 return True
         else:
             logging.warning('unknown or unsupported user')
@@ -330,13 +330,9 @@ class LSV2(object):
             if parameter is not None:
                 payload.extend(map(ord, parameter))
                 payload.append(0x00) # terminate string
-            result = self._send_recive(LSV2.COMMAND_C_CC, LSV2.RESPONSE_T_OK, payload)
-            if result:
+            if self._send_recive_ack(LSV2.COMMAND_C_CC, payload):
                 return True
-            else:
-                raise Exception('an error occurred while executing a system command')
-        else:
-            raise Exception('unknown or unsupported system command')
+        logging.debug('unknown or unsupported system command')
         return False
 
     def get_system_parameter(self, force=False):
@@ -344,56 +340,55 @@ class LSV2(object):
         if self._sys_par is not None and force is False:
             logging.debug('version info already in memory, return previous values')
             return self._sys_par
-        else:
-            result = self._send_recive(command=LSV2.COMMAND_R_PR, expected_response=LSV2.RESPONSE_S_PR)
-            if result:
-                message_length = len(result)
-                info_list = list()
-                # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
-                if message_length == 120: # programming station?
-                    info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
-                elif message_length == 124: # real machine? not tested!
-                    raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
-                else:
-                    raise ValueError('unexpected length {} of message content {}'.format(message_length, result))
-                sys_par = dict()
-                sys_par['Marker_Start'] = info_list[0]
-                sys_par['Markers'] = info_list[1]
-                sys_par['Input_Start'] = info_list[2]
-                sys_par['Inputs'] = info_list[3]
-                sys_par['Output_Start'] = info_list[4]
-                sys_par['Outputs'] = info_list[5]
-                sys_par['Counter_Start'] = info_list[6]
-                sys_par['Counters'] = info_list[7]
-                sys_par['Timer_Start'] = info_list[8]
-                sys_par['Timers'] = info_list[9]
-                sys_par['Word_Start'] = info_list[10]
-                sys_par['Words'] = info_list[11]
-                sys_par['String_Start'] = info_list[12]
-                sys_par['Strings'] = info_list[13]
-                sys_par['String_Length'] = info_list[14]
-                sys_par['Input_Word_Start'] = info_list[22]
-                sys_par['Input Words'] = info_list[23]
-                sys_par['Output_Word_Start'] = info_list[24]
-                sys_par['Output_Words'] = info_list[25]
-                sys_par['LSV2_Version'] = info_list[30]
-                sys_par['LSV2_Version_Flags'] = info_list[31]
-                sys_par['Max_Block_Length'] = info_list[32]
-                sys_par['HDH_Bin_Version'] = info_list[33]
-                sys_par['HDH_Bin_Revision'] = info_list[34]
-                sys_par['ISO_Bin_Version'] = info_list[35]
-                sys_par['ISO_Bin_Revision'] = info_list[36]
-                sys_par['HardwareVersion'] = info_list[37]
-                sys_par['LSV2_Version_Flags_Ex'] = info_list[38]
-                sys_par['Max_Trace_Line'] = info_list[39]
-                sys_par['Scope_Channels'] = info_list[40]
-                sys_par['PW_Encryption_Key'] = info_list[41]
-                logging.debug('got system parameters: {}'.format(sys_par))
-                self._sys_par = sys_par
-                return self._sys_par
+
+        result = self._send_recive(command=LSV2.COMMAND_R_PR, expected_response=LSV2.RESPONSE_S_PR)
+        if result:
+            message_length = len(result)
+            info_list = list()
+            # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
+            if message_length == 120: # programming station?
+                info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
+            elif message_length == 124: # real machine? not tested!
+                raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
             else:
-                logging.error('an error occurred while querying system parameters')
-                return False
+                raise ValueError('unexpected length {} of message content {}'.format(message_length, result))
+            sys_par = dict()
+            sys_par['Marker_Start'] = info_list[0]
+            sys_par['Markers'] = info_list[1]
+            sys_par['Input_Start'] = info_list[2]
+            sys_par['Inputs'] = info_list[3]
+            sys_par['Output_Start'] = info_list[4]
+            sys_par['Outputs'] = info_list[5]
+            sys_par['Counter_Start'] = info_list[6]
+            sys_par['Counters'] = info_list[7]
+            sys_par['Timer_Start'] = info_list[8]
+            sys_par['Timers'] = info_list[9]
+            sys_par['Word_Start'] = info_list[10]
+            sys_par['Words'] = info_list[11]
+            sys_par['String_Start'] = info_list[12]
+            sys_par['Strings'] = info_list[13]
+            sys_par['String_Length'] = info_list[14]
+            sys_par['Input_Word_Start'] = info_list[22]
+            sys_par['Input Words'] = info_list[23]
+            sys_par['Output_Word_Start'] = info_list[24]
+            sys_par['Output_Words'] = info_list[25]
+            sys_par['LSV2_Version'] = info_list[30]
+            sys_par['LSV2_Version_Flags'] = info_list[31]
+            sys_par['Max_Block_Length'] = info_list[32]
+            sys_par['HDH_Bin_Version'] = info_list[33]
+            sys_par['HDH_Bin_Revision'] = info_list[34]
+            sys_par['ISO_Bin_Version'] = info_list[35]
+            sys_par['ISO_Bin_Revision'] = info_list[36]
+            sys_par['HardwareVersion'] = info_list[37]
+            sys_par['LSV2_Version_Flags_Ex'] = info_list[38]
+            sys_par['Max_Trace_Line'] = info_list[39]
+            sys_par['Scope_Channels'] = info_list[40]
+            sys_par['PW_Encryption_Key'] = info_list[41]
+            logging.debug('got system parameters: %s', sys_par)
+            self._sys_par = sys_par
+            return self._sys_par
+        logging.error('an error occurred while querying system parameters')
+        return False
 
     def get_versions(self, force=False):
         """get version information from the control and return as dictionary"""
@@ -432,7 +427,7 @@ class LSV2(object):
             if result:
                 info_data['SPLC_Version'] = result.strip(b'\x00').decode('utf-8')
 
-            logging.debug('got version info: {}'.format(info_data))
+            logging.debug('got version info: %s', info_data)
             self._versions = info_data
 
         return self._versions
@@ -448,13 +443,15 @@ class LSV2(object):
         result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             pgm_state = struct.unpack('!H', result)[0]
-            logging.debug('succesfully read state of active program: {}'.format(self.get_program_status_text(pgm_state)))
+            logging.debug('succesfully read state of active program: %s', self.get_program_status_text(pgm_state))
             return pgm_state
         else:
             logging.error('an error occurred while querying program state')
-            return False
+        return False
 
-    def get_program_status_text(self, code):
+    @staticmethod
+    def get_program_status_text(code):
+        """map status code to text"""
         return {LSV2.PGM_STATE_STARTED: 'Program started',
             LSV2.PGM_STATE_STOPPED: 'Program stopped',
             LSV2.PGM_STATE_FINISHED: 'Program finished',
@@ -476,16 +473,16 @@ class LSV2(object):
         result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload=payload)
         if result:
             pgm_path = result.decode().strip('\x00').replace('\\', '/')
-            logging.debug('succesfully read path of active program: {}'.format(pgm_path))
+            logging.debug('succesfully read path of active program: %s', pgm_path)
             return pgm_path
         else:
             logging.error('an error occurred while querying active program state')
-            return False
+        return False
 
     def get_directory_info(self, remote_directory=None):
         """get information on the current working directory"""
         if remote_directory is not None and not self.change_directory(remote_directory):
-            logging.error('could not change current directory to read directory info for {}'.format(remote_directory))
+            logging.error('could not change current directory to read directory info for %s', remote_directory)
 
         result = self._send_recive(LSV2.COMMAND_R_DI, LSV2.RESPONSE_S_DI)
         if result:
@@ -502,12 +499,12 @@ class LSV2(object):
             dir_info['unknown'] = result[128:164]
             dir_info['Path'] = result[164:].decode().strip('\x00').replace('\\', '/')
             #TODO decode rest of directory information
-            logging.debug('succesfully received directory information {}'.format(dir_info))
+            logging.debug('succesfully received directory information %s', dir_info)
 
             return dir_info
         else:
             logging.error('an error occurred while querying directory info')
-            return False
+        return False
 
     def change_directory(self, remote_directory):
         """change the current working directoyon the control"""
@@ -515,13 +512,12 @@ class LSV2(object):
         payload = bytearray()
         payload.extend(map(ord, dir_path))
         payload.append(0x00)
-        result = self._send_recive(LSV2.COMMAND_C_DC, LSV2.RESPONSE_T_OK, payload=payload)
-        if result:
-            logging.debug('changed working directory to {}'.format(dir_path))
+        if self._send_recive_ack(LSV2.COMMAND_C_DC, payload=payload):
+            logging.debug('changed working directory to %s', dir_path)
             return True
         else:
             logging.error('an error occurred while changing directory')
-            return False
+        return False
 
     def get_file_info(self, remote_file_path):
         """get information about the file or folder? and return the information as a dict"""
@@ -537,11 +533,11 @@ class LSV2(object):
             file_info['Timestamp'] = datetime.datetime.fromtimestamp(struct.unpack('!L', result[4:8])[0])
             file_info['Name'] = result[12:].decode().strip('\x00').replace('\\', '/')
             file_info['Attributs'] = struct.unpack('!L', result[8:12])[0]
-            logging.debug('succesfully received file information {}'.format(file_info))
+            logging.debug('succesfully received file information %s', file_info)
             return file_info
         else:
-            logging.warning('an error occurred while querying file info this might also indicate that it does not exist {}'.format(remote_file_path))
-            return False
+            logging.warning('an error occurred while querying file info this might also indicate that it does not exist %s', remote_file_path)
+        return False
 
     def get_directory_content(self):
         """get content of current working directory"""
@@ -550,7 +546,7 @@ class LSV2(object):
         payload.append(self.COMMAND_R_DR_MODE_SINGLE)
 
         result = self._send_recive_block(LSV2.COMMAND_R_DR, LSV2.RESPONSE_S_DR, payload)
-        logging.debug('received {} entries for directory content information'.format(len(result)))
+        logging.debug('received %d entries for directory content information', len(result))
         for entry in result:
             file_info = dict()
             file_info['Size'] = struct.unpack('!L', entry[:4])[0]
@@ -558,7 +554,7 @@ class LSV2(object):
             file_info['Name'] = entry[12:].decode().strip('\x00').replace('\\', '/')
             file_info['Attributs'] = struct.unpack('!L', entry[8:12])[0]
             dir_content.append(file_info)
-        logging.debug('succesfully received directory information {}'.format(dir_content))
+        logging.debug('succesfully received directory information %s', dir_content)
         return dir_content
 
     def get_drive_info(self):
@@ -568,7 +564,7 @@ class LSV2(object):
         payload.append(self.COMMAND_R_DR_MODE_DRIVES)
 
         result = self._send_recive_block(LSV2.COMMAND_R_DR, LSV2.RESPONSE_S_DR, payload)
-        logging.debug('received {} packet of for drive information'.format(len(result)))
+        logging.debug('received %d packet of for drive information', len(result))
         for entry in result:
             info_list = entry.split(b':\x00')
             for drive in info_list[:-1]:
@@ -578,7 +574,7 @@ class LSV2(object):
                 drive_info['unknown'] = drive
                 drives_list.append(drive_info)
 
-        logging.debug('succesfully received drive information {}'.format(drives_list))
+        logging.debug('succesfully received drive information %s', drives_list)
         return drives_list
 
     def make_directory(self, dir_path):
@@ -592,11 +588,10 @@ class LSV2(object):
                 payload = bytearray()
                 payload.extend(map(ord, path_to_check))
                 payload.append(0x00) # terminate string
-                result = self._send_recive(command=LSV2.COMMAND_C_DM, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
-                if result:
+                if self._send_recive_ack(command=LSV2.COMMAND_C_DM, payload=payload):
                     logging.debug('Directory created succesfully')
                 else:
-                    raise Exception('an error occurred while changing directory {}'.format(dir_path))
+                    raise Exception('an error occurred while creating directory {}'.format(dir_path))
             else:
                 logging.debug('nothing to do as this segment already exists')
         return True
@@ -607,13 +602,11 @@ class LSV2(object):
         payload = bytearray()
         payload.extend(map(ord, dir_path))
         payload.append(0x00)
-        result = self._send_recive(command=LSV2.COMMAND_C_DD, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
-        if result:
-            logging.debug('succesfully deleted folder {}'.format(dir_path))
-            return True
-        else:
-            logging.warning('an error occurred while deleting directory {}, this might also indicate that it it does not exist'.format(dir_path))
+        if not self._send_recive_ack(command=LSV2.COMMAND_C_DD, payload=payload):
+            logging.warning('an error occurred while deleting directory %s, this might also indicate that it it does not exist', dir_path)
             return False
+        logging.debug('succesfully deleted folder %s', dir_path)
+        return True
 
     def delete_file(self, file_path):
         """delete a file on control"""
@@ -621,13 +614,11 @@ class LSV2(object):
         payload = bytearray()
         payload.extend(map(ord, file_path))
         payload.append(0x00)
-        result = self._send_recive(command=LSV2.COMMAND_C_FD, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
-        if result:
-            logging.debug('succesfully deleted file {}'.format(file_path))
-            return True
-        else:
-            logging.warning('an error occurred while deleting file {}, this might also indicate that it it does not exist'.format(file_path))
+        if not self._send_recive_ack(command=LSV2.COMMAND_C_FD, payload=payload):
+            logging.warning('an error occurred while deleting file %s, this might also indicate that it it does not exist', file_path)
             return False
+        logging.debug('succesfully deleted file %s', file_path)
+        return True
 
     def copy_local_file(self, source_path, target_path):
         """copy a file on control"""
@@ -652,14 +643,12 @@ class LSV2(object):
         payload.append(0x00)
         payload.extend(map(ord, target_path))
         payload.append(0x00)
-        logging.debug('prepare to copy file {} from {} to {}'.format(source_file_name, source_folder, target_path))
-        result = self._send_recive(command=LSV2.COMMAND_C_FC, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
-        if result:
-            logging.debug('succesfully copied file {}'.format(source_path))
-            return True
-        else:
-            logging.warning('an error occurred copying file {} to {}'.format(source_path, target_path))
+        logging.debug('prepare to copy file %s from %s to %s', source_file_name, source_folder, target_path)
+        if not self._send_recive_ack(command=LSV2.COMMAND_C_FC, payload=payload):
+            logging.warning('an error occurred copying file %s to %s', source_path, target_path)
             return False
+        logging.debug('succesfully copied file %s', source_path)
+        return True
 
     def move_local_file(self, source_path, target_path):
         """move a file on control"""
@@ -683,21 +672,19 @@ class LSV2(object):
         payload.append(0x00)
         payload.extend(map(ord, target_path))
         payload.append(0x00)
-        logging.debug('prepare to move file {} from {} to {}'.format(source_file_name, source_folder, target_path))
-        result = self._send_recive(command=LSV2.COMMAND_C_FR, expected_response=LSV2.RESPONSE_T_OK, payload=payload)
-        if result:
-            logging.debug('succesfully moved file {}'.format(source_path))
-            return True
-        else:
-            logging.warning('an error occurred moving file {} to {}'.format(source_path, target_path))
+        logging.debug('prepare to move file %s from %s to %s', source_file_name, source_folder, target_path)
+        if not self._send_recive_ack(command=LSV2.COMMAND_C_FR, payload=payload):
+            logging.warning('an error occurred moving file %s to %s', source_path, target_path)
             return False
+        logging.debug('succesfully moved file %s', source_path)
+        return True
 
     def send_file(self, local_path, remote_path, override_file=False):
-        '''send file to the control, parameter override_file allowes replacing an existing file'''
+        """send file to the control, parameter override_file allowes replacing an existing file"""
         local_file = Path(local_path)
 
         if not local_file.is_file():
-            logging.error('the supplied path {} did not resolve to a file'.format(local_file))
+            logging.error('the supplied path %s did not resolve to a file', local_file)
             raise Exception('local file does not exist! {}'.format(local_file))
 
         remote_path = remote_path.replace('\\', '/')
@@ -710,7 +697,7 @@ class LSV2(object):
                 remote_file_name = remote_path.split('/')[-1]
                 remote_folder = remote_path.rstrip(remote_file_name)
                 if not self.change_directory(remote_directory=remote_folder):
-                    raise Exception('could not open the source directoy {}'.format(remote_folder))
+                    raise Exception('could not open the source directory {}'.format(remote_folder))
         else:
             remote_file_name = remote_path
             remote_folder = self.get_directory_info()['Path'] # get pwd
@@ -731,7 +718,7 @@ class LSV2(object):
                 logging.warning('remote file already exists, override was not set')
                 return False
 
-        logging.debug('ready to send file from {} to {}'.format(local_file, remote_folder + '/' + remote_file_name))
+        logging.debug('ready to send file from %s to %s', local_file, remote_folder + '/' + remote_file_name)
 
         payload = bytearray()
         payload.extend(map(ord, remote_folder + '/' + remote_file_name))
@@ -740,9 +727,9 @@ class LSV2(object):
         response, content = self._llcom.telegram(LSV2.COMMAND_C_FL, payload, buffer_size=self._buffer_size)
 
         if response in self.RESPONSE_T_OK:
-            with local_file.open('rb') as lf:
+            with local_file.open('rb') as input_buffer:
                 while True:
-                    buffer = lf.read(self._buffer_size - 10)  # use current buffer size but reduce by 10 to make shure it fits together with command and size
+                    buffer = input_buffer.read(self._buffer_size - 10)  # use current buffer size but reduce by 10 to make sure it fits together with command and size
                     if not buffer:
                         # finished reading file
                         break
@@ -754,10 +741,10 @@ class LSV2(object):
                         self._decode_error(content)
                         return False
                     else:
-                        logging.error('could not send data with error {}'.format(response))
+                        logging.error('could not send data with error %s', response)
                         return False
 
-            #signal that no more data is beeing sent
+            #signal that no more data is being sent
             if not self._send_recive(command=LSV2.RESPONSE_T_FD, expected_response=LSV2.RESPONSE_T_OK, payload=None):
                 logging.error('could not send end of file with error')
                 return False
@@ -766,10 +753,9 @@ class LSV2(object):
             self._decode_error(content)
             return False
         else:
-            logging.error('could not send file with error {}'.format(response))
+            logging.error('could not send file with error %s', response)
             return False
         return True
-
 
     def _test_command(self, command_string, payload=None):
         """check commands for validity"""
@@ -781,7 +767,7 @@ class LSV2(object):
         if response in LSV2.RESPONSE_T_ER:
             if len(content) == 2:
                 byte_1, byte_2, = struct.unpack('!BB', content)
-                error_text = get_error_text(type=byte_1, code=byte_2)
+                error_text = get_error_text(byte_1, byte_2)
             else:
                 error_text = 'Unknown Error Number {}'.format(content)
         else:
