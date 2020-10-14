@@ -51,6 +51,8 @@ def test_remote_file_functions():
     assert lsv2.get_file_info('TNC:/nc_prog/pyLSV2_test/cc.h') != False
 
     assert lsv2.delete_file('TNC:/nc_prog/pyLSV2_test/cc.h') == True
+    assert lsv2.get_file_info('TNC:/nc_prog/pyLSV2_test/cc.h') == False
+
     assert lsv2.delete_file('TNC:/nc_prog/pyLSV2_test/aa.h') == True
     assert lsv2.delete_file('TNC:/nc_prog/pyLSV2_test/$mdi.h') == True
     assert lsv2.delete_file('TNC:/nc_prog/mdi.b') == True

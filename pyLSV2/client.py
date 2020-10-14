@@ -191,7 +191,7 @@ class LSV2():
         """decode error codes to text"""
         byte_1, byte_2, = struct.unpack('!BB', content)
         error_text = get_error_text(byte_1, byte_2)
-        logging.warning('T_ER received, an error occurred during the execution of the fast command: %s', error_text)
+        logging.warning('T_ER or T_BD received, an error occurred during the execution of the fast command: %s', error_text)
         return error_text
 
     def _send_recive(self, command, expected_response, payload=None):
@@ -679,7 +679,7 @@ class LSV2():
         logging.debug('succesfully moved file %s', source_path)
         return True
 
-    def send_file(self, local_path, remote_path, override_file=False):
+    def send_file(self, local_path, remote_path, override_file=False, binary_mode=False):
         """send file to the control, parameter override_file allowes replacing an existing file"""
         local_file = Path(local_path)
 
@@ -723,7 +723,8 @@ class LSV2():
         payload = bytearray()
         payload.extend(map(ord, remote_folder + '/' + remote_file_name))
         payload.append(0x00)
-        payload.append(LSV2.C_FL_MODE_BINARY)
+        if binary_mode:
+            payload.append(LSV2.C_FL_MODE_BINARY)
         response, content = self._llcom.telegram(LSV2.COMMAND_C_FL, payload, buffer_size=self._buffer_size)
 
         if response in self.RESPONSE_T_OK:
@@ -755,6 +756,76 @@ class LSV2():
         else:
             logging.error('could not send file with error %s', response)
             return False
+        return True
+
+    def recive_file(self, remote_path, local_path, override_file=False, binary_mode=False):
+        '''send file to the control, parameter override_file allowes replacing an existing file'''
+
+        remote_file_info = self.get_file_info(remote_path)
+        if not remote_file_info:
+            logging.error('remote file does not exist: %s', remote_path)
+            return False
+
+        local_file = Path(local_path)
+        if local_file.is_dir():
+            local_file.joinpath(remote_path.split('/')[-1])
+
+        if local_file.is_file():
+            logging.debug('local path exists and points to file')
+            if override_file:
+                local_file.unlink()
+            else:
+                logging.warning('remote file already exists, override was not set')
+                return False
+
+        logging.debug('loading file from %s to %s', remote_path, local_file)
+
+        payload = bytearray()
+        payload.extend(map(ord, remote_path))
+        payload.append(0x00)
+        if binary_mode:
+            payload.append(0x01) # force binary transfer?
+        response, content = self._llcom.telegram(LSV2.COMMAND_R_FL, payload, buffer_size=self._buffer_size)
+
+        with local_file.open('wb') as out_file:
+            #file_buffer = bytearray()
+            if response in self.RESPONSE_S_FL:
+                #file_buffer.extend(content)
+                if binary_mode:
+                    out_file.write(content)
+                else:
+                    out_file.write(content.replace(b'\x00', b'\r\n'))
+                logging.debug('received first block of file file {}'.format(remote_path))
+
+                while True:
+                    response, content = self._llcom.telegram(LSV2.RESPONSE_T_OK, payload=None, buffer_size=self._buffer_size)
+                    if response in self.RESPONSE_S_FL:
+                        #file_buffer.extend(content)
+                        if binary_mode:
+                            out_file.write(content)
+                        else:
+                            out_file.write(content.replace(b'\x00', b'\r\n'))
+                        logging.debug('received {} more bytes for file'.format(len(content)))
+                    elif response in self.RESPONSE_T_FD:
+                        logging.info('finished loading file')
+                        break
+                    elif response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
+                        error_text = self._decode_error(content)
+                        logging.error('an error occurred while loading the first block of data for file {}: {}'.format(remote_path, error_text))
+                        return False
+                    else:
+                        logging.error('something went wrong while reciving file data {}'.format(remote_path))
+                        raise Exception('something went wrong while reciving file data')
+            elif response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
+                error_text = self._decode_error(content)
+                logging.error('an error occurred while loading the first block of data for file {}: {}'.format(remote_path, error_text))
+                return False
+            else:
+                logging.error('could not load file with error {}'.format(response))
+                raise Exception('an error occured while loading the first block of data for file. see log for details')
+
+        logging.info('received {} bytes transfer complete for file {} to {}'.format(local_file.stat().st_size, remote_path, local_file))
+
         return True
 
     def _test_command(self, command_string, payload=None):

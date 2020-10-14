@@ -74,24 +74,31 @@ class LLLSV2Com():
         telegram.extend(map(ord, command))
         if payload is not None:
             telegram.extend(payload)
-        logging.debug('telegram to transmit: command %s payload length %d bytes', command, payload_length)
+        logging.debug('telegram to transmit: command %s payload length %d bytes data: %s', command, payload_length, telegram)
         if len(telegram) >= buffer_size:
             raise OverflowError('telegram to long for set current buffer size: %d >= %d' % (len(telegram), buffer_size))
 
         try:
             self._tcpsock.send(telegram)
-            response = self._tcpsock.recv(buffer_size) # get first 8 bytes: length + response
+            response = self._tcpsock.recv(buffer_size)
         except:
-            logging.error('somthing went wront while waiting for new data to arrive, buffer was set to %d', buffer_size)
+            logging.error('somthing went wrong while waiting for new data to arrive, buffer was set to %d', buffer_size)
             raise
 
         response_length = struct.unpack('!L', response[0:4])[0] # read 4 bytes for response length
         response_command = response[4:8].decode('utf-8', 'ignore') # read 4 bytes for response type
-        logging.debug('response telegram %s with overall length of %d bytes, actual length including header is %d', response_command, response_length, len(response))
 
-        if len(response) > 8:
-            response_content = response[8:]
+        if response_length > 0:
+            response_content = bytearray(response[8:])
+            while len(response_content) < response_length:
+                logging.debug('waiting for more data to arive, %d bytes missing', len(response_content) < response_length)
+                try:
+                    response_content.extend(self._tcpsock.recv(response_length-len(response[8:])))
+                except:
+                    logging.error('somthing went wront while waiting for more data to arrive')
+                    raise
         else:
             response_content = None
+        logging.debug('response telegram %s with overall length of %d bytes, actual length including header is %d', response_command, response_length, len(response))
 
         return response_command, response_content
