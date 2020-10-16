@@ -207,10 +207,12 @@ class LSV2():
                 return content
             logging.info('command %s executed successfully, received %s without any payload', command, response)
             return True
-        elif response in LSV2.RESPONSE_T_ER:
+
+        if response in LSV2.RESPONSE_T_ER:
             self._decode_error(content)
         else:
             logging.error('recived unexpected response %s to command %s. response code %s', response, command, content)
+
         return False
 
     def _send_recive_block(self, command, expected_response, payload=None):
@@ -235,7 +237,8 @@ class LSV2():
         response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
         if response in LSV2.RESPONSE_T_OK:
             return True
-        elif response in LSV2.RESPONSE_T_ER:
+
+        if response in LSV2.RESPONSE_T_ER:
             self._decode_error(content)
         else:
             logging.error('recived unexpected response %s to command %s. response code %s', response, command, content)
@@ -500,7 +503,6 @@ class LSV2():
             dir_info['Dir_Attributs'] = attribute_list
             dir_info['unknown'] = result[128:164]
             dir_info['Path'] = result[164:].decode().strip('\x00').replace('\\', '/')
-            #TODO decode rest of directory information
             logging.debug('succesfully received directory information %s', dir_info)
 
             return dir_info
@@ -740,11 +742,11 @@ class LSV2():
                     response, content = self._llcom.telegram(LSV2.RESPONSE_S_FL, buffer, buffer_size=self._buffer_size)
                     if response in self.RESPONSE_T_OK:
                         pass
-                    elif response in self.RESPONSE_T_ER:
-                        self._decode_error(content)
-                        return False
                     else:
-                        logging.error('could not send data with error %s', response)
+                        if response in self.RESPONSE_T_ER:
+                            self._decode_error(content)
+                        else:
+                            logging.error('could not send data with error %s', response)
                         return False
 
             #signal that no more data is being sent
@@ -752,12 +754,13 @@ class LSV2():
                 logging.error('could not send end of file with error')
                 return False
 
-        elif response in self.RESPONSE_T_ER:
-            self._decode_error(content)
-            return False
         else:
-            logging.error('could not send file with error %s', response)
+            if response in self.RESPONSE_T_ER:
+                self._decode_error(content)
+            else:
+                logging.error('could not send file with error %s', response)
             return False
+
         return True
 
     def recive_file(self, remote_path, local_path, override_file=False, binary_mode=False):
@@ -797,7 +800,7 @@ class LSV2():
                     out_file.write(content)
                 else:
                     out_file.write(content.replace(b'\x00', b'\r\n'))
-                logging.debug('received first block of file file {}'.format(remote_path))
+                logging.debug('received first block of file file %s', remote_path)
 
                 while True:
                     response, content = self._llcom.telegram(LSV2.RESPONSE_T_OK, payload=None, buffer_size=self._buffer_size)
@@ -806,27 +809,25 @@ class LSV2():
                         if binary_mode:
                             out_file.write(content)
                         else:
-                            out_file.write(content.replace(b'\x00', b'\r\n'))
-                        logging.debug('received {} more bytes for file'.format(len(content)))
+                            out_file.write(content.replace(b'\x00', b''))
+                        logging.debug('received %d more bytes for file', len(content))
                     elif response in self.RESPONSE_T_FD:
                         logging.info('finished loading file')
                         break
-                    elif response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
-                        error_text = self._decode_error(content)
-                        logging.error('an error occurred while loading the first block of data for file {}: {}'.format(remote_path, error_text))
-                        return False
                     else:
-                        logging.error('something went wrong while receiving file data {}'.format(remote_path))
-                        raise Exception('something went wrong while receiving file data')
-            elif response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
-                error_text = self._decode_error(content)
-                logging.error('an error occurred while loading the first block of data for file {}: {}'.format(remote_path, error_text))
-                return False
+                        if response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
+                            logging.error('an error occurred while loading the first block of data for file %s : %s', remote_path, self._decode_error(content))
+                        else:
+                            logging.error('something went wrong while receiving file data %s', remote_path)
+                        return False
             else:
-                logging.error('could not load file with error {}'.format(response))
-                raise Exception('an error occurred while loading the first block of data for file. see log for details')
+                if response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
+                    logging.error('an error occurred while loading the first block of data for file %s : %s', remote_path, self._decode_error(content))
+                else:
+                    logging.error('could not load file with error %s', response)
+                return False
 
-        logging.info('received {} bytes transfer complete for file {} to {}'.format(local_file.stat().st_size, remote_path, local_file))
+        logging.info('received %d bytes transfer complete for file %s to %s', local_file.stat().st_size, remote_path, local_file)
 
         return True
 
