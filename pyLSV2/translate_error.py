@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""error code definitions and decodeing"""
+"""error code definitions and decoding"""
 
 #Error map
 LSV2_ERROR_T_ER_BAD_FORMAT = 20

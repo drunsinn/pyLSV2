@@ -7,7 +7,7 @@ import socket
 
 class LLLSV2Com():
     """implementation of the low level communication functions for sending and
-       reciving LSV"2 telegrams via TCP"""
+       receiving LSV"2 telegrams via TCP"""
     DEFAULT_PORT = 19000 # Default port for LSV2 on control side
     DEFAULT_BUFFER_SIZE = 256 # in the eclipse plugin it is set to 256-10, why ?
 
@@ -91,11 +91,11 @@ class LLLSV2Com():
         if response_length > 0:
             response_content = bytearray(response[8:])
             while len(response_content) < response_length:
-                logging.debug('waiting for more data to arive, %d bytes missing', len(response_content) < response_length)
+                logging.debug('waiting for more data to arrive, %d bytes missing', len(response_content) < response_length)
                 try:
                     response_content.extend(self._tcpsock.recv(response_length-len(response[8:])))
                 except:
-                    logging.error('somthing went wront while waiting for more data to arrive')
+                    logging.error('somthing went wrong while waiting for more data to arrive')
                     raise
         else:
             response_content = None

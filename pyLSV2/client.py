@@ -24,6 +24,8 @@ class LSV2():
     DRIVE_TNC = 'PLC:'
     DRIVE_LOG = 'LOG:'
 
+    BIN_FILES = '.ads .bak .bck .bin .bmp .bmx .chm .cyc .cy% .dmp .dll .eak .elf .enc .exe .gds .gif .hbi .he .ioc .iocp .jpg .jpeg .map .mds .mo .omf .pdf .png .pyc .s .sds .sk .str .xml .xls .xrs .zip'
+
     # const for login
     LOGIN_INSPECT = 'INSPECT' # nur lesende Funktionen ausführbar
     LOGIN_DIAG = 'DIAGNOSTICS' # Logbuch / Recover
@@ -213,7 +215,7 @@ class LSV2():
 
     def _send_recive_block(self, command, expected_response, payload=None):
         """takes a command and payload, sends it to the control and continues reading
-            until the expected response is recived."""
+            until the expected response is received."""
         response_buffer = list()
         response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
 
@@ -814,15 +816,15 @@ class LSV2():
                         logging.error('an error occurred while loading the first block of data for file {}: {}'.format(remote_path, error_text))
                         return False
                     else:
-                        logging.error('something went wrong while reciving file data {}'.format(remote_path))
-                        raise Exception('something went wrong while reciving file data')
+                        logging.error('something went wrong while receiving file data {}'.format(remote_path))
+                        raise Exception('something went wrong while receiving file data')
             elif response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
                 error_text = self._decode_error(content)
                 logging.error('an error occurred while loading the first block of data for file {}: {}'.format(remote_path, error_text))
                 return False
             else:
                 logging.error('could not load file with error {}'.format(response))
-                raise Exception('an error occured while loading the first block of data for file. see log for details')
+                raise Exception('an error occurred while loading the first block of data for file. see log for details')
 
         logging.info('received {} bytes transfer complete for file {} to {}'.format(local_file.stat().st_size, remote_path, local_file))
 
