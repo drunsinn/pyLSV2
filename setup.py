@@ -10,6 +10,7 @@ setup(
     version=__version__,
     description='A pure Python3 implementation of the LSV2 protocol',
     long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     author='drunsinn',
     author_email='dr.unsinn@googlemail.com',
     url='https://github.com/drunsinn/pyLSV2',

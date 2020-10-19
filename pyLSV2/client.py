@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Python 3 LSV2 library
-This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about said files.
-Most of this library is based on the work of tfischer73 and his Eclipse plugin. https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any documentation beside the plugin some parts are based on re-engineering and might therefore be not correct.
-Everything related to PLC or unknown/untested System functions was left out as these function might compromise the control.
+   This library is an attempt to implement the LSV2 communication protocol used by certain
+   CNC controls. It's goal is to transfer file between the application and the control as well
+   as collect information about said files.
+   Most of this library is based on the work of tfischer73 and his Eclipse 
+   plugin https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any
+   documentation beside the plugin some parts are based on re-engineering and might therefore be
+   not correct.
+   Everything related to PLC or unknown/untested System functions was left out as these function
+   might compromise the control.
 """
 import struct
 import logging
@@ -153,6 +159,7 @@ class LSV2():
 
     def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
         """init object variables and create socket"""
+        logging.getLogger(__name__).addHandler(logging.NullHandler())
 
         self._llcom = LLLSV2Com(hostname, port, timeout)
 
