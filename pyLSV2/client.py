@@ -4,7 +4,7 @@
    This library is an attempt to implement the LSV2 communication protocol used by certain
    CNC controls. It's goal is to transfer file between the application and the control as well
    as collect information about said files.
-   Most of this library is based on the work of tfischer73 and his Eclipse 
+   Most of this library is based on the work of tfischer73 and his Eclipse
    plugin https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any
    documentation beside the plugin some parts are based on re-engineering and might therefore be
    not correct.

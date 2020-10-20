@@ -79,6 +79,8 @@
    7: Idle
    8: Undefined
 
+DNC login is only possible if the option is set on the control, without the option you get an error when trying to login with DNC.
+
 ### Creating a log file
  By recording the communiction with Wireshark between the control and TNCremo the following sequence was accired.
 
@@ -99,3 +101,7 @@
  To trigger the generation of the log file, the telegram C_CC with command 27 is used. The parameters contain the filename of the log file an the start-date and time for the log entries.
  This is to acknowledge with a T_OK. After some time another telegram is receive: M_CC with data 0x00 1b 00 64. This seems to be the signal that the log file was created successfully and is ready to be copied.
  Afterwards a regular file copy takes place.
+
+### file transfer
+ Transfer of files can happen in binary or ASCII mode. To enable binary mode, add 0x01 after the filename. In TNCremo you can find a list of file types for which binary mode is recommended.
+ The functions recive_file and send_file can be configured with the parameter binary_mode.
