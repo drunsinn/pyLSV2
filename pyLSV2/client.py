@@ -30,7 +30,7 @@ class LSV2():
     DRIVE_TNC = 'PLC:'
     DRIVE_LOG = 'LOG:'
 
-    BIN_FILES = '.ads .bak .bck .bin .bmp .bmx .chm .cyc .cy% .dmp .dll .eak .elf .enc .exe .gds .gif .hbi .he .ioc .iocp .jpg .jpeg .map .mds .mo .omf .pdf .png .pyc .s .sds .sk .str .xml .xls .xrs .zip'
+    BIN_FILES = '.ads .bak .bck .bin .bmp .bmx .chm .cyc .cy% .dmp .dll .eak .elf .enc .exe .gds .gif .hbi .he .ioc .iocp .jpg .jpeg .map .mds .mo .omf .pdf .png .pyc .s .sds .sk .str .xml .xls .xrs .zip'.split(' ')
 
     # const for login
     LOGIN_INSPECT = 'INSPECT' # nur lesende Funktionen ausführbar
