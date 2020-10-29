@@ -40,7 +40,7 @@
  If additional data has to be sent after the command string the value 0x00 is used as a separator.
  All values are transmitted with big-endian byte order.
 
-### file Info
+### File Info
  By using the command R_FI followed by a valid file path, the control responds with information about this file. This includes the file size, the unix-date and the filename.
  The message also contains some additional bytes which purpose is not yet confirmed. These bytes are probably attributes and/or access rights.
 
@@ -102,6 +102,6 @@ DNC login is only possible if the option is set on the control, without the opti
  This is to acknowledge with a T_OK. After some time another telegram is receive: M_CC with data 0x00 1b 00 64. This seems to be the signal that the log file was created successfully and is ready to be copied.
  Afterwards a regular file copy takes place.
 
-### file transfer
+### File transfer
  Transfer of files can happen in binary or ASCII mode. To enable binary mode, add 0x01 after the filename. In TNCremo you can find a list of file types for which binary mode is recommended.
  The functions recive_file and send_file can be configured with the parameter binary_mode.
