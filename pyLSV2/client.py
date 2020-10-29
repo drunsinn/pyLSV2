@@ -52,12 +52,12 @@ class LSV2():
     # A_LO: used to drop access to certain parts of the control, followed by an optional logon name
     COMMAND_A_LO = 'A_LO'
     # C_CC: used to set system commands
-    COMMAND_C_CC = 'C_CC'  
+    COMMAND_C_CC = 'C_CC'
     # C_DC: change the working directory for future file operations, followed by a null terminated string
     COMMAND_C_DC = 'C_DC'
 
     # C_DS: found via bruteforce test, purpose unknown!
-    # COMMAND_C_DS = 'C_DS' 
+    # COMMAND_C_DS = 'C_DS'
 
     # C_DD: delete a directory, followed by a null terminated string
     COMMAND_C_DD = 'C_DD'
@@ -65,14 +65,14 @@ class LSV2():
     COMMAND_C_DM = 'C_DM'
 
     # C_EK: found via bruteforce test, purpose unknown!
-    # COMMAND_C_EK = 'C_EK' 
+    # COMMAND_C_EK = 'C_EK'
     # C_FA: found via bruteforce test, purpose unknown!
-    # COMMAND_C_FA = 'C_FA' 
+    # COMMAND_C_FA = 'C_FA'
 
     # C_FC: ocal file copy from current directory, filename + null + target path + null, found via wireshark
     COMMAND_C_FC = 'C_FC'
     # C_FD: delete a file, followed by a null terminated string
-    COMMAND_C_FD = 'C_FD'  
+    COMMAND_C_FD = 'C_FD'
     # C_FL: send a file to the control, followed by a null terminated with the filename string
     COMMAND_C_FL = 'C_FL'
     # C_FR: move local file from current directory, filename + null + target path + null, found via wireshark
@@ -86,9 +86,9 @@ class LSV2():
     # COMMAND_C_ST = 'C_ST' # found via bruteforce test, purpose unknown!
     # COMMAND_C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
     # COMMAND_R_CI = 'R_CI' # found via bruteforce test, purpose unknown!
-    
+
     # R_DI: directory info - read info about the selected directory
-    COMMAND_R_DI = 'R_DI'  
+    COMMAND_R_DI = 'R_DI'
     # R_DR: get info about directory content
     COMMAND_R_DR = 'R_DR'
 
@@ -109,14 +109,14 @@ class LSV2():
     # COMMAND_R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
 
     # R_PR: read parameter from the control
-    COMMAND_R_PR = 'R_PR'  
+    COMMAND_R_PR = 'R_PR'
     # R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)
     COMMAND_R_RI = 'R_RI'
 
     # COMMAND_R_ST = 'R_ST' # found via bruteforce test, purpose unknown!
 
     # R_VR: read general info about the control itself
-    COMMAND_R_VR = 'R_VR'  
+    COMMAND_R_VR = 'R_VR'
 
     # known lsv2 responses
     # T_OK: signals that the last transaction was completed, no additional data is sent?
@@ -129,7 +129,7 @@ class LSV2():
     RESPONSE_T_BD = 'T_BD'
 
     # M_CC: signals that a poeration some king of operation was completed that took some time to complete, ??? response to C_CC??
-    RESPONSE_M_CC = 'M_CC'  
+    RESPONSE_M_CC = 'M_CC'
     # S_DI: signals that the command R_DI was accepted, it is followed by more data
     RESPONSE_S_DI = 'S_DI'
     # S_DR: ??? signals that the command R_DR was accepted, it is followed by more data
@@ -141,15 +141,15 @@ class LSV2():
 
     # S_IN: found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
     # RESPONSE_S_IN = 'S_IN'
-    
+
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
     RESPONSE_S_PR = 'S_PR'
     # S_RI: signals that the command R_RI was accepted, it is followed by more data
     RESPONSE_S_RI = 'S_RI'
 
     # S_ST: found via bruteforce test, signals that the command R_ST was accepted, purpose unknown!
-    # RESPONSE_S_ST = 'S_ST' 
-    
+    # RESPONSE_S_ST = 'S_ST'
+
     # S_VR: signals that the command R_VR was accepted, it is followed by more data
     RESPONSE_S_VR = 'S_VR'
 
