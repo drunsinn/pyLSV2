@@ -30,8 +30,10 @@ class LSV2():
     DRIVE_TNC = 'PLC:'
     DRIVE_LOG = 'LOG:'
 
-    BIN_FILES = '.ads .bak .bck .bin .bmp .bmx .chm .cyc .cy% .dmp .dll .eak .elf .enc .exe .gds .gif .hbi .he .ioc .iocp .jpg .jpeg .map .mds .mo .omf .pdf .png .pyc .s .sds .sk .str .xml .xls .xrs .zip'.split(
-        ' ')
+    BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
+        '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi', '.he', '.ioc',
+        '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf', '.pdf', '.png', '.pyc', '.s',
+        '.sds', '.sk', '.str', '.xml', '.xls', '.xrs', '.zip')
 
     # const for login
     LOGIN_INSPECT = 'INSPECT'  # nur lesende Funktionen ausführbar
@@ -209,6 +211,7 @@ class LSV2():
     COMMAND_R_DR_MODE_DRIVES = 0x02
 
     C_FL_MODE_BINARY = 0x01  # is set by TNCcmd, seems to work for all filetypes
+    R_FL_MODE_BINARY = 0x01 # enable binary file transfer, see also C_FL_MODE_BINARY
 
     def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
         """init object variables and create socket"""
@@ -810,7 +813,9 @@ class LSV2():
         return True
 
     def send_file(self, local_path, remote_path, override_file=False, binary_mode=False):
-        """send file to the control, parameter override_file allowes replacing an existing file"""
+        """send file to the control, parameter override_file allowes replacing an existing file
+            with parameter binary mode you can select the transfer mode. it it is not set the filename is
+            checked against a know list of binary extentions"""
         local_file = Path(local_path)
 
         if not local_file.is_file():
@@ -859,8 +864,9 @@ class LSV2():
         payload = bytearray()
         payload.extend(map(ord, remote_folder + '/' + remote_file_name))
         payload.append(0x00)
-        if binary_mode:
+        if binary_mode or self._is_file_type_binary(local_path):
             payload.append(LSV2.C_FL_MODE_BINARY)
+            logging.info('useing binary transfer mode')
         response, content = self._llcom.telegram(
             LSV2.COMMAND_C_FL, payload, buffer_size=self._buffer_size)
 
@@ -900,7 +906,9 @@ class LSV2():
         return True
 
     def recive_file(self, remote_path, local_path, override_file=False, binary_mode=False):
-        '''send file to the control, parameter override_file allowes replacing an existing file'''
+        '''send file to the control, parameter override_file allowes replacing an existing file
+            with parameter binary mode you can select the transfer mode. it it is not set the filename is
+            checked against a know list of binary extentions'''
 
         remote_file_info = self.get_file_info(remote_path)
         if not remote_file_info:
@@ -925,8 +933,9 @@ class LSV2():
         payload = bytearray()
         payload.extend(map(ord, remote_path))
         payload.append(0x00)
-        if binary_mode:
-            payload.append(0x01)  # force binary transfer?
+        if binary_mode or self._is_file_type_binary(remote_path):
+            payload.append(LSV2.R_FL_MODE_BINARY)  # force binary transfer
+            logging.info('useing binary transfer mode')
         response, content = self._llcom.telegram(
             LSV2.COMMAND_R_FL, payload, buffer_size=self._buffer_size)
 
@@ -976,6 +985,12 @@ class LSV2():
                      local_file.stat().st_size, remote_path, local_file)
 
         return True
+
+    def _is_file_type_binary(self, file_name):
+        for bin_type in self.BIN_FILES:
+            if file_name.endswith(bin_type):
+                return True
+        return False
 
     def _test_command(self, command_string, payload=None):
         """check commands for validity"""

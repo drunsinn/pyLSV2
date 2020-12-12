@@ -81,7 +81,7 @@
 
 DNC login is only possible if the option is set on the control, without the option you get an error when trying to login with DNC.
 
-### Creating a log file
+### Creating a log file - not implemented
  By recording the communiction with Wireshark between the control and TNCremo the following sequence was accired.
 
 ```
