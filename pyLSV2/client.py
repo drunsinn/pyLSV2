@@ -440,8 +440,9 @@ class LSV2():
             if message_length == 120:  # programming station?
                 info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
             elif message_length == 124:  # real machine? not tested!
-                raise NotImplementedError(
-                    'this case for system parameters is unknown, please send log messages to add: {}'.format(result))
+                #raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
+                logging.warning('messages with length 124 might not be decoded correctly!')
+                info_list = struct.unpack('!14L8B8L2BH4B2L2HLL', result)
             else:
                 raise ValueError('unexpected length {} of message content {}'.format(
                     message_length, result))
