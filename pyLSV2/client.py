@@ -570,7 +570,7 @@ class LSV2():
                 LSV2.PGM_STATE_IDLE: 'No Program running',
                 LSV2.PGM_STATE_UNDEFINED: 'Program state undefined'}.get(code, 'Unknown Program state')
 
-    def get_selected_program_stack(self):
+    def get_program_stack(self):
         """reads the path of the currently active programs and the line number of the execution.
            See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1"""
         self.login(login=LSV2.LOGIN_DNC)
@@ -581,14 +581,15 @@ class LSV2():
         result = self._send_recive(
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload=payload)
         if result:
-            current_line = struct.unpack('!L', result)
-            pgm_stack = list()
-            for entry in result[:4].split(b'\x00'):
-                if len(entry) > 1:
-                    pgm_stack.append(entry.decode().strip('\x00').replace('\\', '/'))
+            stack_info = dict()
+            stack_info['Line'] = struct.unpack('!L', result[:4])[0]
+            print(len(result[4:].split(b'\x00')))
+            stack_info['Main_PGM'] = result[4:].split(b'\x00')[0].decode().strip('\x00').replace('\\', '/')
+            stack_info['Current_PGM'] = result[4:].split(b'\x00')[1].decode().strip('\x00').replace('\\', '/')
             logging.debug(
-                'succesfully read active program stack and line number: %d @ %s', current_line, pgm_stack)
-            return pgm_stack
+                'succesfully read active program stack and line number: %s', stack_info)
+
+            return stack_info
         else:
             logging.error(
                 'an error occurred while querying active program state')
