@@ -327,40 +327,40 @@ class LSV2():
         logging.info('setting connection settings for %s and block length %s',
                      control_type, max_block_length)
 
-        self.set_system_command(LSV2.SYSCMD_SET_BUF512)
-
         if max_block_length >= 4096:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF4096):
                 self._buffer_size = 4096
             else:
-                raise Exception('error in communication')
+                raise Exception('error in communication while setting buffer size to 4096')
         elif 3072 <= max_block_length < 4096:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF3072):
                 self._buffer_size = 3072
             else:
-                raise Exception('error in communication')
+                raise Exception('error in communication while setting buffer size to 3072')
         elif 2048 <= max_block_length < 3072:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF2048):
                 self._buffer_size = 2048
             else:
-                raise Exception('error in communication')
+                raise Exception('error in communication while setting buffer size to 2048')
         elif 1024 <= max_block_length < 2048:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF1024):
                 self._buffer_size = 1024
             else:
-                raise Exception('error in communication')
+                raise Exception('error in communication while setting buffer size to 1024')
         elif 512 <= max_block_length < 1024:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF512):
                 self._buffer_size = 512
             else:
-                raise Exception('error in communication')
+                raise Exception('error in communication while setting buffer size to 512')
         elif 256 <= max_block_length < 512:
             self._buffer_size = 256
         else:
+            logging.error('could not decide on a buffer size for maximum message length of %d', max_block_length)
             raise Exception('unknown buffer size')
 
         if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
-            raise Exception('error in communication')
+            raise Exception('error in communication while enabling secure file send')
+
         self.login(login=LSV2.LOGIN_FILETRANSFER)
         logging.info(
             'successfully configured connection parameters and basic logins. selected buffer size is %d', self._buffer_size)
@@ -437,9 +437,9 @@ class LSV2():
             message_length = len(result)
             info_list = list()
             # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
-            if message_length == 120:  # programming station?
+            if message_length == 120:
                 info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
-            elif message_length == 124:  # real machine? not tested!
+            elif message_length == 124:
                 #raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
                 logging.warning('messages with length 124 might not be decoded correctly!')
                 info_list = struct.unpack('!14L8B8L2BH4B2L2HLL', result)
@@ -570,8 +570,8 @@ class LSV2():
                 LSV2.PGM_STATE_IDLE: 'No Program running',
                 LSV2.PGM_STATE_UNDEFINED: 'Program state undefined'}.get(code, 'Unknown Program state')
 
-    def get_selected_program(self):
-        """reads the path of the currently active program.
+    def get_program_stack(self):
+        """reads the path of the currently active programs and the line number of the execution.
            See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1"""
         self.login(login=LSV2.LOGIN_DNC)
 
@@ -581,10 +581,13 @@ class LSV2():
         result = self._send_recive(
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload=payload)
         if result:
-            pgm_path = result.decode().strip('\x00').replace('\\', '/')
+            stack_info = dict()
+            stack_info['Line'] = struct.unpack('!L', result[:4])[0]
+            stack_info['Main_PGM'] = result[4:].split(b'\x00')[0].decode().strip('\x00').replace('\\', '/')
+            stack_info['Current_PGM'] = result[4:].split(b'\x00')[1].decode().strip('\x00').replace('\\', '/')
             logging.debug(
-                'succesfully read path of active program: %s', pgm_path)
-            return pgm_path
+                'succesfully read active program stack and line number: %s', stack_info)
+            return stack_info
         else:
             logging.error(
                 'an error occurred while querying active program state')
