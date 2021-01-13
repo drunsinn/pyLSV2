@@ -583,12 +583,10 @@ class LSV2():
         if result:
             stack_info = dict()
             stack_info['Line'] = struct.unpack('!L', result[:4])[0]
-            print(len(result[4:].split(b'\x00')))
             stack_info['Main_PGM'] = result[4:].split(b'\x00')[0].decode().strip('\x00').replace('\\', '/')
             stack_info['Current_PGM'] = result[4:].split(b'\x00')[1].decode().strip('\x00').replace('\\', '/')
             logging.debug(
                 'succesfully read active program stack and line number: %s', stack_info)
-
             return stack_info
         else:
             logging.error(
