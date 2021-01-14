@@ -241,6 +241,7 @@ class LSV2():
 
         self._versions = None
         self._sys_par = None
+        self._secure_file_send = False
 
     def connect(self):
         """connect to control"""
@@ -259,29 +260,35 @@ class LSV2():
         byte_1, byte_2, = struct.unpack('!BB', content)
         error_text = get_error_text(byte_1, byte_2)
         logging.warning(
-            'T_ER or T_BD received, an error occurred during the execution of the fast command: %s', error_text)
+            'T_ER or T_BD received, an error occurred during the execution of the last command: %s', error_text)
         return error_text
 
     def _send_recive(self, command, expected_response, payload=None):
         """takes a command and payload, sends it to the control and checks
             if the response is as expected. Returns content if not an error"""
-        response, content = self._llcom.telegram(
-            command, payload, buffer_size=self._buffer_size)
-
-        if response in expected_response:
-            if content is not None and len(content) > 0:
-                logging.info(
-                    'command %s executed successfully, received %s with %d bytes payload', command, response, len(content))
-                return content
+        if expected_response is None:
+            self._llcom.telegram(command, payload, buffer_size=self._buffer_size, wait_for_response=False)
             logging.info(
-                'command %s executed successfully, received %s without any payload', command, response)
+                'command %s sent successfully, did not check for response', command)
             return True
-
-        if response in LSV2.RESPONSE_T_ER:
-            self._decode_error(content)
         else:
-            logging.error(
-                'recived unexpected response %s to command %s. response code %s', response, command, content)
+            response, content = self._llcom.telegram(
+                command, payload, buffer_size=self._buffer_size, wait_for_response=True)
+
+            if response in expected_response:
+                if content is not None and len(content) > 0:
+                    logging.info(
+                        'command %s executed successfully, received %s with %d bytes payload', command, response, len(content))
+                    return content
+                logging.info(
+                    'command %s executed successfully, received %s without any payload', command, response)
+                return True
+
+            if response in LSV2.RESPONSE_T_ER:
+                self._decode_error(content)
+            else:
+                logging.error(
+                    'recived unexpected response %s to command %s. response code %s', response, command, content)
 
         return False
 
@@ -359,11 +366,15 @@ class LSV2():
             raise Exception('unknown buffer size')
 
         if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
-            raise Exception('error in communication while enabling secure file send')
+            logging.warning('secure file transfer not supported? use fallback')
+            self._secure_file_send = False
+            #raise Exception('error in communication while enabling secure file send')
+        else:
+            self._secure_file_send = True
 
         self.login(login=LSV2.LOGIN_FILETRANSFER)
         logging.info(
-            'successfully configured connection parameters and basic logins. selected buffer size is %d', self._buffer_size)
+            'successfully configured connection parameters and basic logins. selected buffer size is %d, use secure file send: %s', self._buffer_size, self._secure_file_send)
 
     def login(self, login, password=None):
         """some functions require certain access levels, to elevate this level a logon has to be performed. some levels require a password"""
@@ -870,7 +881,7 @@ class LSV2():
         payload.append(0x00)
         if binary_mode or self._is_file_type_binary(local_path):
             payload.append(LSV2.C_FL_MODE_BINARY)
-            logging.info('useing binary transfer mode')
+            logging.info('selecting binary transfer mode for this file type')
         response, content = self._llcom.telegram(
             LSV2.COMMAND_C_FL, payload, buffer_size=self._buffer_size)
 
@@ -896,9 +907,14 @@ class LSV2():
                         return False
 
             # signal that no more data is being sent
-            if not self._send_recive(command=LSV2.RESPONSE_T_FD, expected_response=LSV2.RESPONSE_T_OK, payload=None):
-                logging.error('could not send end of file with error')
-                return False
+            if self._secure_file_send:
+                if not self._send_recive(command=LSV2.RESPONSE_T_FD, expected_response=LSV2.RESPONSE_T_OK, payload=None):
+                    logging.error('could not send end of file with error')
+                    return False
+            else:
+                if not self._send_recive(command=LSV2.RESPONSE_T_FD, expected_response=None, payload=None):
+                    logging.error('could not send end of file with error')
+                    return False
 
         else:
             if response in self.RESPONSE_T_ER:
