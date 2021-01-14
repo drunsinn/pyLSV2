@@ -55,7 +55,7 @@ class LLLSV2Com():
         self._is_connected = False
         logging.debug('Connection to %s closed', self._host_ip)
 
-    def telegram(self, command, payload=None, buffer_size=0):
+    def telegram(self, command, payload=None, buffer_size=0, wait_for_response=True):
         """this function handles sending telegrams to the control"""
         if self._is_connected is False:
             raise Exception('connection is not open!')
@@ -78,15 +78,21 @@ class LLLSV2Com():
         if len(telegram) >= buffer_size:
             raise OverflowError('telegram to long for set current buffer size: %d >= %d' % (len(telegram), buffer_size))
 
+        response = None
         try:
             self._tcpsock.send(telegram)
-            response = self._tcpsock.recv(buffer_size)
+            if wait_for_response:
+                response = self._tcpsock.recv(buffer_size)
         except:
             logging.error('somthing went wrong while waiting for new data to arrive, buffer was set to %d', buffer_size)
             raise
 
-        response_length = struct.unpack('!L', response[0:4])[0] # read 4 bytes for response length
-        response_command = response[4:8].decode('utf-8', 'ignore') # read 4 bytes for response type
+        if response is not None:
+            response_length = struct.unpack('!L', response[0:4])[0] # read 4 bytes for response length
+            response_command = response[4:8].decode('utf-8', 'ignore') # read 4 bytes for response type
+        else:
+            response_length = 0
+            response_command = None
 
         if response_length > 0:
             response_content = bytearray(response[8:])
@@ -99,6 +105,5 @@ class LLLSV2Com():
                     raise
         else:
             response_content = None
-        logging.debug('response telegram %s with overall length of %d bytes, actual length including header is %d', response_command, response_length, len(response))
 
         return response_command, response_content
