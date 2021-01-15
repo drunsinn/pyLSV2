@@ -188,8 +188,9 @@ class LSV2():
     SYSCMD_GENERATE_OP_LOG = 27
 
     # const for relegram R_RI
-    R_INFO_SELECTED_PGM = 24
-    R_INFO_PGM_STATE = 26
+    RUN_INFO_EXEC_STATE = 23
+    RUN_INFO_SELECTED_PGM = 24
+    RUN_INFO_PGM_STATE = 26
 
     # known program states
     PGM_STATE_STARTED = 0
@@ -201,6 +202,14 @@ class LSV2():
     PGM_STATE_ERROR_CLEARED = 6
     PGM_STATE_IDLE = 7
     PGM_STATE_UNDEFINED = 8
+
+    # known execution states
+    EXEC_STATE_MANUAL = 0
+    EXEC_STATE_MDI = 1
+    EXEC_STATE_PASS_REFERENCES = 2
+    EXEC_STATE_SINGLE_STEP = 3
+    EXEC_STATE_AUTOMATIC = 4
+    EXEC_STATE_UNDEFINED = 5
 
     # known modes for command R_DR
     # mode switch for command R_DR to only read one entry at a time
@@ -555,7 +564,7 @@ class LSV2():
         self.login(login=LSV2.LOGIN_DNC)
 
         payload = bytearray()
-        payload.extend(struct.pack('!H', self.R_INFO_PGM_STATE))
+        payload.extend(struct.pack('!H', self.RUN_INFO_PGM_STATE))
 
         result = self._send_recive(
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
@@ -587,7 +596,7 @@ class LSV2():
         self.login(login=LSV2.LOGIN_DNC)
 
         payload = bytearray()
-        payload.extend(struct.pack('!H', self.R_INFO_SELECTED_PGM))
+        payload.extend(struct.pack('!H', self.RUN_INFO_SELECTED_PGM))
 
         result = self._send_recive(
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload=payload)
@@ -603,6 +612,34 @@ class LSV2():
             logging.error(
                 'an error occurred while querying active program state')
         return False
+
+    def get_execution_status(self):
+        """reads the execution status.
+           See https://github.com/drunsinn/pyLSV2/issues/1"""
+        self.login(login=LSV2.LOGIN_DNC)
+
+        payload = bytearray()
+        payload.extend(struct.pack('!H', self.RUN_INFO_EXEC_STATE))
+
+        result = self._send_recive(
+            LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        if result:
+            exec_state = struct.unpack('!H', result)[0]
+            return exec_state
+        else:
+            logging.error('an error occurred while querying execution state')
+        return False
+
+    @staticmethod
+    def get_execution_status_text(code):
+        """map status code to text
+           See https://github.com/drunsinn/pyLSV2/issues/1"""
+        return {LSV2.EXEC_STATE_MANUAL: 'Manual execution',
+                LSV2.EXEC_STATE_MDI: 'MDI execution',
+                LSV2.EXEC_STATE_PASS_REFERENCES: 'Pass References execution',
+                LSV2.EXEC_STATE_SINGLE_STEP: 'Single Step execution',
+                LSV2.EXEC_STATE_AUTOMATIC: 'Automatic execution',
+                LSV2.EXEC_STATE_UNDEFINED: 'Execution state undefined'}.get(code, 'Unknown Execution state')
 
     def get_directory_info(self, remote_directory=None):
         """get information on the current working directory"""
