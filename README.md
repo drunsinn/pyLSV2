@@ -26,12 +26,31 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
 
+## Contributors
+tfischer73
+drunsinn
+WouterElfrink
+
 ## Usage
+### Basic example
 ```
  import pyLSV2
  con = pyLSV2.LSV2('192.168.56.101')
  con.connect()
  print(con.get_versions())
+ con.disconnect()
+```
+
+### Reading Information from the control
+```
+ import logging
+ import pyLSV2
+ 
+ logging.basicConfig(level=logging.DEBUG)
+ con = pyLSV2.LSV2('192.168.56.101', safe_mode=False)
+ con.connect()
+ print(con.get_program_status_text(con.get_program_status()))
+ print(con.get_execution_status_text(con.get_execution_status()))
  con.disconnect()
 ```
 
