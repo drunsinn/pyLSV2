@@ -103,15 +103,19 @@ class LSV2():
     COMMAND_R_FL = 'R_FL'
 
     # COMMAND_R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
-    # COMMAND_R_MB = 'R_MB' # found via bruteforce test, purpose unknown!
+    
+    # R_MG: read value from PLC memory
+    COMMAND_R_MB = 'R_MB' # found via bruteforce test, purpose unknown!
+    
     # COMMAND_R_MC = 'R_MC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
 
-    # R_PR: read parameter from the control
+    # R_PR: read parameter from the control, requires login PLCDEBUG
     COMMAND_R_PR = 'R_PR'
+
     # R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)
     COMMAND_R_RI = 'R_RI'
 
@@ -143,6 +147,9 @@ class LSV2():
 
     # S_IN: found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
     # RESPONSE_S_IN = 'S_IN'
+
+    # S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data
+    RESPONSE_S_MB = 'S_MB'
 
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
     RESPONSE_S_PR = 'S_PR'
@@ -1047,6 +1054,21 @@ class LSV2():
         for bin_type in self.BIN_FILES:
             if file_name.endswith(bin_type):
                 return True
+        return False
+
+    def read_plc_memory(self):
+        """read data from plc memory"""
+        # at least 4 bytes of payload are required. with four or more bytes of payload we get the error message "bad memory address"
+        payload = bytearray()
+        payload.append(0xAA)
+        payload.append(0xAA)
+        payload.append(0x55)
+        payload.append(0xAA)
+
+        result = self._send_recive(
+            LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
+        if result:
+            return True
         return False
 
     def _test_command(self, command_string, payload=None):
