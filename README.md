@@ -124,3 +124,14 @@ DNC login is only possible if the option is set on the control, without the opti
 ### File transfer
  Transfer of files can happen in binary or ASCII mode. To enable binary mode, add 0x01 after the filename. In TNCremo you can find a list of file types for which binary mode is recommended.
  The functions recive_file and send_file can be configured with the parameter binary_mode.
+
+# Testing
+To run the test you either need a machine or a programming station. The controls has to be on and the 
+PLC programm has to be running. You can add the IP-Address as a parameter
+```
+pytest --address=192.168.56.103
+```
+
+# Resources
+https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
+https://de.industryarena.com/heidenhain/forum

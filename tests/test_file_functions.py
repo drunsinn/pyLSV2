@@ -3,8 +3,8 @@
 
 import pyLSV2
 
-def test_read_info():
-    lsv2 = pyLSV2.LSV2('192.168.56.101', port=19000, safe_mode=True)
+def test_read_info(address):
+    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
     assert lsv2.change_directory(remote_directory='TNC:/nc_prog') == True
     assert lsv2.get_directory_info() != False
@@ -13,8 +13,8 @@ def test_read_info():
     assert lsv2.get_drive_info() != False
     lsv2.disconnect()
 
-def test_folder_functions():
-    lsv2 = pyLSV2.LSV2('192.168.56.101', port=19000, safe_mode=True)
+def test_folder_functions(address):
+    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
     assert lsv2.change_directory('TNC:/nc_prog') == True
     assert lsv2.make_directory('TNC:/nc_prog/pyLSV2_test/T1/T2/T3') == True
@@ -28,8 +28,8 @@ def test_folder_functions():
     assert lsv2.delete_empty_directory('TNC:/nc_prog/pyLSV2_test') == True
     lsv2.disconnect()
 
-def test_remote_file_functions():
-    lsv2 = pyLSV2.LSV2('192.168.56.101', port=19000, safe_mode=True)
+def test_remote_file_functions(address):
+    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
     assert lsv2.make_directory('TNC:/nc_prog/pyLSV2_test') == True
     assert lsv2.change_directory('TNC:/nc_prog/pyLSV2_test') == True

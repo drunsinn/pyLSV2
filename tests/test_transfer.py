@@ -8,8 +8,8 @@ import shutil
 import hashlib
 import pyLSV2
 
-def test_file_recive():
-    lsv2 = pyLSV2.LSV2('192.168.56.101', port=19000, safe_mode=True)
+def test_file_recive(address):
+    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
 
     with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
@@ -24,8 +24,8 @@ def test_file_recive():
 
         lsv2.disconnect()
 
-def test_file_transfer_binary():
-    lsv2 = pyLSV2.LSV2('192.168.56.101', port=19000, safe_mode=True)
+def test_file_transfer_binary(address):
+    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
 
     with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
