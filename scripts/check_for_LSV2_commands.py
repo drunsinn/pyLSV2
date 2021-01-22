@@ -7,9 +7,9 @@ import struct
 from pyLSV2 import LSV2
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.DEBUG)
-
-    lsv2 = LSV2('192.168.56.101', safe_mode=False)
+    logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.ERROR)
+    
+    lsv2 = LSV2('192.168.56.103', safe_mode=False)
 
     lsv2.connect()
     lsv2.login(login=LSV2.LOGIN_INSPECT)
