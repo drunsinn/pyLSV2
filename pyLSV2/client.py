@@ -101,8 +101,8 @@ class LSV2():
 
     # COMMAND_R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
     
-    # R_MG: read value from PLC memory
-    COMMAND_R_MB = 'R_MB' # found via bruteforce test, purpose unknown!
+    # R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count
+    COMMAND_R_MB = 'R_MB'
     
     # COMMAND_R_MC = 'R_MC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
@@ -110,7 +110,7 @@ class LSV2():
     # COMMAND_R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
 
-    # R_PR: read parameter from the control, requires login PLCDEBUG
+    # R_PR: read parameter from the control
     COMMAND_R_PR = 'R_PR'
 
     # R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)
@@ -226,6 +226,7 @@ class LSV2():
     C_FL_MODE_BINARY = 0x01  # is set by TNCcmd, seems to work for all filetypes
     R_FL_MODE_BINARY = 0x01 # enable binary file transfer, see also C_FL_MODE_BINARY
 
+    # Memory types for reading from PLC memory
     PLC_MEM_TYPE_MARKER = 1
     PLC_MEM_TYPE_INPUT = 2
     PLC_MEM_TYPE_OUTPUT = 3
@@ -889,7 +890,7 @@ class LSV2():
     def send_file(self, local_path, remote_path, override_file=False, binary_mode=False):
         """send file to the control, parameter override_file allowes replacing an existing file
             with parameter binary mode you can select the transfer mode. it it is not set the filename is
-            checked against a know list of binary extentions"""
+            checked against a know list of binary extensions"""
         local_file = Path(local_path)
 
         if not local_file.is_file():
@@ -922,7 +923,7 @@ class LSV2():
             remote_folder + '/' + remote_file_name)
 
         if remote_info:
-            logging.debug('remote path exists and points to files')
+            logging.debug('remote path exists and points to file\'s')
             if override_file:
                 if not self.delete_file(remote_folder + '/' + remote_file_name):
                     raise Exception('something went wrong while deleting file {}'.format(
@@ -987,7 +988,7 @@ class LSV2():
     def recive_file(self, remote_path, local_path, override_file=False, binary_mode=False):
         """send file to the control, parameter override_file allowes replacing an existing file
             with parameter binary mode you can select the transfer mode. it it is not set the filename is
-            checked against a know list of binary extentions"""
+            checked against a know list of binary extensions"""
 
         remote_file_info = self.get_file_info(remote_path)
         if not remote_file_info:
@@ -1150,17 +1151,19 @@ class LSV2():
         if count > 0xFF:
             raise Exception('cant read more than 255 elements at a time')
 
-        mem_area = list()
+        plc_values = list()
 
         if mem_type is LSV2.PLC_MEM_TYPE_STRING:
             for i in range(count):
                 payload = bytearray()
-                payload.extend(struct.pack('!L', start_address + address + i*mem_byte_count))
+                payload.extend(struct.pack('!L', start_address + address + i * mem_byte_count))
                 payload.extend(struct.pack('!B', mem_byte_count))
                 result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
                 if result:
-                    mem_area.append(struct.unpack(unpack_string, result)[0].rstrip(b'\x00').decode('utf8'))
+                    logging.debug('read string %d', address + i * mem_byte_count)
+                    plc_values.append(struct.unpack(unpack_string, result)[0].rstrip(b'\x00').decode('utf8'))
                 else:
+                    logging.error('faild to read string from address %d', start_address + address + i * mem_byte_count)
                     return False
         else:
             payload = bytearray()
@@ -1168,11 +1171,13 @@ class LSV2():
             payload.extend(struct.pack('!B', count * mem_byte_count))
             result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
             if result:
+                logging.debug('read %d value(s) from address %d', count, address + i * mem_byte_count)
                 for i in range(0, len(result), mem_byte_count):
-                    mem_area.append(struct.unpack(unpack_string, result[i:i+mem_byte_count])[0])
+                    plc_values.append(struct.unpack(unpack_string, result[i:i+mem_byte_count])[0])
             else:
+                logging.error('faild to read string from address %d', start_address + address)
                 return False
-        return mem_area
+        return plc_values
 
     def _test_command(self, command_string, payload=None):
         """check commands for validity"""
