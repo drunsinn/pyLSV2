@@ -3,6 +3,7 @@
 
 import pyLSV2
 
+
 def test_login(address):
     lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
@@ -10,6 +11,7 @@ def test_login(address):
     assert lsv2.login(login=pyLSV2.LSV2.LOGIN_FILETRANSFER) == True
     assert lsv2.login(login=pyLSV2.LSV2.LOGIN_DNC) == False
     lsv2.disconnect()
+
 
 def test_read_versions(address):
     lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
