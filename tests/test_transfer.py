@@ -10,6 +10,7 @@ import pyLSV2
 
 
 def test_file_recive(address):
+    """test if loading a file from the controls works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
 
@@ -17,16 +18,17 @@ def test_file_recive(address):
         local_mdi_path = Path(tmp_dir_name).joinpath('mdi.h')
         assert lsv2.recive_file(local_path=str(local_mdi_path),
                                 remote_path='TNC:/nc_prog/$mdi.h',
-                                binary_mode=False) == True
+                                binary_mode=False) is True
 
         local_tool_table_path = Path(tmp_dir_name).joinpath('tool.t')
         assert lsv2.recive_file(local_path=str(local_tool_table_path),
-                                remote_path='TNC:/table/tool.t') == True
+                                remote_path='TNC:/table/tool.t') is True
 
         lsv2.disconnect()
 
 
 def test_file_transfer_binary(address):
+    """test if transfering a file in binary mode works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
     lsv2.connect()
 
@@ -35,30 +37,28 @@ def test_file_transfer_binary(address):
         local_recive_path = Path(tmp_dir_name).joinpath('test.bmp')
         remote_path = 'TNC:/' + local_send_path.name
 
-        assert lsv2.get_file_info(remote_path) == False
+        assert lsv2.get_file_info(remote_path) is False
 
         assert lsv2.send_file(local_path=local_send_path,
                               remote_path=remote_path,
                               override_file=True,
-                              binary_mode=True) == True
+                              binary_mode=True) is True
 
         assert lsv2.recive_file(local_path=str(local_recive_path),
                                 remote_path=remote_path,
                                 override_file=True,
-                                binary_mode=True) == True
+                                binary_mode=True) is True
 
-        assert lsv2.delete_file(remote_path) == True
+        assert lsv2.delete_file(remote_path) is True
 
         digests = []
         for filename in [local_send_path, local_recive_path]:
             hasher = hashlib.md5()
-            with open(filename, 'rb') as f:
-                buf = f.read()
+            with open(filename, 'rb') as fp:
+                buf = fp.read()
                 hasher.update(buf)
-                a = hasher.hexdigest()
-                digests.append(a)
-                print(a)
-
-        assert digests[0] == digests[1]
+                hd = hasher.hexdigest()
+                digests.append(hd)
+        assert digests[0] is digests[1]
 
     lsv2.disconnect()
