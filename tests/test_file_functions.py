@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""tests for file and directory functions"""
 
 import pyLSV2
 

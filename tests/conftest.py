@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import pytest
+"""config for pytest"""
 
+import pytest
 
 def pytest_addoption(parser):
     """add commandline options to tests"""

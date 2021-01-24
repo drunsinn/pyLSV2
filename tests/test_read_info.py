@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""tests for reading file system information"""
 
 import pyLSV2
 

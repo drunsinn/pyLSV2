@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""tests for file transfer functions"""
 
-import os
 import tempfile
 from pathlib import Path
-import shutil
 import hashlib
 import pyLSV2
 
@@ -54,11 +53,11 @@ def test_file_transfer_binary(address):
         digests = []
         for filename in [local_send_path, local_recive_path]:
             hasher = hashlib.md5()
-            with open(filename, 'rb') as fp:
-                buf = fp.read()
+            with open(filename, 'rb') as f_p:
+                buf = f_p.read()
                 hasher.update(buf)
-                hd = hasher.hexdigest()
-                digests.append(hd)
+                h_d = hasher.hexdigest()
+                digests.append(h_d)
         assert digests[0] is digests[1]
 
     lsv2.disconnect()

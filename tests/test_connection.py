@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""tests for establishing a connection"""
 
 import pyLSV2
 
