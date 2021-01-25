@@ -21,10 +21,7 @@ from .low_level_com import LLLSV2Com
 
 class LSV2():
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls.
-       This is just a test implementation that will get worked into a complete Python library. It
-       has only been tested with a programming station for the TNC 640 with software version
-       340595 8 SP1.
-       No tests on real machines have been made so far!"""
+       This is just a test implementation that will get worked into a complete Python library."""
 
     DRIVE_TNC = 'TNC:'
     DRIVE_TNC = 'PLC:'
@@ -103,7 +100,10 @@ class LSV2():
     COMMAND_R_FL = 'R_FL'
 
     # COMMAND_R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
-    # COMMAND_R_MB = 'R_MB' # found via bruteforce test, purpose unknown!
+    
+    # R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count
+    COMMAND_R_MB = 'R_MB'
+    
     # COMMAND_R_MC = 'R_MC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
@@ -112,6 +112,7 @@ class LSV2():
 
     # R_PR: read parameter from the control
     COMMAND_R_PR = 'R_PR'
+
     # R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)
     COMMAND_R_RI = 'R_RI'
 
@@ -143,6 +144,9 @@ class LSV2():
 
     # S_IN: found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
     # RESPONSE_S_IN = 'S_IN'
+
+    # S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data
+    RESPONSE_S_MB = 'S_MB'
 
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
     RESPONSE_S_PR = 'S_PR'
@@ -221,6 +225,19 @@ class LSV2():
 
     C_FL_MODE_BINARY = 0x01  # is set by TNCcmd, seems to work for all filetypes
     R_FL_MODE_BINARY = 0x01 # enable binary file transfer, see also C_FL_MODE_BINARY
+
+    # Memory types for reading from PLC memory
+    PLC_MEM_TYPE_MARKER = 1
+    PLC_MEM_TYPE_INPUT = 2
+    PLC_MEM_TYPE_OUTPUT = 3
+    PLC_MEM_TYPE_COUNTER = 4
+    PLC_MEM_TYPE_TIMER = 5
+    PLC_MEM_TYPE_BYTE = 6
+    PLC_MEM_TYPE_WORD = 7
+    PLC_MEM_TYPE_DWORD = 8
+    PLC_MEM_TYPE_STRING = 9
+    PLC_MEM_TYPE_INPUT_WORD = 10
+    PLC_MEM_TYPE_OUTPUT_WORD = 11
 
     def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
         """init object variables and create socket"""
@@ -405,6 +422,8 @@ class LSV2():
         if not self._send_recive_ack(LSV2.COMMAND_A_LG, payload):
             logging.error('an error occurred during login for login %s', login)
             return False
+        
+        self._active_logins.append(login)
 
         logging.info('login executed successfully for login %s', login)
         return True
@@ -422,6 +441,10 @@ class LSV2():
                 if self._send_recive_ack(LSV2.COMMAND_A_LO, payload):
                     logging.info(
                         'logout executed successfully for login %s', login)
+                    if login is not None:
+                        self._active_logins.remove(login)
+                    else:
+                        self._active_logins = list()
                     return True
             else:
                 logging.info(
@@ -650,7 +673,7 @@ class LSV2():
         result = self._send_recive(LSV2.COMMAND_R_DI, LSV2.RESPONSE_S_DI)
         if result:
             dir_info = dict()
-            dir_info['Free Size'] = struct.unpack('!L', result[:4])
+            dir_info['Free Size'] = struct.unpack('!L', result[:4])[0]
 
             attribute_list = list()
             for i in range(4, len(result[4:128]), 4):
@@ -867,7 +890,7 @@ class LSV2():
     def send_file(self, local_path, remote_path, override_file=False, binary_mode=False):
         """send file to the control, parameter override_file allowes replacing an existing file
             with parameter binary mode you can select the transfer mode. it it is not set the filename is
-            checked against a know list of binary extentions"""
+            checked against a know list of binary extensions"""
         local_file = Path(local_path)
 
         if not local_file.is_file():
@@ -900,7 +923,7 @@ class LSV2():
             remote_folder + '/' + remote_file_name)
 
         if remote_info:
-            logging.debug('remote path exists and points to files')
+            logging.debug('remote path exists and points to file\'s')
             if override_file:
                 if not self.delete_file(remote_folder + '/' + remote_file_name):
                     raise Exception('something went wrong while deleting file {}'.format(
@@ -963,9 +986,9 @@ class LSV2():
         return True
 
     def recive_file(self, remote_path, local_path, override_file=False, binary_mode=False):
-        '''send file to the control, parameter override_file allowes replacing an existing file
+        """send file to the control, parameter override_file allowes replacing an existing file
             with parameter binary mode you can select the transfer mode. it it is not set the filename is
-            checked against a know list of binary extentions'''
+            checked against a know list of binary extensions"""
 
         remote_file_info = self.get_file_info(remote_path)
         if not remote_file_info:
@@ -1048,6 +1071,113 @@ class LSV2():
             if file_name.endswith(bin_type):
                 return True
         return False
+
+    def read_plc_memory(self, address, mem_type, count=1):
+        """
+        Read data from plc memory.
+
+        :param address: which memory location should be read, starts at 0 up to the max number for each type
+        :param mem_type: what datatype to read
+        :param count: how many elements should be read at a time, from 1 (default) up to 255 or max number
+        :returns: a list with the data values
+        :raises Exception: raises an Exception
+        """
+        if self._sys_par is None:
+            self.get_system_parameter()
+
+        self.login(login=LSV2.LOGIN_PLCDEBUG)
+
+        if mem_type is LSV2.PLC_MEM_TYPE_MARKER:
+            start_address = self._sys_par['Marker_Start']
+            max_count = self._sys_par['Markers']
+            mem_byte_count = 1
+            unpack_string = '!?'
+        elif mem_type is LSV2.PLC_MEM_TYPE_INPUT:
+            start_address = self._sys_par['Input_Start']
+            max_count = self._sys_par['Inputs']
+            mem_byte_count = 1
+            unpack_string = '!?'
+        elif mem_type is LSV2.PLC_MEM_TYPE_OUTPUT:
+            start_address = self._sys_par['Output_Start']
+            max_count = self._sys_par['Outputs']
+            mem_byte_count = 1
+            unpack_string = '!?'
+        elif mem_type is LSV2.PLC_MEM_TYPE_COUNTER:
+            start_address = self._sys_par['Counter_Start']
+            max_count = self._sys_par['Counters']
+            mem_byte_count = 1
+            unpack_string = '!?'
+        elif mem_type is LSV2.PLC_MEM_TYPE_TIMER:
+            start_address = self._sys_par['Timer_Start']
+            max_count = self._sys_par['Timers']
+            mem_byte_count = 1
+            unpack_string = '!?'
+        elif mem_type is LSV2.PLC_MEM_TYPE_BYTE:
+            start_address = self._sys_par['Word_Start']
+            max_count = self._sys_par['Words'] * 2
+            mem_byte_count = 1
+            unpack_string = '!B'
+        elif mem_type is LSV2.PLC_MEM_TYPE_WORD:
+            start_address = self._sys_par['Word_Start']
+            max_count = self._sys_par['Words']
+            mem_byte_count = 2
+            unpack_string = '<H'
+        elif mem_type is LSV2.PLC_MEM_TYPE_DWORD:
+            start_address = self._sys_par['Word_Start']
+            max_count = self._sys_par['Words'] / 4
+            mem_byte_count = 4
+            unpack_string = '<L'
+        elif mem_type is LSV2.PLC_MEM_TYPE_STRING:
+            start_address = self._sys_par['String_Start']
+            max_count = self._sys_par['Strings']
+            mem_byte_count = self._sys_par['String_Length']
+            unpack_string = '{}s'.format(mem_byte_count)
+        elif mem_type is LSV2.PLC_MEM_TYPE_INPUT_WORD:
+            start_address = self._sys_par['Input_Word_Start']
+            max_count = self._sys_par['Input']
+            mem_byte_count = 2
+            unpack_string = '<H'
+        elif mem_type is LSV2.PLC_MEM_TYPE_OUTPUT_WORD:
+            start_address = self._sys_par['Output_Word_Start']
+            max_count = self._sys_par['Output_Words']
+            mem_byte_count = 2
+            unpack_string = '<H'
+        else:
+            raise Exception('unknown address type')
+
+        if count > max_count:
+            raise Exception()
+
+        if count > 0xFF:
+            raise Exception('cant read more than 255 elements at a time')
+
+        plc_values = list()
+
+        if mem_type is LSV2.PLC_MEM_TYPE_STRING:
+            for i in range(count):
+                payload = bytearray()
+                payload.extend(struct.pack('!L', start_address + address + i * mem_byte_count))
+                payload.extend(struct.pack('!B', mem_byte_count))
+                result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
+                if result:
+                    logging.debug('read string %d', address + i * mem_byte_count)
+                    plc_values.append(struct.unpack(unpack_string, result)[0].rstrip(b'\x00').decode('utf8'))
+                else:
+                    logging.error('faild to read string from address %d', start_address + address + i * mem_byte_count)
+                    return False
+        else:
+            payload = bytearray()
+            payload.extend(struct.pack('!L', start_address + address))
+            payload.extend(struct.pack('!B', count * mem_byte_count))
+            result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
+            if result:
+                logging.debug('read %d value(s) from address %d', count, address + i * mem_byte_count)
+                for i in range(0, len(result), mem_byte_count):
+                    plc_values.append(struct.unpack(unpack_string, result[i:i+mem_byte_count])[0])
+            else:
+                logging.error('faild to read string from address %d', start_address + address)
+                return False
+        return plc_values
 
     def _test_command(self, command_string, payload=None):
         """check commands for validity"""

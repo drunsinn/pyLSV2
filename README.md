@@ -31,6 +31,27 @@ tfischer73
 drunsinn
 WouterElfrink
 
+## Compatibility
+Since there are a lot of different software versions and machine configurations out there 
+it is hard to say if this library is compatible with all of them. Most testing has been done 
+on programming stations but also with real hardware. Here is a list of versions have been tested:
+
+### Programming Stations
+| Control     | Software       |
+|-------------|----------------|
+| TNC640      | 340595 08 SP1  |
+| TNC640      | 340595 10 SP2  |
+| iTNC530     | 606425 04 SP20 |
+| CNCpilot640 | 1230521 03 SP1 |
+
+### Machines
+| Control     | Software       |
+|-------------|----------------|
+| TNC640      | 340595 08 SP1  |
+| iTNC530     | 340480 14 SP4  |
+
+If you have tested it on one of your machines with a different software version, please let us know!
+
 ## Usage
 ### Basic example
 ```
@@ -53,6 +74,9 @@ WouterElfrink
  print(con.get_execution_status_text(con.get_execution_status()))
  con.disconnect()
 ```
+
+### Accessing PLC data 
+see scripts/lsv2_demo.py
 
 ## Information on the protocol based on reverse engineering and prior work
  Each LSV2 telegram starts with a 32 bit length value followed by a command string consisting of exactly 4 characters. The length value does not include the command string, a telegram with only a command and no additional data will have a length value of 0x0000.
