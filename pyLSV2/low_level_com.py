@@ -43,7 +43,7 @@ class LLLSV2Com():
         """Establish connection to control
 
         :raise: Exception if connection times out.
-        rtype: None
+        :rtype: None
         """
         try:
             self._tcpsock.connect((self._host_ip, self._port))
@@ -58,7 +58,7 @@ class LLLSV2Com():
         """Close connection
         
         :raise: Exception if connection times out.
-        rtype: None
+        :rtype: None
         """
         try:
             self._tcpsock.close()

@@ -665,7 +665,12 @@ class LSV2():
                 LSV2.EXEC_STATE_UNDEFINED: 'Execution state undefined'}.get(code, 'Unknown Execution state')
 
     def get_directory_info(self, remote_directory=None):
-        """get information on the current working directory"""
+        """Query information a the current working direcory on the control
+
+        :param str remote_directory: optional. If set, working directory will be changed
+        :returns: dictionary with info about the directory or False if an error occured
+        :rtype: dict
+        """
         if remote_directory is not None and not self.change_directory(remote_directory):
             logging.error(
                 'could not change current directory to read directory info for %s', remote_directory)
@@ -694,7 +699,12 @@ class LSV2():
         return False
 
     def change_directory(self, remote_directory):
-        """change the current working directoyon the control"""
+        """Change the current working directoyon the control
+
+        :param str remote_directory: path of directory on the control
+        :returns: True if changing of directory succeded
+        :rtype: bool
+        """
         dir_path = remote_directory.replace('\\', '/')
         payload = bytearray()
         payload.extend(map(ord, dir_path))
@@ -707,7 +717,12 @@ class LSV2():
         return False
 
     def get_file_info(self, remote_file_path):
-        """get information about the file or folder? and return the information as a dict"""
+        """Query information about a file
+
+        :param str remote_file_path: path of file on the control
+        :returns: dictionary with info about file of False if remote path does not exist
+        :rtype: dict
+        """
         file_path = remote_file_path.replace('\\', '/')
         payload = bytearray()
         payload.extend(map(ord, file_path))
@@ -732,7 +747,11 @@ class LSV2():
         return False
 
     def get_directory_content(self):
-        """get content of current working directory"""
+        """Query content of current working directory from the control
+
+        :returns: list of dict with info about directory entries
+        :rtype: list
+        """
         dir_content = list()
         payload = bytearray()
         payload.append(self.COMMAND_R_DR_MODE_SINGLE)
@@ -755,7 +774,11 @@ class LSV2():
         return dir_content
 
     def get_drive_info(self):
-        """get content of current working directory"""
+        """Query info all drives and partitions from the control
+
+        :returns: list of dict with with info about drive entries
+        :rtype: list
+        """
         drives_list = list()
         payload = bytearray()
         payload.append(self.COMMAND_R_DR_MODE_DRIVES)
@@ -777,8 +800,12 @@ class LSV2():
         return drives_list
 
     def make_directory(self, dir_path):
-        """create directory on control. split path into separate parts and iterate over every segment.
-        starting from the base check each segment and create the directory if necessary"""
+        """Create a directory on control. If necessary also creates parent directories
+
+        :param str dir_path: path of directory on the control
+        :returns: True if creating of directory completed successfuly
+        :rtype: bool
+        """
         path_parts = dir_path.replace(
             '\\', '/').split('/')  # convert path to unix style
         path_to_check = ''
@@ -799,7 +826,12 @@ class LSV2():
         return True
 
     def delete_empty_directory(self, dir_path):
-        """deleta a directory on the control, only works if it is empty"""
+        """Delete empty directory on control
+
+        :param str file_path: path of directory on the control
+        :returns: True if deleting of directory completed successfuly
+        :rtype: bool
+        """
         dir_path = dir_path.replace('\\', '/')
         payload = bytearray()
         payload.extend(map(ord, dir_path))
@@ -808,11 +840,16 @@ class LSV2():
             logging.warning(
                 'an error occurred while deleting directory %s, this might also indicate that it it does not exist', dir_path)
             return False
-        logging.debug('succesfully deleted folder %s', dir_path)
+        logging.debug('succesfully deleted directory %s', dir_path)
         return True
 
     def delete_file(self, file_path):
-        """delete a file on control"""
+        """Delete file on control
+
+        :param str file_path: path of file on the control
+        :returns: True if deleting of file completed successfuly
+        :rtype: bool
+        """
         file_path = file_path.replace('\\', '/')
         payload = bytearray()
         payload.extend(map(ord, file_path))
@@ -825,19 +862,25 @@ class LSV2():
         return True
 
     def copy_local_file(self, source_path, target_path):
-        """copy a file on control"""
+        """Copy file on control from one place to another
+
+        :param str source_path: path of file on the control
+        :param str target_path: path fo target location
+        :returns: True if copying of file completed successfuly
+        :rtype: bool
+        """
         source_path = source_path.replace('\\', '/')
         target_path = target_path.replace('\\', '/')
 
         if '/' in source_path:
             # change directory
             source_file_name = source_path.split('/')[-1]
-            source_folder = source_path.rstrip(source_file_name)
-            if not self.change_directory(remote_directory=source_folder):
+            source_directory = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_directory):
                 raise Exception('could not open the source directoy')
         else:
             source_file_name = source_path
-            source_folder = '.'
+            source_directory = '.'
 
         if target_path.endswith('/'):
             target_path += source_file_name
@@ -848,7 +891,7 @@ class LSV2():
         payload.extend(map(ord, target_path))
         payload.append(0x00)
         logging.debug('prepare to copy file %s from %s to %s',
-                      source_file_name, source_folder, target_path)
+                      source_file_name, source_directory, target_path)
         if not self._send_recive_ack(command=LSV2.COMMAND_C_FC, payload=payload):
             logging.warning(
                 'an error occurred copying file %s to %s', source_path, target_path)
@@ -857,18 +900,24 @@ class LSV2():
         return True
 
     def move_local_file(self, source_path, target_path):
-        """move a file on control"""
+        """Move file on control from one place to another
+
+        :param str source_path: path of file on the control
+        :param str target_path: path fo target location
+        :returns: True if moving of file completed successfuly
+        :rtype: bool
+        """
         source_path = source_path.replace('\\', '/')
         target_path = target_path.replace('\\', '/')
 
         if '/' in source_path:
             source_file_name = source_path.split('/')[-1]
-            source_folder = source_path.rstrip(source_file_name)
-            if not self.change_directory(remote_directory=source_folder):
+            source_directory = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_directory):
                 raise Exception('could not open the source directoy')
         else:
             source_file_name = source_path
-            source_folder = '.'
+            source_directory = '.'
 
         if target_path.endswith('/'):
             target_path += source_file_name
@@ -879,7 +928,7 @@ class LSV2():
         payload.extend(map(ord, target_path))
         payload.append(0x00)
         logging.debug('prepare to move file %s from %s to %s',
-                      source_file_name, source_folder, target_path)
+                      source_file_name, source_directory, target_path)
         if not self._send_recive_ack(command=LSV2.COMMAND_C_FR, payload=payload):
             logging.warning(
                 'an error occurred moving file %s to %s', source_path, target_path)
@@ -888,9 +937,15 @@ class LSV2():
         return True
 
     def send_file(self, local_path, remote_path, override_file=False, binary_mode=False):
-        """send file to the control, parameter override_file allowes replacing an existing file
-            with parameter binary mode you can select the transfer mode. it it is not set the filename is
-            checked against a know list of binary extensions"""
+        """Upload a file to control
+
+        :param str remote_path: path of file on the control
+        :param str local_path: local path of destination with or without file name
+        :param bool override_file: flag if file should be replaced if it already exists
+        :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is checked for known binary file type 
+        :returns: True if transfer completed successfuly
+        :rtype: bool
+        """
         local_file = Path(local_path)
 
         if not local_file.is_file():
@@ -903,41 +958,41 @@ class LSV2():
         if '/' in remote_path:
             if remote_path.endswith('/'):  # no filename given
                 remote_file_name = local_file.name
-                remote_folder = remote_path
+                remote_directory = remote_path
             else:
                 remote_file_name = remote_path.split('/')[-1]
-                remote_folder = remote_path.rstrip(remote_file_name)
-                if not self.change_directory(remote_directory=remote_folder):
+                remote_directory = remote_path.rstrip(remote_file_name)
+                if not self.change_directory(remote_directory=remote_directory):
                     raise Exception(
-                        'could not open the source directory {}'.format(remote_folder))
+                        'could not open the source directory {}'.format(remote_directory))
         else:
             remote_file_name = remote_path
-            remote_folder = self.get_directory_info()['Path']  # get pwd
-        remote_folder = remote_folder.rstrip('/')
+            remote_directory = self.get_directory_info()['Path']  # get pwd
+        remote_directory = remote_directory.rstrip('/')
 
-        if not self.get_directory_info(remote_folder):
-            logging.debug('remote path does not exist, create folder(s)')
-            self.make_directory(remote_folder)
+        if not self.get_directory_info(remote_directory):
+            logging.debug('remote path does not exist, create directory(s)')
+            self.make_directory(remote_directory)
 
         remote_info = self.get_file_info(
-            remote_folder + '/' + remote_file_name)
+            remote_directory + '/' + remote_file_name)
 
         if remote_info:
             logging.debug('remote path exists and points to file\'s')
             if override_file:
-                if not self.delete_file(remote_folder + '/' + remote_file_name):
+                if not self.delete_file(remote_directory + '/' + remote_file_name):
                     raise Exception('something went wrong while deleting file {}'.format(
-                        remote_folder + '/' + remote_file_name))
+                        remote_directory + '/' + remote_file_name))
             else:
                 logging.warning(
                     'remote file already exists, override was not set')
                 return False
 
         logging.debug('ready to send file from %s to %s',
-                      local_file, remote_folder + '/' + remote_file_name)
+                      local_file, remote_directory + '/' + remote_file_name)
 
         payload = bytearray()
-        payload.extend(map(ord, remote_folder + '/' + remote_file_name))
+        payload.extend(map(ord, remote_directory + '/' + remote_file_name))
         payload.append(0x00)
         if binary_mode or self._is_file_type_binary(local_path):
             payload.append(LSV2.C_FL_MODE_BINARY)
@@ -986,9 +1041,15 @@ class LSV2():
         return True
 
     def recive_file(self, remote_path, local_path, override_file=False, binary_mode=False):
-        """send file to the control, parameter override_file allowes replacing an existing file
-            with parameter binary mode you can select the transfer mode. it it is not set the filename is
-            checked against a know list of binary extensions"""
+        """Download a file from control
+
+        :param str remote_path: path of file on the control
+        :param str local_path: local path of destination with or without file name
+        :param bool override_file: flag if file should be replaced if it already exists
+        :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is checked for known binary file type 
+        :returns: True if transfer completed successfuly
+        :rtype: bool
+        """
 
         remote_file_info = self.get_file_info(remote_path)
         if not remote_file_info:
@@ -1067,14 +1128,19 @@ class LSV2():
         return True
 
     def _is_file_type_binary(self, file_name):
+        """Check if file is expected to be binary by comparing with known expentions.
+
+        :param file_name: name of the file to check
+        :returns: True if file matches know binary file type
+        :rtype: bool
+        """
         for bin_type in self.BIN_FILES:
             if file_name.endswith(bin_type):
                 return True
         return False
 
     def read_plc_memory(self, address, mem_type, count=1):
-        """
-        Read data from plc memory.
+        """Read data from plc memory.
 
         :param address: which memory location should be read, starts at 0 up to the max number for each type
         :param mem_type: what datatype to read
@@ -1146,7 +1212,7 @@ class LSV2():
             raise Exception('unknown address type')
 
         if count > max_count:
-            raise Exception()
+            raise Exception('maximum number of values is %d' % max_count)
 
         if count > 0xFF:
             raise Exception('cant read more than 255 elements at a time')
