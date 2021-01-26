@@ -6,7 +6,7 @@ from pyLSV2 import __version__
 
 setup(
     name='pyLSV2',
-    packages=find_packages(include=['pyLSV2',], exclude=('tests', 'data')),
+    packages=find_packages(include=['pyLSV2',], exclude=['tests', 'data']),
     version=__version__,
     description='A pure Python3 implementation of the LSV2 protocol',
     long_description=open('README.md').read(),
@@ -16,7 +16,7 @@ setup(
     url='https://github.com/drunsinn/pyLSV2',
     license='MIT',
     install_requires=[],
-    scripts=['scripts/check_for_LSV2_commands.py',],
+    scripts=['scripts/check_for_LSV2_commands.py', 'scripts/lsv2_demo.py'],
     zip_safe=True,
     keywords="LSV2 cnc communication transfer",
     classifiers=[
