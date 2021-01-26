@@ -1,0 +1,3 @@
+include *.md
+recursive-include scripts *.py
+recursive-include locales *.mo *.po
