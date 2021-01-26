@@ -353,7 +353,10 @@ class LSV2():
         return False
 
     def _configure_connection(self):
-        """This function sets up the communication parameters for file transfer. The buffer size is set based on the capabilitys of the control."""
+        """Set up the communication parameters for file transfer. Buffer size and secure file transfere are enabled based on the capabilitys of the control.
+
+        :rtype: None
+        """
         self.login(login=LSV2.LOGIN_INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
@@ -403,7 +406,13 @@ class LSV2():
             'successfully configured connection parameters and basic logins. selected buffer size is %d, use secure file send: %s', self._buffer_size, self._secure_file_send)
 
     def login(self, login, password=None):
-        """some functions require certain access levels, to elevate this level a logon has to be performed. some levels require a password"""
+        """Request aditional access rights. To elevate this level a logon has to be performed. Some levels require a password.
+
+        :param str login: One of the known login strings
+        :param str password: optional. Password for login
+        :returns: True if execution was succesfull
+        :rtype: bool
+        """
         if login in self._active_logins:
             logging.debug('login already active')
             return True
@@ -429,7 +438,12 @@ class LSV2():
         return True
 
     def logout(self, login=None):
-        """drop access rights. if no user is supplied all active accrss rights are dropped."""
+        """Drop one or all access right. If no login is supplied all active access rights are dropped.
+
+        :param str login: optional. One of the known login strings
+        :returns: True if execution was succesfull
+        :rtype: bool
+        """
         if login in self._known_logins or login is None:
             logging.debug('logout for login %s', login)
             if login in self._active_logins or login is None:
@@ -455,7 +469,14 @@ class LSV2():
         return False
 
     def set_system_command(self, command, parameter=None):
-        """execute a system command on the control. command is one self._known_sys_cmd. If necessary additinal parameters can be supplied"""
+        """Execute a system command on the control if command is one a known value. If safe mode is active, some of the
+        commands are disabled. If necessary additinal parameters can be supplied.
+
+        :param int command: system command
+        :param str parameter: optional. parameter payload for system command
+        :returns: True if execution was succesfull
+        :rtype: bool
+        """
         if command in self._known_sys_cmd:
             payload = bytearray()
             payload.extend(struct.pack('!H', command))
@@ -468,7 +489,13 @@ class LSV2():
         return False
 
     def get_system_parameter(self, force=False):
-        """receive system parameters from the control and pares them to a dict."""
+        """Get all version information, result is bufferd since it is also used internaly. With parameter force it is
+        possible to manualy re-read the information form the control
+
+        :param bool force: if Ture the information is read even if it is already buffered
+        :returns: dictionary with system parameters like number of plc variables, supported lsv2 version etc.
+        :rtype: dict
+        """
         if self._sys_par is not None and force is False:
             logging.debug(
                 'version info already in memory, return previous values')
@@ -528,7 +555,13 @@ class LSV2():
         return False
 
     def get_versions(self, force=False):
-        """get version information from the control and return as dictionary"""
+        """Get all version information, result is bufferd since it is also used internaly. With parameter force it is
+        possible to manualy re-read the information form the control
+
+        :param bool force: if Ture the information is read even if it is already buffered
+        :returns: dictionary with version text for control type, nc software, plc software, software options etc.
+        :rtype: dict
+        """
         if self._versions is not None and force is False:
             logging.debug(
                 'version info already in memory, return previous values')
@@ -582,8 +615,12 @@ class LSV2():
         return self._versions
 
     def get_program_status(self):
-        """reads status of the currently active program.
-           See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1"""
+        """Get status code of currently active program
+        See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
+
+        :returns: status code or False if something went wrong
+        :rtype: int
+        """
         self.login(login=LSV2.LOGIN_DNC)
 
         payload = bytearray()
@@ -602,7 +639,12 @@ class LSV2():
 
     @staticmethod
     def get_program_status_text(code):
-        """map status code to text"""
+        """Translate status code of program state to text
+
+        :param int code: status code of program state
+        :returns: readable text for execution state
+        :rtype: str
+        """
         return {LSV2.PGM_STATE_STARTED: 'Program started',
                 LSV2.PGM_STATE_STOPPED: 'Program stopped',
                 LSV2.PGM_STATE_FINISHED: 'Program finished',
@@ -614,8 +656,12 @@ class LSV2():
                 LSV2.PGM_STATE_UNDEFINED: 'Program state undefined'}.get(code, 'Unknown Program state')
 
     def get_program_stack(self):
-        """reads the path of the currently active programs and the line number of the execution.
-           See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1"""
+        """Get path of currently active nc program(s) and current line number
+        See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
+
+        :returns: dictionary with line number, main program and current program or False if something went wrong
+        :rtype: dict
+        """
         self.login(login=LSV2.LOGIN_DNC)
 
         payload = bytearray()
@@ -637,8 +683,12 @@ class LSV2():
         return False
 
     def get_execution_status(self):
-        """reads the execution status.
-           See https://github.com/drunsinn/pyLSV2/issues/1"""
+        """Get status code of program state to text
+        See https://github.com/drunsinn/pyLSV2/issues/1
+
+        :returns: status code or False if something went wrong
+        :rtype: int
+        """
         self.login(login=LSV2.LOGIN_DNC)
 
         payload = bytearray()
@@ -655,8 +705,13 @@ class LSV2():
 
     @staticmethod
     def get_execution_status_text(code):
-        """map status code to text
-           See https://github.com/drunsinn/pyLSV2/issues/1"""
+        """Translate status code of execution state to text
+        See https://github.com/drunsinn/pyLSV2/issues/1
+
+        :param int code: status code of execution state
+        :returns: readable text for execution state
+        :rtype: str
+        """
         return {LSV2.EXEC_STATE_MANUAL: 'Manual execution',
                 LSV2.EXEC_STATE_MDI: 'MDI execution',
                 LSV2.EXEC_STATE_PASS_REFERENCES: 'Pass References execution',
