@@ -1237,7 +1237,7 @@ class LSV2():
             payload.extend(struct.pack('!B', count * mem_byte_count))
             result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
             if result:
-                logging.debug('read %d value(s) from address %d', count, address + i * mem_byte_count)
+                logging.debug('read %d value(s) from address %d', count, address)
                 for i in range(0, len(result), mem_byte_count):
                     plc_values.append(struct.unpack(unpack_string, result[i:i+mem_byte_count])[0])
             else:
