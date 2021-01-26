@@ -14,4 +14,7 @@ def pytest_addoption(parser):
 @pytest.fixture
 def address(request):
     """process commandline option 'address'"""
-    return request.config.getoption("--address")
+    par = request.config.getoption("--address")
+    if par is None:
+        par = '192.168.56.101'
+    return par
