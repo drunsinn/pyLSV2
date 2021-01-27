@@ -5,9 +5,9 @@
 import pyLSV2
 
 
-def test_login(address):
+def test_login(address, timeout):
     """test to see if reading of plc data works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_MARKER, count=1) is not False
