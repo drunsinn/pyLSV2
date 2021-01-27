@@ -151,11 +151,12 @@ DNC login is only possible if the option is set on the control, without the opti
 
 # Testing
 To run the test you either need a machine or a programming station. The controls has to be on and the 
-PLC programm has to be running. You can add the IP-Address as a parameter
+PLC programm has to be running. You can add the IP-Address and timeout as a parameter
 ```
-pytest --address=192.168.56.103
+pytest --address=192.168.56.103 --timeout=0.1
 ```
 
 # Resources
 https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
+
 https://de.industryarena.com/heidenhain/forum
