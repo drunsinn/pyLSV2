@@ -27,5 +27,9 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
+        msgfmt -o ./locales/en/LC_MESSAGES/error_text.mo ./locales/en/LC_MESSAGES/error_text.po
+        msgfmt -o ./locales/en/LC_MESSAGES/message_text.mo ./locales/en/LC_MESSAGES/message_text.po
+        msgfmt -o ./locales/de/LC_MESSAGES/error_text.mo ./locales/de/LC_MESSAGES/error_text.po
+        msgfmt -o ./locales/de/LC_MESSAGES/message_text.mo ./locales/de/LC_MESSAGES/message_text.po
         python setup.py sdist bdist_wheel
         twine upload dist/*
