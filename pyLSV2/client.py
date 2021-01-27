@@ -414,11 +414,11 @@ class LSV2():
             'successfully configured connection parameters and basic logins. selected buffer size is %d, use secure file send: %s', self._buffer_size, self._secure_file_send)
 
     def login(self, login, password=None):
-        """Request aditional access rights. To elevate this level a logon has to be performed. Some levels require a password.
+        """Request additional access rights. To elevate this level a logon has to be performed. Some levels require a password.
 
         :param str login: One of the known login strings
         :param str password: optional. Password for login
-        :returns: True if execution was succesfull
+        :returns: True if execution was successful
         :rtype: bool
         """
         if login in self._active_logins:
@@ -449,7 +449,7 @@ class LSV2():
         """Drop one or all access right. If no login is supplied all active access rights are dropped.
 
         :param str login: optional. One of the known login strings
-        :returns: True if execution was succesfull
+        :returns: True if execution was successful
         :rtype: bool
         """
         if login in self._known_logins or login is None:
@@ -482,7 +482,7 @@ class LSV2():
 
         :param int command: system command
         :param str parameter: optional. parameter payload for system command
-        :returns: True if execution was succesfull
+        :returns: True if execution was successful
         :rtype: bool
         """
         if command in self._known_sys_cmd:
@@ -497,10 +497,10 @@ class LSV2():
         return False
 
     def get_system_parameter(self, force=False):
-        """Get all version information, result is bufferd since it is also used internaly. With parameter force it is
-        possible to manualy re-read the information form the control
+        """Get all version information, result is bufferd since it is also used internally. With parameter force it is
+        possible to manually re-read the information form the control
 
-        :param bool force: if Ture the information is read even if it is already buffered
+        :param bool force: if True the information is read even if it is already buffered
         :returns: dictionary with system parameters like number of plc variables, supported lsv2 version etc.
         :rtype: dict
         """
@@ -564,10 +564,10 @@ class LSV2():
         return False
 
     def get_versions(self, force=False):
-        """Get all version information, result is bufferd since it is also used internaly. With parameter force it is
-        possible to manualy re-read the information form the control
+        """Get all version information, result is bufferd since it is also used internally. With parameter force it is
+        possible to manually re-read the information form the control
 
-        :param bool force: if Ture the information is read even if it is already buffered
+        :param bool force: if True the information is read even if it is already buffered
         :returns: dictionary with version text for control type, nc software, plc software, software options etc.
         :rtype: dict
         """
@@ -639,7 +639,7 @@ class LSV2():
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             pgm_state = struct.unpack('!H', result)[0]
-            logging.debug('succesfully read state of active program: %s',
+            logging.debug('successfuly read state of active program: %s',
                           self.get_program_status_text(pgm_state))
             return pgm_state
         else:
@@ -689,7 +689,7 @@ class LSV2():
             stack_info['Current_PGM'] = result[4:].split(
                 b'\x00')[1].decode().strip('\x00').replace('\\', '/')
             logging.debug(
-                'succesfully read active program stack and line number: %s', stack_info)
+                'successfuly read active program stack and line number: %s', stack_info)
             return stack_info
         else:
             logging.error(
@@ -722,7 +722,8 @@ class LSV2():
         """Translate status code of execution state to text
         See https://github.com/drunsinn/pyLSV2/issues/1
 
-        :param int code: status code of execution staautopte
+        :param int code: status code of execution status
+        :param str language: optional. language code for translation of text
         :returns: readable text for execution state
         :rtype: str
         """
@@ -736,10 +737,10 @@ class LSV2():
                 LSV2.EXEC_STATE_UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))
 
     def get_directory_info(self, remote_directory=None):
-        """Query information a the current working direcory on the control
+        """Query information a the current working directory on the control
 
         :param str remote_directory: optional. If set, working directory will be changed
-        :returns: dictionary with info about the directory or False if an error occured
+        :returns: dictionary with info about the directory or False if an error occurred
         :rtype: dict
         """
         if remote_directory is not None and not self.change_directory(remote_directory):
@@ -762,7 +763,7 @@ class LSV2():
             dir_info['Path'] = result[164:].decode().strip(
                 '\x00').replace('\\', '/')
             logging.debug(
-                'succesfully received directory information %s', dir_info)
+                'successfuly received directory information %s', dir_info)
 
             return dir_info
         else:
@@ -773,7 +774,7 @@ class LSV2():
         """Change the current working directoyon the control
 
         :param str remote_directory: path of directory on the control
-        :returns: True if changing of directory succeded
+        :returns: True if changing of directory succeeded
         :rtype: bool
         """
         dir_path = remote_directory.replace('\\', '/')
@@ -810,7 +811,7 @@ class LSV2():
                 '\x00').replace('\\', '/')
             file_info['Attributs'] = struct.unpack('!L', result[8:12])[0]
             logging.debug(
-                'succesfully received file information %s', file_info)
+                'successfuly received file information %s', file_info)
             return file_info
         else:
             logging.warning(
@@ -841,7 +842,7 @@ class LSV2():
             file_info['Attributs'] = struct.unpack('!L', entry[8:12])[0]
             dir_content.append(file_info)
         logging.debug(
-            'succesfully received directory information %s', dir_content)
+            'successfuly received directory information %s', dir_content)
         return dir_content
 
     def get_drive_info(self):
@@ -867,14 +868,14 @@ class LSV2():
                 drive_info['unknown'] = drive
                 drives_list.append(drive_info)
 
-        logging.debug('succesfully received drive information %s', drives_list)
+        logging.debug('successfuly received drive information %s', drives_list)
         return drives_list
 
     def make_directory(self, dir_path):
         """Create a directory on control. If necessary also creates parent directories
 
         :param str dir_path: path of directory on the control
-        :returns: True if creating of directory completed successfuly
+        :returns: True if creating of directory completed successfully
         :rtype: bool
         """
         path_parts = dir_path.replace(
@@ -888,7 +889,7 @@ class LSV2():
                 payload.extend(map(ord, path_to_check))
                 payload.append(0x00)  # terminate string
                 if self._send_recive_ack(command=LSV2.COMMAND_C_DM, payload=payload):
-                    logging.debug('Directory created succesfully')
+                    logging.debug('Directory created successfuly')
                 else:
                     raise Exception(
                         'an error occurred while creating directory {}'.format(dir_path))
@@ -900,7 +901,7 @@ class LSV2():
         """Delete empty directory on control
 
         :param str file_path: path of directory on the control
-        :returns: True if deleting of directory completed successfuly
+        :returns: True if deleting of directory completed successfully
         :rtype: bool
         """
         dir_path = dir_path.replace('\\', '/')
@@ -911,14 +912,14 @@ class LSV2():
             logging.warning(
                 'an error occurred while deleting directory %s, this might also indicate that it it does not exist', dir_path)
             return False
-        logging.debug('succesfully deleted directory %s', dir_path)
+        logging.debug('successfuly deleted directory %s', dir_path)
         return True
 
     def delete_file(self, file_path):
         """Delete file on control
 
         :param str file_path: path of file on the control
-        :returns: True if deleting of file completed successfuly
+        :returns: True if deleting of file completed successfully
         :rtype: bool
         """
         file_path = file_path.replace('\\', '/')
@@ -929,15 +930,15 @@ class LSV2():
             logging.warning(
                 'an error occurred while deleting file %s, this might also indicate that it it does not exist', file_path)
             return False
-        logging.debug('succesfully deleted file %s', file_path)
+        logging.debug('successfuly deleted file %s', file_path)
         return True
 
     def copy_local_file(self, source_path, target_path):
         """Copy file on control from one place to another
 
         :param str source_path: path of file on the control
-        :param str target_path: path fo target location
-        :returns: True if copying of file completed successfuly
+        :param str target_path: path of target location
+        :returns: True if copying of file completed successfully
         :rtype: bool
         """
         source_path = source_path.replace('\\', '/')
@@ -967,15 +968,15 @@ class LSV2():
             logging.warning(
                 'an error occurred copying file %s to %s', source_path, target_path)
             return False
-        logging.debug('succesfully copied file %s', source_path)
+        logging.debug('successfuly copied file %s', source_path)
         return True
 
     def move_local_file(self, source_path, target_path):
         """Move file on control from one place to another
 
         :param str source_path: path of file on the control
-        :param str target_path: path fo target location
-        :returns: True if moving of file completed successfuly
+        :param str target_path: path of target location
+        :returns: True if moving of file completed successfully
         :rtype: bool
         """
         source_path = source_path.replace('\\', '/')
@@ -1004,7 +1005,7 @@ class LSV2():
             logging.warning(
                 'an error occurred moving file %s to %s', source_path, target_path)
             return False
-        logging.debug('succesfully moved file %s', source_path)
+        logging.debug('successfuly moved file %s', source_path)
         return True
 
     def send_file(self, local_path, remote_path, override_file=False, binary_mode=False):
@@ -1014,7 +1015,7 @@ class LSV2():
         :param str local_path: local path of destination with or without file name
         :param bool override_file: flag if file should be replaced if it already exists
         :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is checked for known binary file type 
-        :returns: True if transfer completed successfuly
+        :returns: True if transfer completed successfully
         :rtype: bool
         """
         local_file = Path(local_path)
@@ -1118,7 +1119,7 @@ class LSV2():
         :param str local_path: local path of destination with or without file name
         :param bool override_file: flag if file should be replaced if it already exists
         :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is checked for known binary file type 
-        :returns: True if transfer completed successfuly
+        :returns: True if transfer completed successfully
         :rtype: bool
         """
 

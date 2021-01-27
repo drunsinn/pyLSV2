@@ -151,7 +151,7 @@ msgstr "wrong operating mode'"
 
 #: translate_error.py:134
 msgid "LSV2_ERROR_T_ER_NO_NEXT_ERROR"
-msgstr "no next error availible"
+msgstr "no next error available"
 
 #: translate_error.py:135
 msgid "LSV2_ERROR_T_ER_ACCESS_TIMEOUT"
@@ -195,7 +195,7 @@ msgstr "could not activate file"
 
 #: translate_error.py:145
 msgid "LSV2_ERROR_T_ER_DSP_CHANNEL"
-msgstr "DSP channel not availible"
+msgstr "DSP channel not available"
 
 #: translate_error.py:146
 msgid "LSV2_ERROR_T_ER_DSP_PARA"
@@ -231,7 +231,7 @@ msgstr "remanten PLC memory was cleared"
 
 #: translate_error.py:154
 msgid "LSV2_ERROR_T_ER_OSZI_CHSEL"
-msgstr "chanel selection for remote scope incorrect"
+msgstr "channel selection for remote scope incorrect"
 
 #: translate_error.py:155
 msgid "LSV2_ERROR_LSV2_BUSY"
@@ -319,7 +319,7 @@ msgstr "buffer overrund, boude rate to low"
 
 #: translate_error.py:176
 msgid "LSV2_ERROR_T_BD_FD"
-msgstr "block transfer finished successfuly"
+msgstr "block transfer finished successfully"
 
 #: translate_error.py:177
 msgid "LSV2_ERROR_T_USER_ERROR"
