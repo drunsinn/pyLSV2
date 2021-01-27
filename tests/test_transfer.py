@@ -58,6 +58,6 @@ def test_file_transfer_binary(address):
                 hasher.update(buf)
                 h_d = hasher.hexdigest()
                 digests.append(h_d)
-        assert digests[0] is digests[1]
+        assert (digests[0] == digests[1]) is True
 
     lsv2.disconnect()
