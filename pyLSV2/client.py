@@ -11,6 +11,7 @@
    Everything related to PLC or unknown/untested System functions was left out as these function
    might compromise the control.
 """
+import os
 import struct
 import logging
 import datetime
@@ -655,8 +656,9 @@ class LSV2():
         :returns: readable text for execution state
         :rtype: str
         """
+        locale_path = os.path.dirname(__file__) + '/locales'
         translate = gettext.translation(
-            'message_text', localedir='./locales', languages=[language], fallback=True)
+            'message_text', localedir=locale_path, languages=[language], fallback=True)
         return {LSV2.PGM_STATE_STARTED: translate.gettext('PGM_STATE_STARTED'),
                 LSV2.PGM_STATE_STOPPED: translate.gettext('PGM_STATE_STOPPED'),
                 LSV2.PGM_STATE_FINISHED: translate.gettext('PGM_STATE_FINISHED'),
@@ -727,8 +729,9 @@ class LSV2():
         :returns: readable text for execution state
         :rtype: str
         """
+        locale_path = os.path.dirname(__file__) + '/locales'
         translate = gettext.translation(
-            'message_text', localedir='./locales', languages=[language], fallback=True)
+            'message_text', localedir=locale_path, languages=[language], fallback=True)
         return {LSV2.EXEC_STATE_MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
                 LSV2.EXEC_STATE_MDI: translate.gettext('EXEC_STATE_MDI'),
                 LSV2.EXEC_STATE_PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),

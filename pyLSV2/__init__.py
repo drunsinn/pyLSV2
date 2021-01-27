@@ -3,4 +3,4 @@
 """A pure Python3 implementation of the LSV2 protocol"""
 from .client import LSV2
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'

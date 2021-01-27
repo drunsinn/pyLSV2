@@ -25,7 +25,7 @@ jobs:
     - name: msgfmt
       uses: whtsky/msgfmt-action@20190305
       env:
-        WORKDIR: "locales"
+        WORKDIR: "pyLSV2/locales"
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}

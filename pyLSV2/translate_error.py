@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """error code definitions and decoding"""
 import gettext
+import os
 
 # Error map
 LSV2_ERROR_T_ER_BAD_FORMAT = 20
@@ -83,18 +84,19 @@ LSV2_ERROR_T_BD_FD = 200
 LSV2_ERROR_T_USER_ERROR = 255
 
 
-def get_error_text(error_type, error_code, lang='en'):
+def get_error_text(error_type, error_code, language='en'):
     """Parse error type and error code and return the error message.
 
     :param int error_type: type of error code.
     :param int error_code: code of error message.
-    :param str lang: language code for message.
+    :param str language: language code for message.
     :raise: NotImplementedError if error type is != 1
     :return: error message in selected language
     :rtype: str
     """
+    locale_path = os.path.dirname(__file__) + '/locales'
     translate = gettext.translation(
-        'error_text', localedir='./locales', languages=[lang], fallback=True)
+        'error_text', localedir=locale_path, languages=[language], fallback=True)
     _ = translate.gettext
 
     if error_type != 1:
