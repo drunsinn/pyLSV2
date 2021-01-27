@@ -14,6 +14,7 @@
 import struct
 import logging
 import datetime
+import gettext
 from pathlib import Path
 from .translate_error import get_error_text
 from .low_level_com import LLLSV2Com
@@ -28,9 +29,9 @@ class LSV2():
     DRIVE_LOG = 'LOG:'
 
     BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
-        '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi', '.he', '.ioc',
-        '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf', '.pdf', '.png', '.pyc', '.s',
-        '.sds', '.sk', '.str', '.xml', '.xls', '.xrs', '.zip')
+                 '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi', '.he', '.ioc',
+                 '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf', '.pdf', '.png', '.pyc', '.s',
+                 '.sds', '.sk', '.str', '.xml', '.xls', '.xrs', '.zip')
 
     # const for login
     LOGIN_INSPECT = 'INSPECT'  # nur lesende Funktionen ausführbar
@@ -100,10 +101,10 @@ class LSV2():
     COMMAND_R_FL = 'R_FL'
 
     # COMMAND_R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
-    
+
     # R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count
     COMMAND_R_MB = 'R_MB'
-    
+
     # COMMAND_R_MC = 'R_MC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
@@ -224,7 +225,7 @@ class LSV2():
     COMMAND_R_DR_MODE_DRIVES = 0x02
 
     C_FL_MODE_BINARY = 0x01  # is set by TNCcmd, seems to work for all filetypes
-    R_FL_MODE_BINARY = 0x01 # enable binary file transfer, see also C_FL_MODE_BINARY
+    R_FL_MODE_BINARY = 0x01  # enable binary file transfer, see also C_FL_MODE_BINARY
 
     # Memory types for reading from PLC memory
     PLC_MEM_TYPE_MARKER = 1
@@ -293,7 +294,8 @@ class LSV2():
         """takes a command and payload, sends it to the control and checks
             if the response is as expected. Returns content if not an error"""
         if expected_response is None:
-            self._llcom.telegram(command, payload, buffer_size=self._buffer_size, wait_for_response=False)
+            self._llcom.telegram(
+                command, payload, buffer_size=self._buffer_size, wait_for_response=False)
             logging.info(
                 'command %s sent successfully, did not check for response', command)
             return True
@@ -367,31 +369,37 @@ class LSV2():
             if self.set_system_command(LSV2.SYSCMD_SET_BUF4096):
                 self._buffer_size = 4096
             else:
-                raise Exception('error in communication while setting buffer size to 4096')
+                raise Exception(
+                    'error in communication while setting buffer size to 4096')
         elif 3072 <= max_block_length < 4096:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF3072):
                 self._buffer_size = 3072
             else:
-                raise Exception('error in communication while setting buffer size to 3072')
+                raise Exception(
+                    'error in communication while setting buffer size to 3072')
         elif 2048 <= max_block_length < 3072:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF2048):
                 self._buffer_size = 2048
             else:
-                raise Exception('error in communication while setting buffer size to 2048')
+                raise Exception(
+                    'error in communication while setting buffer size to 2048')
         elif 1024 <= max_block_length < 2048:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF1024):
                 self._buffer_size = 1024
             else:
-                raise Exception('error in communication while setting buffer size to 1024')
+                raise Exception(
+                    'error in communication while setting buffer size to 1024')
         elif 512 <= max_block_length < 1024:
             if self.set_system_command(LSV2.SYSCMD_SET_BUF512):
                 self._buffer_size = 512
             else:
-                raise Exception('error in communication while setting buffer size to 512')
+                raise Exception(
+                    'error in communication while setting buffer size to 512')
         elif 256 <= max_block_length < 512:
             self._buffer_size = 256
         else:
-            logging.error('could not decide on a buffer size for maximum message length of %d', max_block_length)
+            logging.error(
+                'could not decide on a buffer size for maximum message length of %d', max_block_length)
             raise Exception('unknown buffer size')
 
         if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
@@ -431,7 +439,7 @@ class LSV2():
         if not self._send_recive_ack(LSV2.COMMAND_A_LG, payload):
             logging.error('an error occurred during login for login %s', login)
             return False
-        
+
         self._active_logins.append(login)
 
         logging.info('login executed successfully for login %s', login)
@@ -511,7 +519,8 @@ class LSV2():
                 info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
             elif message_length == 124:
                 #raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
-                logging.warning('messages with length 124 might not be decoded correctly!')
+                logging.warning(
+                    'messages with length 124 might not be decoded correctly!')
                 info_list = struct.unpack('!14L8B8L2BH4B2L2HLL', result)
             else:
                 raise ValueError('unexpected length {} of message content {}'.format(
@@ -638,22 +647,25 @@ class LSV2():
         return False
 
     @staticmethod
-    def get_program_status_text(code):
+    def get_program_status_text(code, language='en'):
         """Translate status code of program state to text
 
         :param int code: status code of program state
+        :param str language: optional. language code for translation of text
         :returns: readable text for execution state
         :rtype: str
         """
-        return {LSV2.PGM_STATE_STARTED: 'Program started',
-                LSV2.PGM_STATE_STOPPED: 'Program stopped',
-                LSV2.PGM_STATE_FINISHED: 'Program finished',
-                LSV2.PGM_STATE_CANCELLED: 'Program cancelled',
-                LSV2.PGM_STATE_INTERRUPTED: 'Program interrupted by user',
-                LSV2.PGM_STATE_ERROR: 'Program interrupted with error',
-                LSV2.PGM_STATE_ERROR_CLEARED: 'Program interrupted with error, error was cleared',
-                LSV2.PGM_STATE_IDLE: 'No Program running',
-                LSV2.PGM_STATE_UNDEFINED: 'Program state undefined'}.get(code, 'Unknown Program state')
+        translate = gettext.translation(
+            'message_text', localedir='./locales', languages=[language], fallback=True)
+        return {LSV2.PGM_STATE_STARTED: translate.gettext('PGM_STATE_STARTED'),
+                LSV2.PGM_STATE_STOPPED: translate.gettext('PGM_STATE_STOPPED'),
+                LSV2.PGM_STATE_FINISHED: translate.gettext('PGM_STATE_FINISHED'),
+                LSV2.PGM_STATE_CANCELLED: translate.gettext('PGM_STATE_CANCELLED'),
+                LSV2.PGM_STATE_INTERRUPTED: translate.gettext('PGM_STATE_INTERRUPTED'),
+                LSV2.PGM_STATE_ERROR: translate.gettext('PGM_STATE_ERROR'),
+                LSV2.PGM_STATE_ERROR_CLEARED: translate.gettext('PGM_STATE_ERROR_CLEARED'),
+                LSV2.PGM_STATE_IDLE: translate.gettext('PGM_STATE_IDLE'),
+                LSV2.PGM_STATE_UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
 
     def get_program_stack(self):
         """Get path of currently active nc program(s) and current line number
@@ -672,8 +684,10 @@ class LSV2():
         if result:
             stack_info = dict()
             stack_info['Line'] = struct.unpack('!L', result[:4])[0]
-            stack_info['Main_PGM'] = result[4:].split(b'\x00')[0].decode().strip('\x00').replace('\\', '/')
-            stack_info['Current_PGM'] = result[4:].split(b'\x00')[1].decode().strip('\x00').replace('\\', '/')
+            stack_info['Main_PGM'] = result[4:].split(
+                b'\x00')[0].decode().strip('\x00').replace('\\', '/')
+            stack_info['Current_PGM'] = result[4:].split(
+                b'\x00')[1].decode().strip('\x00').replace('\\', '/')
             logging.debug(
                 'succesfully read active program stack and line number: %s', stack_info)
             return stack_info
@@ -704,20 +718,22 @@ class LSV2():
         return False
 
     @staticmethod
-    def get_execution_status_text(code):
+    def get_execution_status_text(code, language='en'):
         """Translate status code of execution state to text
         See https://github.com/drunsinn/pyLSV2/issues/1
 
-        :param int code: status code of execution state
+        :param int code: status code of execution staautopte
         :returns: readable text for execution state
         :rtype: str
         """
-        return {LSV2.EXEC_STATE_MANUAL: 'Manual execution',
-                LSV2.EXEC_STATE_MDI: 'MDI execution',
-                LSV2.EXEC_STATE_PASS_REFERENCES: 'Pass References execution',
-                LSV2.EXEC_STATE_SINGLE_STEP: 'Single Step execution',
-                LSV2.EXEC_STATE_AUTOMATIC: 'Automatic execution',
-                LSV2.EXEC_STATE_UNDEFINED: 'Execution state undefined'}.get(code, 'Unknown Execution state')
+        translate = gettext.translation(
+            'message_text', localedir='./locales', languages=[language], fallback=True)
+        return {LSV2.EXEC_STATE_MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
+                LSV2.EXEC_STATE_MDI: translate.gettext('EXEC_STATE_MDI'),
+                LSV2.EXEC_STATE_PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
+                LSV2.EXEC_STATE_SINGLE_STEP: translate.gettext('EXEC_STATE_SINGLE_STEP'),
+                LSV2.EXEC_STATE_AUTOMATIC: translate.gettext('EXEC_STATE_AUTOMATIC'),
+                LSV2.EXEC_STATE_UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))
 
     def get_directory_info(self, remote_directory=None):
         """Query information a the current working direcory on the control
@@ -1277,26 +1293,35 @@ class LSV2():
         if mem_type is LSV2.PLC_MEM_TYPE_STRING:
             for i in range(count):
                 payload = bytearray()
-                payload.extend(struct.pack('!L', start_address + address + i * mem_byte_count))
+                payload.extend(struct.pack(
+                    '!L', start_address + address + i * mem_byte_count))
                 payload.extend(struct.pack('!B', mem_byte_count))
-                result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
+                result = self._send_recive(
+                    LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
                 if result:
-                    logging.debug('read string %d', address + i * mem_byte_count)
-                    plc_values.append(struct.unpack(unpack_string, result)[0].rstrip(b'\x00').decode('utf8'))
+                    logging.debug('read string %d', address +
+                                  i * mem_byte_count)
+                    plc_values.append(struct.unpack(unpack_string, result)[
+                                      0].rstrip(b'\x00').decode('utf8'))
                 else:
-                    logging.error('faild to read string from address %d', start_address + address + i * mem_byte_count)
+                    logging.error('faild to read string from address %d',
+                                  start_address + address + i * mem_byte_count)
                     return False
         else:
             payload = bytearray()
             payload.extend(struct.pack('!L', start_address + address))
             payload.extend(struct.pack('!B', count * mem_byte_count))
-            result = self._send_recive(LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
+            result = self._send_recive(
+                LSV2.COMMAND_R_MB, LSV2.RESPONSE_S_MB, payload=payload)
             if result:
-                logging.debug('read %d value(s) from address %d', count, address)
+                logging.debug('read %d value(s) from address %d',
+                              count, address)
                 for i in range(0, len(result), mem_byte_count):
-                    plc_values.append(struct.unpack(unpack_string, result[i:i+mem_byte_count])[0])
+                    plc_values.append(struct.unpack(
+                        unpack_string, result[i:i+mem_byte_count])[0])
             else:
-                logging.error('faild to read string from address %d', start_address + address)
+                logging.error('faild to read string from address %d',
+                              start_address + address)
                 return False
         return plc_values
 
