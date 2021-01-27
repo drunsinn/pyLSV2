@@ -21,6 +21,7 @@ def address(request):
         par = '192.168.56.101'
     return par
 
+
 @pytest.fixture
 def timeout(request):
     """process commandline option 'timeout'"""
