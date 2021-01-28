@@ -1295,6 +1295,7 @@ class LSV2():
         plc_values = list()
 
         if mem_type is LSV2.PLC_MEM_TYPE_STRING:
+            address = address + (count - 1) * mem_byte_count # advance address if necessary
             for i in range(count):
                 payload = bytearray()
                 payload.extend(struct.pack(
