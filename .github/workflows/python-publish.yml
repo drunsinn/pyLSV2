@@ -23,7 +23,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
     - name: msgfmt
-      uses: whtsky/msgfmt-action@20190305
+      uses: whtsky/msgfmt-action@6b2181f051b002182d01a1e1f1aff216230c5a4d
       env:
         WORKDIR: "pyLSV2/locales"
     - name: Build and publish
