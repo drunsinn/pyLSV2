@@ -1,3 +1,14 @@
+# macOS General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -123,5 +134,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE Settings
 .vscode/settings.json
-debug.py

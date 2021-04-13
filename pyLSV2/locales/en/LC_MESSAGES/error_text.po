@@ -1,0 +1,330 @@
+# pyLSV2 error text translation file.
+# Copyright (C) 2021
+# This file is distributed under the same MIT license as pyLSV2 package.
+# drunsinn <dr.unsinn@googlemail.com>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-01-26 19:44+0100\n"
+"PO-Revision-Date: 2021-01-26 19:44+0100\n"
+"Last-Translator: dr.unsinn@googlemail.com\n"
+"Language-Team: English dr.unsinn@googlemail.com\n"
+"Language: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: translate_error.py:101
+msgid "LSV2_ERROR_T_ER_BAD_FORMAT"
+msgstr "format error in telegram"
+
+#: translate_error.py:102
+msgid "LSV2_ERROR_T_ER_UNEXPECTED_TELE"
+msgstr "telegram not supported by protocol"
+
+#: translate_error.py:103
+msgid "LSV2_ERROR_T_ER_UNKNOWN_TELE"
+msgstr "unknown telegram type"
+
+#: translate_error.py:104
+msgid "LSV2_ERROR_T_ER_NO_PRIV"
+msgstr "no privilege for execution"
+
+#: translate_error.py:105
+msgid "LSV2_ERROR_T_ER_WRONG_PARA"
+msgstr "wrong parameter"
+
+#: translate_error.py:106
+msgid "LSV2_ERROR_T_ER_BREAK"
+msgstr "stopped by user"
+
+#: translate_error.py:107
+msgid "LSV2_ERROR_T_ER_BAD_KEY"
+msgstr "bad key number for login"
+
+#: translate_error.py:108
+msgid "LSV2_ERROR_T_ER_BAD_FNAME"
+msgstr "bad file or path name"
+
+#: translate_error.py:109
+msgid "LSV2_ERROR_T_ER_NO_FILE"
+msgstr "file does not exist"
+
+#: translate_error.py:110
+msgid "LSV2_ERROR_T_ER_OPEN_FILE"
+msgstr "could not open file"
+
+#: translate_error.py:111
+msgid "LSV2_ERROR_T_ER_FILE_EXISTS"
+msgstr "file already exists"
+
+#: translate_error.py:112
+msgid "LSV2_ERROR_T_ER_BAD_FILE"
+msgstr "file type unknown or not allowed"
+
+#: translate_error.py:113
+msgid "LSV2_ERROR_T_ER_NO_DELETE"
+msgstr "could not delete file"
+
+#: translate_error.py:114
+msgid "LSV2_ERROR_T_ER_NO_NEW_FILE"
+msgstr "could not create file"
+
+#: translate_error.py:115
+msgid "LSV2_ERROR_T_ER_NO_CHANGE_ATT"
+msgstr "file is read only"
+
+#: translate_error.py:116
+msgid "LSV2_ERROR_T_ER_BAD_EMULATEKEY"
+msgstr "bad key emulation"
+
+#: translate_error.py:117
+msgid "LSV2_ERROR_T_ER_NO_MP"
+msgstr "machine parameter wrong or not supported"
+
+#: translate_error.py:118
+msgid "LSV2_ERROR_T_ER_NO_WIN"
+msgstr "wrong window or screen number"
+
+#: translate_error.py:119
+msgid "LSV2_ERROR_T_ER_WIN_NOT_AKTIV"
+msgstr "window not active"
+
+#: translate_error.py:120
+msgid "LSV2_ERROR_T_ER_ANZ"
+msgstr "error while execution the view task"
+
+#: translate_error.py:121
+msgid "LSV2_ERROR_T_ER_FONT_NOT_DEFINED"
+msgstr "font not defined"
+
+#: translate_error.py:122
+msgid "LSV2_ERROR_T_ER_FILE_ACCESS"
+msgstr "error during file access"
+
+#: translate_error.py:123
+msgid "LSV2_ERROR_T_ER_WRONG_DNC_STATUS"
+msgstr "wrong telegram for dnc state"
+
+#: translate_error.py:124
+msgid "LSV2_ERROR_T_ER_CHANGE_PATH"
+msgstr "could not change directory"
+
+#: translate_error.py:125
+msgid "LSV2_ERROR_T_ER_NO_RENAME"
+msgstr "could not rename file"
+
+#: translate_error.py:126
+msgid "LSV2_ERROR_T_ER_NO_LOGIN"
+msgstr "login not possible"
+
+#: translate_error.py:127
+msgid "LSV2_ERROR_T_ER_BAD_PARAMETER"
+msgstr "bad parameter in telegram"
+
+#: translate_error.py:128
+msgid "LSV2_ERROR_T_ER_BAD_NUMBER_FORMAT"
+msgstr "bad number format"
+
+#: translate_error.py:129
+msgid "LSV2_ERROR_T_ER_BAD_MEMADR"
+msgstr "bad memory address"
+
+#: translate_error.py:130
+msgid "LSV2_ERROR_T_ER_NO_FREE_SPACE"
+msgstr "not enough free space"
+
+#: translate_error.py:131
+msgid "LSV2_ERROR_T_ER_DEL_DIR"
+msgstr "could not delete directory"
+
+#: translate_error.py:132
+msgid "LSV2_ERROR_T_ER_NO_DIR"
+msgstr "directory does not exist"
+
+#: translate_error.py:133
+msgid "LSV2_ERROR_T_ER_OPERATING_MODE"
+msgstr "wrong operating mode'"
+
+#: translate_error.py:134
+msgid "LSV2_ERROR_T_ER_NO_NEXT_ERROR"
+msgstr "no next error available"
+
+#: translate_error.py:135
+msgid "LSV2_ERROR_T_ER_ACCESS_TIMEOUT"
+msgstr "timeout while waiting for data"
+
+#: translate_error.py:136
+msgid "LSV2_ERROR_T_ER_NO_WRITE_ACCESS"
+msgstr "no write access"
+
+#: translate_error.py:137
+msgid "LSV2_ERROR_T_ER_STIB"
+msgstr "could not start DNC mode while machine is active"
+
+#: translate_error.py:138
+msgid "LSV2_ERROR_T_ER_REF_NECESSARY"
+msgstr "could not start DNC mode while axes are not referenced"
+
+#: translate_error.py:139
+msgid "LSV2_ERROR_T_ER_PLC_BUF_FULL"
+msgstr "PLC buffer full"
+
+#: translate_error.py:140
+msgid "LSV2_ERROR_T_ER_NOT_FOUND"
+msgstr "information not found"
+
+#: translate_error.py:141
+msgid "LSV2_ERROR_T_ER_WRONG_FILE"
+msgstr "wrong file type or format"
+
+#: translate_error.py:142
+msgid "LSV2_ERROR_T_ER_NO_MATCH"
+msgstr "PLC binary code does not macht control"
+
+#: translate_error.py:143
+msgid "LSV2_ERROR_T_ER_TOO_MANY_TPTS"
+msgstr "too many trace points"
+
+#: translate_error.py:144
+msgid "LSV2_ERROR_T_ER_NOT_ACTIVATED"
+msgstr "could not activate file"
+
+#: translate_error.py:145
+msgid "LSV2_ERROR_T_ER_DSP_CHANNEL"
+msgstr "DSP channel not available"
+
+#: translate_error.py:146
+msgid "LSV2_ERROR_T_ER_DSP_PARA"
+msgstr "could not read requested DSP data"
+
+#: translate_error.py:147
+msgid "LSV2_ERROR_T_ER_OUT_OF_RANGE"
+msgstr "parameter out of range"
+
+#: translate_error.py:148
+msgid "LSV2_ERROR_T_ER_INVALID_AXIS"
+msgstr "invalid axis"
+
+#: translate_error.py:149
+msgid "LSV2_ERROR_T_ER_STREAMING_ACTIVE"
+msgstr "axis streaming already active"
+
+#: translate_error.py:150
+msgid "LSV2_ERROR_T_ER_NO_STREAMING_ACTIVE"
+msgstr "no axis streaming active"
+
+#: translate_error.py:151
+msgid "LSV2_ERROR_T_ER_TO_MANY_OPEN_TCP"
+msgstr "to many connections"
+
+#: translate_error.py:152
+msgid "LSV2_ERROR_T_ER_NO_FREE_HANDLE"
+msgstr "no free LSV2 handle"
+
+#: translate_error.py:153
+msgid "LSV2_ERROR_T_ER_PLCMEMREMA_CLEAR"
+msgstr "remanten PLC memory was cleared"
+
+#: translate_error.py:154
+msgid "LSV2_ERROR_T_ER_OSZI_CHSEL"
+msgstr "channel selection for remote scope incorrect"
+
+#: translate_error.py:155
+msgid "LSV2_ERROR_LSV2_BUSY"
+msgstr "transmisson busy"
+
+#: translate_error.py:156
+msgid "LSV2_ERROR_LSV2_X_BUSY"
+msgstr "last X_PC telegram was not acknowledged"
+
+#: translate_error.py:157
+msgid "LSV2_ERROR_LSV2_NOCONNECT"
+msgstr "no connection"
+
+#: translate_error.py:158
+msgid "LSV2_ERROR_LSV2_BAD_BACKUP_FILE"
+msgstr "backup file corrupt"
+
+#: translate_error.py:159
+msgid "LSV2_ERROR_LSV2_RESTORE_NOT_FOUND"
+msgstr "file not fould in backup"
+
+#: translate_error.py:160
+msgid "LSV2_ERROR_LSV2_DLL_NOT_INSTALLED"
+msgstr "ASCII-binary converter dll not installed"
+
+#: translate_error.py:161
+msgid "LSV2_ERROR_LSV2_BAD_CONVERT_DLL"
+msgstr "ACII-binary converter dll not found or corrupt"
+
+#: translate_error.py:162
+msgid "LSV2_ERROR_LSV2_BAD_BACKUP_LIST"
+msgstr "backup list file corrupt"
+
+#: translate_error.py:163
+msgid "LSV2_ERROR_LSV2_UNKNOWN_ERROR"
+msgstr "unknown error"
+
+#: translate_error.py:164
+msgid "LSV2_ERROR_T_BD_NO_NEW_FILE"
+msgstr "could not create new file"
+
+#: translate_error.py:165
+msgid "LSV2_ERROR_T_BD_NO_FREE_SPACE"
+msgstr "not enough free memory for file"
+
+#: translate_error.py:166
+msgid "LSV2_ERROR_T_BD_FILE_NOT_ALLOWED"
+msgstr "file not allowed"
+
+#: translate_error.py:167
+msgid "LSV2_ERROR_T_BD_BAD_FORMAT"
+msgstr "no LF or T_FD sent"
+
+#: translate_error.py:168
+msgid "LSV2_ERROR_T_BD_BAD_BLOCK"
+msgstr "error in program block"
+
+#: translate_error.py:169
+msgid "LSV2_ERROR_T_BD_END_PGM"
+msgstr "end of program already reached"
+
+#: translate_error.py:170
+msgid "LSV2_ERROR_T_BD_ANZ"
+msgstr "error in execution of display task"
+
+#: translate_error.py:171
+msgid "LSV2_ERROR_T_BD_WIN_NOT_DEFINED"
+msgstr "window not defined"
+
+#: translate_error.py:172
+msgid "LSV2_ERROR_T_BD_WIN_CHANGED"
+msgstr "window has changed"
+
+#: translate_error.py:173
+msgid "LSV2_ERROR_T_BD_DNC_WAIT"
+msgstr "DNC-buffer full, file transfer interrupted"
+
+#: translate_error.py:174
+msgid "LSV2_ERROR_T_BD_CANCELLED"
+msgstr "transfer canceled by user"
+
+#: translate_error.py:175
+msgid "LSV2_ERROR_T_BD_OSZI_OVERRUN"
+msgstr "buffer overrund, boude rate to low"
+
+#: translate_error.py:176
+msgid "LSV2_ERROR_T_BD_FD"
+msgstr "block transfer finished successfully"
+
+#: translate_error.py:177
+msgid "LSV2_ERROR_T_USER_ERROR"
+msgstr "error of type 2 with error message"
+
+#: translate_error.py:177
+msgid "LSV2_ERROR_UNKNOWN_CODE"
+msgstr "Unknown Error code"

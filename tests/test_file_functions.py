@@ -5,9 +5,9 @@
 import pyLSV2
 
 
-def test_read_info(address):
+def test_read_info(address, timeout):
     """test if reading of file information works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
     assert lsv2.change_directory(remote_directory='TNC:/nc_prog') is True
     assert lsv2.get_directory_info() is not False
@@ -17,9 +17,9 @@ def test_read_info(address):
     lsv2.disconnect()
 
 
-def test_directory_functions(address):
+def test_directory_functions(address, timeout):
     """test if functions to change, create and delete directorys work"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
     assert lsv2.change_directory('TNC:/nc_prog') is True
     assert lsv2.make_directory('TNC:/nc_prog/pyLSV2_test/T1/T2/T3') is True
@@ -37,9 +37,9 @@ def test_directory_functions(address):
     lsv2.disconnect()
 
 
-def test_remote_file_functions(address):
+def test_remote_file_functions(address, timeout):
     """test if functions for manipulating the remote file system work"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
     assert lsv2.make_directory('TNC:/nc_prog/pyLSV2_test') is True
     assert lsv2.change_directory('TNC:/nc_prog/pyLSV2_test') is True

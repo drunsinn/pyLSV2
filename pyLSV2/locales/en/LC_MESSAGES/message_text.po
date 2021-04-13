@@ -1,0 +1,86 @@
+# pyLSV2 message text translation file.
+# Copyright (C) 2021
+# This file is distributed under the same MIT license as pyLSV2 package.
+# drunsinn <dr.unsinn@googlemail.com>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-01-27 16:08+0100\n"
+"PO-Revision-Date: 2021-01-27 16:08+0100\n"
+"Last-Translator: dr.unsinn@googlemail.com\n"
+"Language-Team: English dr.unsinn@googlemail.com\n"
+"Language: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: client.py:651
+msgid "PGM_STATE_STARTED"
+msgstr "Program started"
+
+#: client.py:652
+msgid "PGM_STATE_STOPPED"
+msgstr "Program stopped"
+
+#: client.py:653
+msgid "PGM_STATE_FINISHED"
+msgstr "Program finished"
+
+#: client.py:654
+msgid "PGM_STATE_CANCELLED"
+msgstr "Program cancelled"
+
+#: client.py:655
+msgid "PGM_STATE_INTERRUPTED"
+msgstr "Program interrupted by user"
+
+#: client.py:656
+msgid "PGM_STATE_ERROR"
+msgstr "Program interrupted with error"
+
+#: client.py:657
+msgid "PGM_STATE_ERROR_CLEARED"
+msgstr "Program interrupted with error, error was cleared"
+
+#: client.py:658
+msgid "PGM_STATE_IDLE"
+msgstr "No Program running"
+
+#: client.py:659
+msgid "PGM_STATE_UNDEFINED"
+msgstr "Program state undefined"
+
+#: client.py:659
+msgid "PGM_STATE_UNKNOWN"
+msgstr "Unknown Program state"
+
+#: client.py:719
+msgid "EXEC_STATE_MANUAL"
+msgstr "Manual execution"
+
+#: client.py:720
+msgid "EXEC_STATE_MDI"
+msgstr "MDI execution"
+
+#: client.py:721
+msgid "EXEC_STATE_PASS_REFERENCES"
+msgstr "Pass References execution"
+
+#: client.py:722
+msgid "EXEC_STATE_SINGLE_STEP"
+msgstr "Single Step execution"
+
+#: client.py:723
+msgid "EXEC_STATE_AUTOMATIC"
+msgstr "Automatic execution"
+
+#: client.py:724
+msgid "EXEC_STATE_UNDEFINED"
+msgstr "Execution state undefined"
+
+#: client.py:724
+msgid "EXEC_STATE_UNKNOWN"
+msgstr "Unknown Execution state"

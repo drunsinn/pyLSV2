@@ -22,7 +22,7 @@ if __name__ == "__main__":
     print('Running LSV2 Version {LSV2_Version} with Flags {LSV2_Version_Flags}'.format(**con.get_system_parameter()))
 
     print('Drive Info: {}'.format(con.get_drive_info()))
-    print('Current Folder Info: {}'.format(con.get_directory_info()))
+    print('Current Folder {Path} Free Space: {Free Size} Attrib: {Dir_Attributs}'.format(**con.get_directory_info()))
 
     print('PLC Marker: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_MARKER, count=15)))
     print('PLC Word: {}'.format(con.read_plc_memory(address=6, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_WORD, count=10)))

@@ -43,7 +43,7 @@ class LLLSV2Com():
         """Establish connection to control
 
         :raise: Exception if connection times out.
-        rtype: None
+        :rtype: None
         """
         try:
             self._tcpsock.connect((self._host_ip, self._port))
@@ -58,7 +58,7 @@ class LLLSV2Com():
         """Close connection
         
         :raise: Exception if connection times out.
-        rtype: None
+        :rtype: None
         """
         try:
             self._tcpsock.close()
@@ -69,7 +69,7 @@ class LLLSV2Com():
         logging.debug('Connection to %s closed', self._host_ip)
 
     def telegram(self, command, payload=None, buffer_size=0, wait_for_response=True):
-        """Send LSV2 telegram and recive response if necesarry.
+        """Send LSV2 telegram and receive response if necessary.
 
         :param str command: command string.
         :param byte array payload: command payload.

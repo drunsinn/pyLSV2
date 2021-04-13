@@ -1,0 +1,330 @@
+# pyLSV2 error text translation file.
+# Copyright (C) 2021
+# This file is distributed under the same MIT license as pyLSV2 package.
+# drunsinn <dr.unsinn@googlemail.com>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-01-26 19:44+0100\n"
+"PO-Revision-Date: 2021-01-26 19:44+0100\n"
+"Last-Translator: dr.unsinn@googlemail.com\n"
+"Language-Team: Deutsch dr.unsinn@googlemail.com\n"
+"Language: Deutsch\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: translate_error.py:101
+msgid "LSV2_ERROR_T_ER_BAD_FORMAT"
+msgstr "Formatfehler im Telegramm"
+
+#: translate_error.py:102
+msgid "LSV2_ERROR_T_ER_UNEXPECTED_TELE"
+msgstr "gesendetes Telegram passt nicht zum Protokoll"
+
+#: translate_error.py:103
+msgid "LSV2_ERROR_T_ER_UNKNOWN_TELE"
+msgstr "Telegrammtyp nicht bekannt"
+
+#: translate_error.py:104
+msgid "LSV2_ERROR_T_ER_NO_PRIV"
+msgstr "Kein Privileg für Ausführung"
+
+#: translate_error.py:105
+msgid "LSV2_ERROR_T_ER_WRONG_PARA"
+msgstr "Parameter nicht zulässig"
+
+#: translate_error.py:106
+msgid "LSV2_ERROR_T_ER_BREAK"
+msgstr "Vom Benutzer abgebrochen"
+
+#: translate_error.py:107
+msgid "LSV2_ERROR_T_ER_BAD_KEY"
+msgstr "falsche Schlüsselzahl für Login"
+
+#: translate_error.py:108
+msgid "LSV2_ERROR_T_ER_BAD_FNAME"
+msgstr "Dateiname / Pfadname nicht zulässig"
+
+#: translate_error.py:109
+msgid "LSV2_ERROR_T_ER_NO_FILE"
+msgstr "Datei existiert nicht"
+
+#: translate_error.py:110
+msgid "LSV2_ERROR_T_ER_OPEN_FILE"
+msgstr "Datei kann nicht geöffnet werden"
+
+#: translate_error.py:111
+msgid "LSV2_ERROR_T_ER_FILE_EXISTS"
+msgstr "Datei existiert bereits"
+
+#: translate_error.py:112
+msgid "LSV2_ERROR_T_ER_BAD_FILE"
+msgstr "Dateityp darf nicht geladen werden (z.B. Programmname == Userzyklusname) oder Dateityp nicht bekannt oder Dateityp gesperrt"
+
+#: translate_error.py:113
+msgid "LSV2_ERROR_T_ER_NO_DELETE"
+msgstr "Datei kann nicht gelöscht werden"
+
+#: translate_error.py:114
+msgid "LSV2_ERROR_T_ER_NO_NEW_FILE"
+msgstr "Datei kann nicht angelegt werden"
+
+#: translate_error.py:115
+msgid "LSV2_ERROR_T_ER_NO_CHANGE_ATT"
+msgstr "Readonly Attrib. kann nicht verändert werden"
+
+#: translate_error.py:116
+msgid "LSV2_ERROR_T_ER_BAD_EMULATEKEY"
+msgstr "Tastenemulation fehlerhaft"
+
+#: translate_error.py:117
+msgid "LSV2_ERROR_T_ER_NO_MP"
+msgstr "Maschinenparameter nicht vorhanden oder nicht interpretierbar"
+
+#: translate_error.py:118
+msgid "LSV2_ERROR_T_ER_NO_WIN"
+msgstr "falsche Window- oder Screennummer"
+
+#: translate_error.py:119
+msgid "LSV2_ERROR_T_ER_WIN_NOT_AKTIV"
+msgstr "Window nicht aktiv"
+
+#: translate_error.py:120
+msgid "LSV2_ERROR_T_ER_ANZ"
+msgstr "Fehler bei Befehlsabarbeitung in der Anzeigetask"
+
+#: translate_error.py:121
+msgid "LSV2_ERROR_T_ER_FONT_NOT_DEFINED"
+msgstr "Anfrage eines nicht vorhandenen Fonts"
+
+#: translate_error.py:122
+msgid "LSV2_ERROR_T_ER_FILE_ACCESS"
+msgstr "Fehler beim Dateizugriff"
+
+#: translate_error.py:123
+msgid "LSV2_ERROR_T_ER_WRONG_DNC_STATUS"
+msgstr "Telegramm im aktuellen DNC-Zustand nicht zulässig"
+
+#: translate_error.py:124
+msgid "LSV2_ERROR_T_ER_CHANGE_PATH"
+msgstr "Verzeichniswechsel nicht möglich"
+
+#: translate_error.py:125
+msgid "LSV2_ERROR_T_ER_NO_RENAME"
+msgstr "Umbenennen nicht möglich"
+
+#: translate_error.py:126
+msgid "LSV2_ERROR_T_ER_NO_LOGIN"
+msgstr "Login mit angegebenem Privileg nicht möglich (z.B. dieses schon an andere Schnittstelle vergeben)"
+
+#: translate_error.py:127
+msgid "LSV2_ERROR_T_ER_BAD_PARAMETER"
+msgstr "Parameter im Telegram nicht o.k."
+
+#: translate_error.py:128
+msgid "LSV2_ERROR_T_ER_BAD_NUMBER_FORMAT"
+msgstr "Falsches Zahlenformat"
+
+#: translate_error.py:129
+msgid "LSV2_ERROR_T_ER_BAD_MEMADR"
+msgstr "Falsche Speicheradresse"
+
+#: translate_error.py:130
+msgid "LSV2_ERROR_T_ER_NO_FREE_SPACE"
+msgstr "Nicht genug Speicher"
+
+#: translate_error.py:131
+msgid "LSV2_ERROR_T_ER_DEL_DIR"
+msgstr "Verzeichnis kann nicht gelöscht werden"
+
+#: translate_error.py:132
+msgid "LSV2_ERROR_T_ER_NO_DIR"
+msgstr "Verzeichnis nicht vorhanden"
+
+#: translate_error.py:133
+msgid "LSV2_ERROR_T_ER_OPERATING_MODE"
+msgstr "Falsche Betriebsart"
+
+#: translate_error.py:134
+msgid "LSV2_ERROR_T_ER_NO_NEXT_ERROR"
+msgstr "Kein weiterer Fehler erhältlich"
+
+#: translate_error.py:135
+msgid "LSV2_ERROR_T_ER_ACCESS_TIMEOUT"
+msgstr "Wartezeit beim Abholen von Daten abgelaufen"
+
+#: translate_error.py:136
+msgid "LSV2_ERROR_T_ER_NO_WRITE_ACCESS"
+msgstr "kein Schreibzugriff (Preset: gelockte Zeilen)"
+
+#: translate_error.py:137
+msgid "LSV2_ERROR_T_ER_STIB"
+msgstr "DNC Betrieb kann nicht aufgenommen werden, da Abarbeiten noch aktiv (STIB: Steuerung in Betrieb)"
+
+#: translate_error.py:138
+msgid "LSV2_ERROR_T_ER_REF_NECESSARY"
+msgstr "Vor DNC Betrieb muß noch Reference gefahren werden"
+
+#: translate_error.py:139
+msgid "LSV2_ERROR_T_ER_PLC_BUF_FULL"
+msgstr "PLC Puffer ist voll"
+
+#: translate_error.py:140
+msgid "LSV2_ERROR_T_ER_NOT_FOUND"
+msgstr "Angeforderte Information nicht verfügbar (TableLine)"
+
+#: translate_error.py:141
+msgid "LSV2_ERROR_T_ER_WRONG_FILE"
+msgstr "Falscher Dateityp (Versionsinfo in 1. Zeile defekt)"
+
+#: translate_error.py:142
+msgid "LSV2_ERROR_T_ER_NO_MATCH"
+msgstr "Zu ersetzender PLC Binärcode stimmt nicht mit dem Binärcode auf der Steuerung überein (PLC Debug)"
+
+#: translate_error.py:143
+msgid "LSV2_ERROR_T_ER_TOO_MANY_TPTS"
+msgstr "Zu viele Trace-Punkte"
+
+#: translate_error.py:144
+msgid "LSV2_ERROR_T_ER_NOT_ACTIVATED"
+msgstr "Datei kann nicht aktiviert werden"
+
+#: translate_error.py:145
+msgid "LSV2_ERROR_T_ER_DSP_CHANNEL"
+msgstr "Angegebener DSP Kanal nicht vorhanden"
+
+#: translate_error.py:146
+msgid "LSV2_ERROR_T_ER_DSP_PARA"
+msgstr "Die gewünschten Daten können nicht gesendet werden"
+
+#: translate_error.py:147
+msgid "LSV2_ERROR_T_ER_OUT_OF_RANGE"
+msgstr "Parameter ausserhalb des gültigen Bereichs"
+
+#: translate_error.py:148
+msgid "LSV2_ERROR_T_ER_INVALID_AXIS"
+msgstr "gewählte Achsen ungültig"
+
+#: translate_error.py:149
+msgid "LSV2_ERROR_T_ER_STREAMING_ACTIVE"
+msgstr "Achs-Streaming bereits aktiv"
+
+#: translate_error.py:150
+msgid "LSV2_ERROR_T_ER_NO_STREAMING_ACTIVE"
+msgstr "Achs-Streaming nicht aktiv"
+
+#: translate_error.py:151
+msgid "LSV2_ERROR_T_ER_TO_MANY_OPEN_TCP"
+msgstr "Zu viele TCP Ports auf Steuerung geöffnet"
+
+#: translate_error.py:152
+msgid "LSV2_ERROR_T_ER_NO_FREE_HANDLE"
+msgstr "Kein freies (LSV-2) Handle"
+
+#: translate_error.py:153
+msgid "LSV2_ERROR_T_ER_PLCMEMREMA_CLEAR"
+msgstr "Remanenter PLC Speicher wurde gelöscht"
+
+#: translate_error.py:154
+msgid "LSV2_ERROR_T_ER_OSZI_CHSEL"
+msgstr "Kanal-Auswahl für Remote-Oszilloskop fehlerhaft"
+
+#: translate_error.py:155
+msgid "LSV2_ERROR_LSV2_BUSY"
+msgstr "Telegrammübertragung noch aktiv (Backgroundtransfer)"
+
+#: translate_error.py:156
+msgid "LSV2_ERROR_LSV2_X_BUSY"
+msgstr "letztes X_PC Telegram noch nicht quittiert"
+
+#: translate_error.py:157
+msgid "LSV2_ERROR_LSV2_NOCONNECT"
+msgstr "Keine Verbindung"
+
+#: translate_error.py:158
+msgid "LSV2_ERROR_LSV2_BAD_BACKUP_FILE"
+msgstr "Format der Backupdatei fehlerhaft"
+
+#: translate_error.py:159
+msgid "LSV2_ERROR_LSV2_RESTORE_NOT_FOUND"
+msgstr "Wiederherzustellende Datei in Backup nicht gefunden"
+
+#: translate_error.py:160
+msgid "LSV2_ERROR_LSV2_DLL_NOT_INSTALLED"
+msgstr "ASCII-Binär Konverter DLL nicht installiert"
+
+#: translate_error.py:161
+msgid "LSV2_ERROR_LSV2_BAD_CONVERT_DLL"
+msgstr "CII-Binär Konverter DLL nicht gefunden oder fehlerhaft"
+
+#: translate_error.py:162
+msgid "LSV2_ERROR_LSV2_BAD_BACKUP_LIST"
+msgstr "Backup-Listdatei fehlerhaft"
+
+#: translate_error.py:163
+msgid "LSV2_ERROR_LSV2_UNKNOWN_ERROR"
+msgstr "Nicht genauer spezifizierter Fehler"
+
+#: translate_error.py:164
+msgid "LSV2_ERROR_T_BD_NO_NEW_FILE"
+msgstr "Datei kann nicht geöffnet werden"
+
+#: translate_error.py:165
+msgid "LSV2_ERROR_T_BD_NO_FREE_SPACE"
+msgstr "nicht genügend Platz für Datei"
+
+#: translate_error.py:166
+msgid "LSV2_ERROR_T_BD_FILE_NOT_ALLOWED"
+msgstr "Programm und Dateiname stimmen nicht überein"
+
+#: translate_error.py:167
+msgid "LSV2_ERROR_T_BD_BAD_FORMAT"
+msgstr "kein LF oder T_FD gesendet"
+
+#: translate_error.py:168
+msgid "LSV2_ERROR_T_BD_BAD_BLOCK"
+msgstr "Fehler in Programmzeile (kann nicht binär gewandelt werden)"
+
+#: translate_error.py:169
+msgid "LSV2_ERROR_T_BD_END_PGM"
+msgstr "Programmende bereits erreicht"
+
+#: translate_error.py:170
+msgid "LSV2_ERROR_T_BD_ANZ"
+msgstr "Fehler bei Befehlsabarbeitung in der Anzeigetask"
+
+#: translate_error.py:171
+msgid "LSV2_ERROR_T_BD_WIN_NOT_DEFINED"
+msgstr "Window noch gar nicht definiert"
+
+#: translate_error.py:172
+msgid "LSV2_ERROR_T_BD_WIN_CHANGED"
+msgstr "Window hat sich in Zwischenzeit geändert"
+
+#: translate_error.py:173
+msgid "LSV2_ERROR_T_BD_DNC_WAIT"
+msgstr "DNC-Puffer voll; Fileübertragung wird unterbrochen"
+
+#: translate_error.py:174
+msgid "LSV2_ERROR_T_BD_CANCELLED"
+msgstr "Übertragung vom Benutzer abgebrochen"
+
+#: translate_error.py:175
+msgid "LSV2_ERROR_T_BD_OSZI_OVERRUN"
+msgstr "Datenüberlauf (Baudrate zu niedrig)"
+
+#: translate_error.py:176
+msgid "LSV2_ERROR_T_BD_FD"
+msgstr "Blockübertragung beendet (eigentlich kein Fehler)"
+
+#: translate_error.py:177
+msgid "LSV2_ERROR_T_USER_ERROR"
+msgstr "Fehlernummer, wenn ein Fehlertelegramm der Fehlerkasse 2 ( benutzerdefinierter Klarschriftfehler) empfangen wurde"
+
+#: translate_error.py:177
+msgid "LSV2_ERROR_UNKNOWN_CODE"
+msgstr "Unbekannte Fehlernummer"

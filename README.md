@@ -6,7 +6,7 @@
 ## License
  MIT License
 
- Copyright (c) 2020 drunsinn
+ Copyright (c) 2020 - 2021 drunsinn
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 tfischer73
 drunsinn
 WouterElfrink
+kekec14
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
@@ -49,6 +50,7 @@ on programming stations but also with real hardware. Here is a list of versions 
 |-------------|----------------|
 | TNC640      | 340595 08 SP1  |
 | iTNC530     | 340480 14 SP4  |
+| iTNC530     | 606420 02 SP14 |
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
@@ -151,11 +153,12 @@ DNC login is only possible if the option is set on the control, without the opti
 
 # Testing
 To run the test you either need a machine or a programming station. The controls has to be on and the 
-PLC programm has to be running. You can add the IP-Address as a parameter
+PLC programm has to be running. You can add the IP-Address and timeout as a parameter
 ```
-pytest --address=192.168.56.103
+pytest --address=192.168.56.103 --timeout=0.1
 ```
 
 # Resources
 https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
+
 https://de.industryarena.com/heidenhain/forum
