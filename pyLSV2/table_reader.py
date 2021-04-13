@@ -77,8 +77,15 @@ class ToolTable(TableReader):
 
     def __init__(self, table_path):
         super().__init__(table_path)
-        for tool in self._table_content:
-            print(tool[ToolTable.COLUMN_TITLE_NAME])
+
+        if len(self._table_content) < 1:
+            raise Exception('Table is empty')
+
+        print(self._table_content[0].keys())
+
+
+        #for tool in self._table_content:
+        #    print(tool[ToolTable.COLUMN_TITLE_NAME])
 
 
 
