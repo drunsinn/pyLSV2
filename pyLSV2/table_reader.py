@@ -6,6 +6,7 @@ from pathlib import Path
 
 
 class TableReader():
+    """generic parser for table files commonly used by TNC and iTNC controls"""
 
     def __init__(self, table_path):
         logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -62,15 +63,27 @@ class TableReader():
             logging.debug('Found %d entrys', len(self._table_content))
 
 
+class ToolEntry():
+    number = None
+    name = None
+    lenght = None
+    radius = None
+    tip_radius = None
+    delta_length = None
+    delta_radius = None
+    delta_tip_radius = None
+    docstring = None
+
+
 class ToolTable(TableReader):
     COLUMN_TITLE_NR = 'T'
     COLUMN_TITLE_NAME = 'NAME'
     COLUMN_TITLE_LENGTH = 'L'
     COLUMN_TITLE_RADIUS = 'R'
     COLUMN_TITLE_TIP_RADIUS = 'R2'
-    COLUMN_TITLE_LENGTH_DELTA = 'DL'
-    COLUMN_TITLE_RADIUS_DELTA = 'DR'
-    COLUMN_TITLE_TIP_RADIUS_DELTA = 'DR2'
+    COLUMN_TITLE_DELTA_LENGTH = 'DL'
+    COLUMN_TITLE_DELTA_RADIUS = 'DR'
+    COLUMN_TITLE_DELTA_TIP_RADIUS = 'DR2'
     COLUMN_TITLE_DOC = 'DOC'
 
     # COLUMN_TITLE_ = ''
@@ -79,13 +92,26 @@ class ToolTable(TableReader):
         super().__init__(table_path)
 
         if len(self._table_content) < 1:
-            raise Exception('Table is empty')
+            logging.error('Table is empty')
+            return None
 
-        print(self._table_content[0].keys())
+        logging.debug('Found Columns: %s', self._table_content[0].keys())
 
+        tools = list()
 
-        #for tool in self._table_content:
-        #    print(tool[ToolTable.COLUMN_TITLE_NAME])
+        for entry in self._table_content:
+            t = ToolEntry()
+            t.number = entry[ToolTable.COLUMN_TITLE_NR]
+            t.name = entry[ToolTable.COLUMN_TITLE_NAME]
+            t.lenght = entry[ToolTable.COLUMN_TITLE_LENGTH]
+            t.radius = entry[ToolTable.COLUMN_TITLE_RADIUS]
+            t.tip_radius = entry[ToolTable.COLUMN_TITLE_TIP_RADIUS]
+            t.delta_length = entry[ToolTable.COLUMN_TITLE_DELTA_LENGTH]
+            t.delta_radius = entry[ToolTable.COLUMN_TITLE_DELTA_RADIUS]
+            t.delta_tip_radius = entry[ToolTable.COLUMN_TITLE_DELTA_TIP_RADIUS]
+            tools.append(t)
+
+        logging.info('Found %d tool entries in table %s', len(tools), table_path)
 
 
 
@@ -93,11 +119,11 @@ if __name__ == '__main__':
     logging.basicConfig(
         format='%(name)s  %(levelname)s : %(message)s', level=logging.DEBUG)
     ToolTable('../data/tool.t')
-    # ToolTable('../data/tool 2.t')
-    # ToolTable('../data/tool 3.t')
-    # ToolTable('../data/TOOL 4.t')
-    # ToolTable('../data/TOOL 5.t')
-    # ToolTable('../data/TOOL 6.t')
-    # ToolTable('../data/TOOL 7.t')
-    # ToolTable('../data/tool.t.bak')
-    # ToolTable('../data/tool.t.bak 2')
+    ToolTable('../data/tool 2.t')
+    ToolTable('../data/tool 3.t')
+    ToolTable('../data/TOOL 4.t')
+    ToolTable('../data/TOOL 5.t')
+    ToolTable('../data/TOOL 6.t')
+    ToolTable('../data/TOOL 7.t')
+    ToolTable('../data/tool.t.bak')
+    ToolTable('../data/tool.t.bak 2')
