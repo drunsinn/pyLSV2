@@ -1174,7 +1174,7 @@ class LSV2():
                         if binary_mode:
                             out_file.write(content)
                         else:
-                            out_file.write(content.replace(b'\x00', b''))
+                            out_file.write(content.replace(b'\x00', b'\r\n'))
                         logging.debug(
                             'received %d more bytes for file', len(content))
                     elif response in self.RESPONSE_T_FD:

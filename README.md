@@ -30,6 +30,7 @@
 tfischer73
 drunsinn
 WouterElfrink
+kekec14
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
@@ -49,6 +50,7 @@ on programming stations but also with real hardware. Here is a list of versions 
 |-------------|----------------|
 | TNC640      | 340595 08 SP1  |
 | iTNC530     | 340480 14 SP4  |
+| iTNC530     | 606420 02 SP14 |
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
