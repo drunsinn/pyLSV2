@@ -31,6 +31,7 @@ tfischer73
 drunsinn
 WouterElfrink
 kekec14
+Michal Navrátil
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 

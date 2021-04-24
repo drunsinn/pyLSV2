@@ -19,6 +19,7 @@ import gettext
 from pathlib import Path
 from .translate_error import get_error_text
 from .low_level_com import LLLSV2Com
+from .const import LSV2CONST as L_C
 
 
 class LSV2():
@@ -64,9 +65,9 @@ class LSV2():
     COMMAND_C_DD = 'C_DD'
     # C_DM: create a new directory, followed by a null terminated string
     COMMAND_C_DM = 'C_DM'
+    # C_EK: send key code to control. Behaves as if the associated key was pressed on the keyboard
+    COMMAND_C_EK = 'C_EK'
 
-    # C_EK: found via bruteforce test, purpose unknown!
-    # COMMAND_C_EK = 'C_EK'
     # C_FA: found via bruteforce test, purpose unknown!
     # COMMAND_C_FA = 'C_FA'
 
@@ -80,9 +81,15 @@ class LSV2():
     COMMAND_C_FR = 'C_FR'
 
     # COMMAND_C_GC = 'C_GC' # found via bruteforce test, purpose unknown!
-    # COMMAND_C_LK = 'C_LK' # found via bruteforce test, purpose unknown!
+
+    # C_LK: lock and unlock keyboard input on control, followed by a switch if lock or unlock
+    COMMAND_C_LK = 'C_LK'
+
     # COMMAND_C_MB = 'C_MB' # found via bruteforce test, purpose unknown!
-    # COMMAND_C_MC = 'C_MC' # found via bruteforce test, purpose unknown! -> Timeout and Control hangs!
+    
+    # C_MC: set machine parameter, followed by flags, name and value
+    COMMAND_C_MC = 'C_MC'
+    
     # COMMAND_C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
     # COMMAND_C_ST = 'C_ST' # found via bruteforce test, purpose unknown!
     # COMMAND_C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
@@ -1329,6 +1336,82 @@ class LSV2():
                               start_address + address)
                 return False
         return plc_values
+    
+    def set_keyboard_access(self, unlocked):
+        """Enable or disable the keyboard on the control. Requires access level MONITOR to work.
+
+        :param bool unlocked: if True unlocks the keyboard. if false, input is set to locked
+        :returns: True or False if command was executed successfully
+        :rtype: bool
+        """
+
+        payload = bytearray()
+        if unlocked:
+            payload.extend(0x00)
+        else:
+            payload.extend(0x01)
+
+        result = self._send_recive(
+            LSV2.COMMAND_C_LK, LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            if unlocked:
+                logging.debug('command to unlock keyboard was successful')
+            else:
+                logging.debug('command to lock keyboard was successful')
+            return True
+        else:
+            logging.warning('an error occurred changing the state of the keyboard lock')
+        return False
+
+    def set_machine_parameter(self, name, value, safe_to_disk=False):
+        """Set machine parameter on control. Requires access INSPECT level to work.
+        
+        :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
+        :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
+        :param bool safe_to_disk: If True the new value will be written to the harddisk ans stay permanent. If False (default) the value will only be availible until the next reboot.
+
+        :returns: True or False if command was executed successfully
+        :rtype: bool
+        """
+        payload = bytearray()
+        payload.extend(struct.pack('!L', flags))
+        payload.extend(map(ord, name))
+        payload.append(0x00)
+        payload.extend(map(ord, value))
+        payload.append(0x00)
+
+        result = self._send_recive(
+            LSV2.COMMAND_C_MC, LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('setting of machine parameter %s to value %s was successful', name, value)
+            return True
+        else:
+            logging.warning('an error occurred while setting machine parameter %s to value %s', name, value)
+        return False
+
+    def send_key_code(self, key_code):
+        """Send key code to control. Behaves as if the associated key was pressed on the keyboard. Requires access MONITOR level to work.
+           To work correctly you first have to lock the keyboard and unlock it afterwards!:
+
+           set_keyboard_access(False)
+           send_key_code(KEY_SPEC_CE)
+           set_keyboard_access(True)
+
+        :param int key_code: code number of the keyboard key
+
+        :returns: True or False if command was executed successfully
+        :rtype: bool
+        """
+        payload = bytearray()
+        payload.extend(struct.pack('!H', key_code))
+
+        result = self._send_recive(LSV2.COMMAND_C_EK, LSV2.RESPONSE_T_OK, payload=payload)
+        if result:
+            logging.debug('sending the key code %d was successful', key_code)
+            return True
+        else:
+            logging.warning('an error occurred while sending the key code %d', key_code)
+        return False
 
     def _test_command(self, command_string, payload=None):
         """check commands for validity"""
