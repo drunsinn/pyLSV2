@@ -15,11 +15,11 @@ import os
 import struct
 import logging
 import datetime
-import gettext
 from pathlib import Path
-from .translate_error import get_error_text
+from .translate_messages import get_error_text, get_program_status_text, get_execution_status_text
 from .low_level_com import LLLSV2Com
-from .const import LSV2CONST as L_C
+from .const import LSV2Const as L_C
+from .misc import decode_system_parameters
 
 
 class LSV2():
@@ -86,10 +86,10 @@ class LSV2():
     COMMAND_C_LK = 'C_LK'
 
     # COMMAND_C_MB = 'C_MB' # found via bruteforce test, purpose unknown!
-    
+
     # C_MC: set machine parameter, followed by flags, name and value
     COMMAND_C_MC = 'C_MC'
-    
+
     # COMMAND_C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
     # COMMAND_C_ST = 'C_ST' # found via bruteforce test, purpose unknown!
     # COMMAND_C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
@@ -363,57 +363,53 @@ class LSV2():
         return False
 
     def _configure_connection(self):
-        """Set up the communication parameters for file transfer. Buffer size and secure file transfere are enabled based on the capabilitys of the control.
+        """Set up the communication parameters for file transfer. Buffer size and secure file transfere are
+        enabled based on the capabilitys of the control.
 
         :rtype: None
         """
         self.login(login=LSV2.LOGIN_INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
-        logging.info('setting connection settings for %s and block length %s',
-                     control_type, max_block_length)
+        logging.info('setting connection settings for %s and block length %s', control_type, max_block_length)
 
+        selected_size = -1
+        selected_command = None
         if max_block_length >= 4096:
-            if self.set_system_command(LSV2.SYSCMD_SET_BUF4096):
-                self._buffer_size = 4096
-            else:
-                raise Exception(
-                    'error in communication while setting buffer size to 4096')
+            selected_size = 4096
+            selected_command = LSV2.SYSCMD_SET_BUF4096
         elif 3072 <= max_block_length < 4096:
-            if self.set_system_command(LSV2.SYSCMD_SET_BUF3072):
-                self._buffer_size = 3072
-            else:
-                raise Exception(
-                    'error in communication while setting buffer size to 3072')
+            selected_size = 3072
+            selected_command = LSV2.SYSCMD_SET_BUF3072
         elif 2048 <= max_block_length < 3072:
-            if self.set_system_command(LSV2.SYSCMD_SET_BUF2048):
-                self._buffer_size = 2048
-            else:
-                raise Exception(
-                    'error in communication while setting buffer size to 2048')
+            selected_size = 2048
+            selected_command = LSV2.SYSCMD_SET_BUF2048
         elif 1024 <= max_block_length < 2048:
-            if self.set_system_command(LSV2.SYSCMD_SET_BUF1024):
-                self._buffer_size = 1024
-            else:
-                raise Exception(
-                    'error in communication while setting buffer size to 1024')
+            selected_size = 1024
+            selected_command = LSV2.SYSCMD_SET_BUF1024
         elif 512 <= max_block_length < 1024:
-            if self.set_system_command(LSV2.SYSCMD_SET_BUF512):
-                self._buffer_size = 512
-            else:
-                raise Exception(
-                    'error in communication while setting buffer size to 512')
+            selected_size = 512
+            selected_command = LSV2.SYSCMD_SET_BUF512
         elif 256 <= max_block_length < 512:
-            self._buffer_size = 256
+            selected_size = 256
         else:
             logging.error(
                 'could not decide on a buffer size for maximum message length of %d', max_block_length)
             raise Exception('unknown buffer size')
 
+        if selected_command is None:
+            logging.debug('use smallest buffer size of 256')
+            self._buffer_size = selected_size
+        else:
+            logging.debug('use buffer size of %d', selected_size)
+            if self.set_system_command(selected_size):
+                self._buffer_size = selected_size
+            else:
+                raise Exception('error in communication while setting buffer size to %d' % selected_size)
+
         if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
             logging.warning('secure file transfer not supported? use fallback')
             self._secure_file_send = False
-            #raise Exception('error in communication while enabling secure file send')
         else:
             self._secure_file_send = True
 
@@ -520,51 +516,7 @@ class LSV2():
         result = self._send_recive(
             command=LSV2.COMMAND_R_PR, expected_response=LSV2.RESPONSE_S_PR)
         if result:
-            message_length = len(result)
-            info_list = list()
-            # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
-            if message_length == 120:
-                info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result)
-            elif message_length == 124:
-                #raise NotImplementedError('this case for system parameters is unknown, please send log messages to add: {}'.format(result))
-                logging.warning(
-                    'messages with length 124 might not be decoded correctly!')
-                info_list = struct.unpack('!14L8B8L2BH4B2L2HLL', result)
-            else:
-                raise ValueError('unexpected length {} of message content {}'.format(
-                    message_length, result))
-            sys_par = dict()
-            sys_par['Marker_Start'] = info_list[0]
-            sys_par['Markers'] = info_list[1]
-            sys_par['Input_Start'] = info_list[2]
-            sys_par['Inputs'] = info_list[3]
-            sys_par['Output_Start'] = info_list[4]
-            sys_par['Outputs'] = info_list[5]
-            sys_par['Counter_Start'] = info_list[6]
-            sys_par['Counters'] = info_list[7]
-            sys_par['Timer_Start'] = info_list[8]
-            sys_par['Timers'] = info_list[9]
-            sys_par['Word_Start'] = info_list[10]
-            sys_par['Words'] = info_list[11]
-            sys_par['String_Start'] = info_list[12]
-            sys_par['Strings'] = info_list[13]
-            sys_par['String_Length'] = info_list[14]
-            sys_par['Input_Word_Start'] = info_list[22]
-            sys_par['Input Words'] = info_list[23]
-            sys_par['Output_Word_Start'] = info_list[24]
-            sys_par['Output_Words'] = info_list[25]
-            sys_par['LSV2_Version'] = info_list[30]
-            sys_par['LSV2_Version_Flags'] = info_list[31]
-            sys_par['Max_Block_Length'] = info_list[32]
-            sys_par['HDH_Bin_Version'] = info_list[33]
-            sys_par['HDH_Bin_Revision'] = info_list[34]
-            sys_par['ISO_Bin_Version'] = info_list[35]
-            sys_par['ISO_Bin_Revision'] = info_list[36]
-            sys_par['HardwareVersion'] = info_list[37]
-            sys_par['LSV2_Version_Flags_Ex'] = info_list[38]
-            sys_par['Max_Trace_Line'] = info_list[39]
-            sys_par['Scope_Channels'] = info_list[40]
-            sys_par['PW_Encryption_Key'] = info_list[41]
+            sys_par = decode_system_parameters(result)
             logging.debug('got system parameters: %s', sys_par)
             self._sys_par = sys_par
             return self._sys_par
@@ -654,28 +606,6 @@ class LSV2():
             logging.error('an error occurred while querying program state')
         return False
 
-    @staticmethod
-    def get_program_status_text(code, language='en'):
-        """Translate status code of program state to text
-
-        :param int code: status code of program state
-        :param str language: optional. language code for translation of text
-        :returns: readable text for execution state
-        :rtype: str
-        """
-        locale_path = os.path.dirname(__file__) + '/locales'
-        translate = gettext.translation(
-            'message_text', localedir=locale_path, languages=[language], fallback=True)
-        return {LSV2.PGM_STATE_STARTED: translate.gettext('PGM_STATE_STARTED'),
-                LSV2.PGM_STATE_STOPPED: translate.gettext('PGM_STATE_STOPPED'),
-                LSV2.PGM_STATE_FINISHED: translate.gettext('PGM_STATE_FINISHED'),
-                LSV2.PGM_STATE_CANCELLED: translate.gettext('PGM_STATE_CANCELLED'),
-                LSV2.PGM_STATE_INTERRUPTED: translate.gettext('PGM_STATE_INTERRUPTED'),
-                LSV2.PGM_STATE_ERROR: translate.gettext('PGM_STATE_ERROR'),
-                LSV2.PGM_STATE_ERROR_CLEARED: translate.gettext('PGM_STATE_ERROR_CLEARED'),
-                LSV2.PGM_STATE_IDLE: translate.gettext('PGM_STATE_IDLE'),
-                LSV2.PGM_STATE_UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
-
     def get_program_stack(self):
         """Get path of currently active nc program(s) and current line number
         See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
@@ -725,26 +655,6 @@ class LSV2():
         else:
             logging.error('an error occurred while querying execution state')
         return False
-
-    @staticmethod
-    def get_execution_status_text(code, language='en'):
-        """Translate status code of execution state to text
-        See https://github.com/drunsinn/pyLSV2/issues/1
-
-        :param int code: status code of execution status
-        :param str language: optional. language code for translation of text
-        :returns: readable text for execution state
-        :rtype: str
-        """
-        locale_path = os.path.dirname(__file__) + '/locales'
-        translate = gettext.translation(
-            'message_text', localedir=locale_path, languages=[language], fallback=True)
-        return {LSV2.EXEC_STATE_MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
-                LSV2.EXEC_STATE_MDI: translate.gettext('EXEC_STATE_MDI'),
-                LSV2.EXEC_STATE_PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
-                LSV2.EXEC_STATE_SINGLE_STEP: translate.gettext('EXEC_STATE_SINGLE_STEP'),
-                LSV2.EXEC_STATE_AUTOMATIC: translate.gettext('EXEC_STATE_AUTOMATIC'),
-                LSV2.EXEC_STATE_UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))
 
     def get_directory_info(self, remote_directory=None):
         """Query information a the current working directory on the control
@@ -1302,7 +1212,8 @@ class LSV2():
         plc_values = list()
 
         if mem_type is LSV2.PLC_MEM_TYPE_STRING:
-            address = address + (count - 1) * mem_byte_count # advance address if necessary
+            # advance address if necessary
+            address = address + (count - 1) * mem_byte_count
             for i in range(count):
                 payload = bytearray()
                 payload.extend(struct.pack(
@@ -1336,7 +1247,7 @@ class LSV2():
                               start_address + address)
                 return False
         return plc_values
-    
+
     def set_keyboard_access(self, unlocked):
         """Enable or disable the keyboard on the control. Requires access level MONITOR to work.
 
@@ -1360,12 +1271,13 @@ class LSV2():
                 logging.debug('command to lock keyboard was successful')
             return True
         else:
-            logging.warning('an error occurred changing the state of the keyboard lock')
+            logging.warning(
+                'an error occurred changing the state of the keyboard lock')
         return False
 
     def set_machine_parameter(self, name, value, safe_to_disk=False):
         """Set machine parameter on control. Requires access INSPECT level to work.
-        
+
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
         :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
         :param bool safe_to_disk: If True the new value will be written to the harddisk ans stay permanent. If False (default) the value will only be availible until the next reboot.
@@ -1383,10 +1295,12 @@ class LSV2():
         result = self._send_recive(
             LSV2.COMMAND_C_MC, LSV2.RESPONSE_T_OK, payload=payload)
         if result:
-            logging.debug('setting of machine parameter %s to value %s was successful', name, value)
+            logging.debug(
+                'setting of machine parameter %s to value %s was successful', name, value)
             return True
         else:
-            logging.warning('an error occurred while setting machine parameter %s to value %s', name, value)
+            logging.warning(
+                'an error occurred while setting machine parameter %s to value %s', name, value)
         return False
 
     def send_key_code(self, key_code):
@@ -1405,12 +1319,14 @@ class LSV2():
         payload = bytearray()
         payload.extend(struct.pack('!H', key_code))
 
-        result = self._send_recive(LSV2.COMMAND_C_EK, LSV2.RESPONSE_T_OK, payload=payload)
+        result = self._send_recive(
+            LSV2.COMMAND_C_EK, LSV2.RESPONSE_T_OK, payload=payload)
         if result:
             logging.debug('sending the key code %d was successful', key_code)
             return True
         else:
-            logging.warning('an error occurred while sending the key code %d', key_code)
+            logging.warning(
+                'an error occurred while sending the key code %d', key_code)
         return False
 
     def _test_command(self, command_string, payload=None):

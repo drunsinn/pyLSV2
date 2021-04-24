@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""error code definitions and decoding"""
+"""error code definitions and decoding, translation of status information into readable text"""
 import gettext
 import os
+from .client import LSV2
 
 # Error map
 LSV2_ERROR_T_ER_BAD_FORMAT = 20
@@ -178,3 +179,44 @@ def get_error_text(error_type, error_code, language='en'):
             LSV2_ERROR_T_BD_OSZI_OVERRUN: _('LSV2_ERROR_T_BD_OSZI_OVERRUN'),
             LSV2_ERROR_T_BD_FD: _('LSV2_ERROR_T_BD_FD'),
             LSV2_ERROR_T_USER_ERROR: _('LSV2_ERROR_T_USER_ERROR')}.get(error_code, _('LSV2_ERROR_UNKNOWN_CODE'))
+
+
+def get_program_status_text(code, language='en'):
+    """Translate status code of program state to text
+
+    :param int code: status code of program state
+    :param str language: optional. language code for translation of text
+    :returns: readable text for execution state
+    :rtype: str
+    """
+    locale_path = os.path.dirname(__file__) + '/locales'
+    translate = gettext.translation(
+        'message_text', localedir=locale_path, languages=[language], fallback=True)
+    return {LSV2.PGM_STATE_STARTED: translate.gettext('PGM_STATE_STARTED'),
+            LSV2.PGM_STATE_STOPPED: translate.gettext('PGM_STATE_STOPPED'),
+            LSV2.PGM_STATE_FINISHED: translate.gettext('PGM_STATE_FINISHED'),
+            LSV2.PGM_STATE_CANCELLED: translate.gettext('PGM_STATE_CANCELLED'),
+            LSV2.PGM_STATE_INTERRUPTED: translate.gettext('PGM_STATE_INTERRUPTED'),
+            LSV2.PGM_STATE_ERROR: translate.gettext('PGM_STATE_ERROR'),
+            LSV2.PGM_STATE_ERROR_CLEARED: translate.gettext('PGM_STATE_ERROR_CLEARED'),
+            LSV2.PGM_STATE_IDLE: translate.gettext('PGM_STATE_IDLE'),
+            LSV2.PGM_STATE_UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
+
+def get_execution_status_text(code, language='en'):
+    """Translate status code of execution state to text
+    See https://github.com/drunsinn/pyLSV2/issues/1
+
+    :param int code: status code of execution status
+    :param str language: optional. language code for translation of text
+    :returns: readable text for execution state
+    :rtype: str
+    """
+    locale_path = os.path.dirname(__file__) + '/locales'
+    translate = gettext.translation(
+        'message_text', localedir=locale_path, languages=[language], fallback=True)
+    return {LSV2.EXEC_STATE_MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
+            LSV2.EXEC_STATE_MDI: translate.gettext('EXEC_STATE_MDI'),
+            LSV2.EXEC_STATE_PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
+            LSV2.EXEC_STATE_SINGLE_STEP: translate.gettext('EXEC_STATE_SINGLE_STEP'),
+            LSV2.EXEC_STATE_AUTOMATIC: translate.gettext('EXEC_STATE_AUTOMATIC'),
+            LSV2.EXEC_STATE_UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))

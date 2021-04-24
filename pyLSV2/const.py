@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """error code definitions and decoding"""
 
-class LSV2CONST():
+class LSV2Const():
     """Constant values used in LSV2"""
     KEY_LOWER_A = 0x0061
     KEY_LOWER_B = 0x0062
