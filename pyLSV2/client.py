@@ -11,15 +11,17 @@
    Everything related to PLC or unknown/untested System functions was left out as these function
    might compromise the control.
 """
-import os
-import struct
-import logging
 import datetime
+import logging
+import struct
+import warnings
 from pathlib import Path
-from .translate_messages import get_error_text, get_program_status_text, get_execution_status_text
+
+from . import const as L_C
 from .low_level_com import LLLSV2Com
-from .const import LSV2Const as L_C
 from .misc import decode_system_parameters
+from .translate_messages import (get_error_text, get_execution_status_text,
+                                 get_program_status_text)
 
 
 class LSV2():
@@ -189,16 +191,14 @@ class LSV2():
     SYSCMD_UPDATE_TNCOPT = 10
     SYSCMD_PUSH_PRESET_INTO_LOG = 11
     SYSCMD_SCREENDUMP = 12
-    SYSCMD_ACTIVATE_PLCPGM = 13  # cmdpara: file name
-    SYSCMD_OBSERVE_ADD_FILE = 15  # cmdpara: file name
-    SYSCMD_OBSERVE_REMOVE_FILE = 16  # cmdpara: file name
+    SYSCMD_ACTIVATE_PLCPGM = 13  # parameter: file name
+    SYSCMD_OBSERVE_ADD_FILE = 15  # parameter: file name
+    SYSCMD_OBSERVE_REMOVE_FILE = 16  # parameter: file name
     SYSCMD_OBSERVE_REMOVE_ALL = 17
     SYSCMD_ACTIVATE_MFSK = 18
-    # C_FL: T_FD wird mit Antworttelegramm (T_OK/T_ER) quittiert
-    SYSCMD_SECURE_FILE_SEND = 19
+    SYSCMD_SECURE_FILE_SEND = 19 # set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER
     SYSCMD_DELETE_TABLE_ENTRY = 20
-    # tell control to generate operations log file, followed by filename and start time and date
-    SYSCMD_GENERATE_OP_LOG = 27
+    SYSCMD_GENERATE_OP_LOG = 27 # generate operations log file, parametes: filename, start time and date
 
     # const for relegram R_RI
     RUN_INFO_EXEC_STATE = 23
@@ -235,19 +235,6 @@ class LSV2():
     C_FL_MODE_BINARY = 0x01  # is set by TNCcmd, seems to work for all filetypes
     R_FL_MODE_BINARY = 0x01  # enable binary file transfer, see also C_FL_MODE_BINARY
 
-    # Memory types for reading from PLC memory
-    PLC_MEM_TYPE_MARKER = 1
-    PLC_MEM_TYPE_INPUT = 2
-    PLC_MEM_TYPE_OUTPUT = 3
-    PLC_MEM_TYPE_COUNTER = 4
-    PLC_MEM_TYPE_TIMER = 5
-    PLC_MEM_TYPE_BYTE = 6
-    PLC_MEM_TYPE_WORD = 7
-    PLC_MEM_TYPE_DWORD = 8
-    PLC_MEM_TYPE_STRING = 9
-    PLC_MEM_TYPE_INPUT_WORD = 10
-    PLC_MEM_TYPE_OUTPUT_WORD = 11
-
     def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
         """init object variables and create socket"""
         logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -260,14 +247,14 @@ class LSV2():
         if safe_mode:
             logging.info(
                 'safe mode is active, login and system commands are restricted')
-            self._known_logins = (LSV2.LOGIN_INSPECT, LSV2.LOGIN_FILETRANSFER)
+            self._known_logins = (L_C.LOGIN_INSPECT, L_C.LOGIN_FILETRANSFER)
             self._known_sys_cmd = (LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512, LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096,
                                    LSV2.SYSCMD_SECURE_FILE_SEND, LSV2.SYSCMD_GENERATE_OP_LOG)
         else:
             logging.info(
                 'safe mode is off, login and system commands are not restricted. Use with caution!')
-            self._known_logins = (LSV2.LOGIN_INSPECT, LSV2.LOGIN_DIAG, LSV2.LOGIN_PLCDEBUG, LSV2.LOGIN_FILETRANSFER, LSV2.LOGIN_MONITOR, LSV2.LOGIN_DSP,
-                                  LSV2.LOGIN_DNC, LSV2.LOGIN_SCOPE, LSV2.LOGIN_STREAMAXES, LSV2.LOGIN_FILEPLC, LSV2.LOGIN_FILESYS)
+            self._known_logins = (L_C.LOGIN_INSPECT, L_C.LOGIN_DIAG, L_C.LOGIN_PLCDEBUG, L_C.LOGIN_FILETRANSFER, L_C.LOGIN_MONITOR, L_C.LOGIN_DSP,
+                                  L_C.LOGIN_DNC, L_C.LOGIN_SCOPE, L_C.LOGIN_STREAMAXES, L_C.LOGIN_FILEPLC, L_C.LOGIN_FILESYS)
             self._known_sys_cmd = (LSV2.SYSCMD_RESET_TNC, LSV2.SYSCMD_STOP_TIMEUPDATE, LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512,
                                    LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096, LSV2.SYSCMD_SECURE_FILE_SEND,
                                    LSV2.SYSCMD_RESET_DNC, LSV2.SYSCMD_RESET_LSV2, LSV2.SYSCMD_UPDATE_TNCOPT, LSV2.SYSCMD_PUSH_PRESET_INTO_LOG,
@@ -368,7 +355,7 @@ class LSV2():
 
         :rtype: None
         """
-        self.login(login=LSV2.LOGIN_INSPECT)
+        self.login(login=L_C.LOGIN_INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
         logging.info('setting connection settings for %s and block length %s', control_type, max_block_length)
@@ -413,7 +400,7 @@ class LSV2():
         else:
             self._secure_file_send = True
 
-        self.login(login=LSV2.LOGIN_FILETRANSFER)
+        self.login(login=L_C.LOGIN_FILETRANSFER)
         logging.info(
             'successfully configured connection parameters and basic logins. selected buffer size is %d, use secure file send: %s', self._buffer_size, self._secure_file_send)
 
@@ -425,6 +412,8 @@ class LSV2():
         :returns: True if execution was successful
         :rtype: bool
         """
+        warnings.warn('Deprecation Warning! The definition of the LOGIN_ constants was extracted from pyLSV.LSV2 to pyLSV2. Definiton in LSV2 will be removed in future versions')
+        
         if login in self._active_logins:
             logging.debug('login already active')
             return True
@@ -494,7 +483,7 @@ class LSV2():
             payload.extend(struct.pack('!H', command))
             if parameter is not None:
                 payload.extend(map(ord, parameter))
-                payload.append(0x00)  # terminate string
+                payload.append(0x00)
             if self._send_recive_ack(LSV2.COMMAND_C_CC, payload):
                 return True
         logging.debug('unknown or unsupported system command')
@@ -590,7 +579,8 @@ class LSV2():
         :returns: status code or False if something went wrong
         :rtype: int
         """
-        self.login(login=LSV2.LOGIN_DNC)
+        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definiton in LSV2 will be removed in future versions')
+        self.login(login=L_C.LOGIN_DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_PGM_STATE))
@@ -599,8 +589,7 @@ class LSV2():
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             pgm_state = struct.unpack('!H', result)[0]
-            logging.debug('successfuly read state of active program: %s',
-                          self.get_program_status_text(pgm_state))
+            logging.debug('successfuly read state of active program: %s', get_program_status_text(pgm_state))
             return pgm_state
         else:
             logging.error('an error occurred while querying program state')
@@ -613,7 +602,7 @@ class LSV2():
         :returns: dictionary with line number, main program and current program or False if something went wrong
         :rtype: dict
         """
-        self.login(login=LSV2.LOGIN_DNC)
+        self.login(login=L_C.LOGIN_DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_SELECTED_PGM))
@@ -642,15 +631,16 @@ class LSV2():
         :returns: status code or False if something went wrong
         :rtype: int
         """
-        self.login(login=LSV2.LOGIN_DNC)
+        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definiton in LSV2 will be removed in future versions')
+        self.login(login=L_C.LOGIN_DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_EXEC_STATE))
 
-        result = self._send_recive(
-            LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             exec_state = struct.unpack('!H', result)[0]
+            logging.debug('read execution state %d : %s', exec_state, get_execution_status_text(exec_state, 'en'))
             return exec_state
         else:
             logging.error('an error occurred while querying execution state')
@@ -934,7 +924,8 @@ class LSV2():
         :param str remote_path: path of file on the control
         :param str local_path: local path of destination with or without file name
         :param bool override_file: flag if file should be replaced if it already exists
-        :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is checked for known binary file type 
+        :param bool binary_mode: flag if binary transfer mode should be used, if not set the
+                                 file name is checked for known binary file type
         :returns: True if transfer completed successfully
         :rtype: bool
         """
@@ -1038,7 +1029,8 @@ class LSV2():
         :param str remote_path: path of file on the control
         :param str local_path: local path of destination with or without file name
         :param bool override_file: flag if file should be replaced if it already exists
-        :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is checked for known binary file type 
+        :param bool binary_mode: flag if binary transfer mode should be used, if not set the file name is
+                                 checked for known binary file type
         :returns: True if transfer completed successfully
         :rtype: bool
         """
@@ -1143,59 +1135,59 @@ class LSV2():
         if self._sys_par is None:
             self.get_system_parameter()
 
-        self.login(login=LSV2.LOGIN_PLCDEBUG)
+        self.login(login=L_C.LOGIN_PLCDEBUG)
 
-        if mem_type is LSV2.PLC_MEM_TYPE_MARKER:
+        if mem_type is L_C.PLC_MEM_TYPE_MARKER:
             start_address = self._sys_par['Marker_Start']
             max_count = self._sys_par['Markers']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is LSV2.PLC_MEM_TYPE_INPUT:
+        elif mem_type is L_C.PLC_MEM_TYPE_INPUT:
             start_address = self._sys_par['Input_Start']
             max_count = self._sys_par['Inputs']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is LSV2.PLC_MEM_TYPE_OUTPUT:
+        elif mem_type is L_C.PLC_MEM_TYPE_OUTPUT:
             start_address = self._sys_par['Output_Start']
             max_count = self._sys_par['Outputs']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is LSV2.PLC_MEM_TYPE_COUNTER:
+        elif mem_type is L_C.PLC_MEM_TYPE_COUNTER:
             start_address = self._sys_par['Counter_Start']
             max_count = self._sys_par['Counters']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is LSV2.PLC_MEM_TYPE_TIMER:
+        elif mem_type is L_C.PLC_MEM_TYPE_TIMER:
             start_address = self._sys_par['Timer_Start']
             max_count = self._sys_par['Timers']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is LSV2.PLC_MEM_TYPE_BYTE:
+        elif mem_type is L_C.PLC_MEM_TYPE_BYTE:
             start_address = self._sys_par['Word_Start']
             max_count = self._sys_par['Words'] * 2
             mem_byte_count = 1
             unpack_string = '!B'
-        elif mem_type is LSV2.PLC_MEM_TYPE_WORD:
+        elif mem_type is L_C.PLC_MEM_TYPE_WORD:
             start_address = self._sys_par['Word_Start']
             max_count = self._sys_par['Words']
             mem_byte_count = 2
             unpack_string = '<H'
-        elif mem_type is LSV2.PLC_MEM_TYPE_DWORD:
+        elif mem_type is L_C.PLC_MEM_TYPE_DWORD:
             start_address = self._sys_par['Word_Start']
             max_count = self._sys_par['Words'] / 4
             mem_byte_count = 4
             unpack_string = '<L'
-        elif mem_type is LSV2.PLC_MEM_TYPE_STRING:
+        elif mem_type is L_C.PLC_MEM_TYPE_STRING:
             start_address = self._sys_par['String_Start']
             max_count = self._sys_par['Strings']
             mem_byte_count = self._sys_par['String_Length']
             unpack_string = '{}s'.format(mem_byte_count)
-        elif mem_type is LSV2.PLC_MEM_TYPE_INPUT_WORD:
+        elif mem_type is L_C.PLC_MEM_TYPE_INPUT_WORD:
             start_address = self._sys_par['Input_Word_Start']
             max_count = self._sys_par['Input']
             mem_byte_count = 2
             unpack_string = '<H'
-        elif mem_type is LSV2.PLC_MEM_TYPE_OUTPUT_WORD:
+        elif mem_type is L_C.PLC_MEM_TYPE_OUTPUT_WORD:
             start_address = self._sys_par['Output_Word_Start']
             max_count = self._sys_par['Output_Words']
             mem_byte_count = 2
@@ -1211,7 +1203,7 @@ class LSV2():
 
         plc_values = list()
 
-        if mem_type is LSV2.PLC_MEM_TYPE_STRING:
+        if mem_type is L_C.PLC_MEM_TYPE_STRING:
             # advance address if necessary
             address = address + (count - 1) * mem_byte_count
             for i in range(count):
@@ -1258,9 +1250,9 @@ class LSV2():
 
         payload = bytearray()
         if unlocked:
-            payload.extend(0x00)
+            payload.extend(struct.pack('!B', 0x00))
         else:
-            payload.extend(0x01)
+            payload.extend(struct.pack('!B', 0x01))
 
         result = self._send_recive(
             LSV2.COMMAND_C_LK, LSV2.RESPONSE_T_OK, payload=payload)
@@ -1286,7 +1278,10 @@ class LSV2():
         :rtype: bool
         """
         payload = bytearray()
-        payload.extend(struct.pack('!L', flags))
+        if safe_to_disk:
+            payload.extend(struct.pack('!H', 0x00))
+        else:
+            payload.extend(struct.pack('!H', 0x01))
         payload.extend(map(ord, name))
         payload.append(0x00)
         payload.extend(map(ord, value))
