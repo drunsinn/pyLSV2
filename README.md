@@ -26,6 +26,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
 
+## News and Releases
+check [the github release page](https://github.com/drunsinn/pyLSV2/releases) for information on the latest updates
+
 ## Contributors
 tfischer73
 drunsinn
@@ -56,6 +59,8 @@ on programming stations but also with real hardware. Here is a list of versions 
 If you have tested it on one of your machines with a different software version, please let us know!
 
 ## Usage
+Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 to pyLSV2 directly!
+
 ### Basic example
 ```
  import pyLSV2
