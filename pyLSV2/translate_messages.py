@@ -3,7 +3,6 @@
 """error code definitions and decoding, translation of status information into readable text"""
 import gettext
 import os
-from .client import LSV2
 from . import const as L_C
 
 # Error map
