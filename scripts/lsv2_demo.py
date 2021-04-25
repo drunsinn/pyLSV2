@@ -3,15 +3,15 @@
 
 import logging
 import sys
+import time
 import pyLSV2
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == "__main__":
+    address = '192.168.56.101'
     if len(sys.argv) > 1:
         address = sys.argv[1]
-    else:
-        address = '192.168.56.101'
 
     print('Connecting to {}'.format(address))
 
@@ -30,5 +30,27 @@ if __name__ == "__main__":
     print('PLC String: {}'.format(con.read_plc_memory(address=2, mem_type=pyLSV2.PLC_MEM_TYPE_STRING, count=2)))
     print('PLC Input: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_INPUT, count=5)))
     print('PLC Word Output: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.PLC_MEM_TYPE_OUTPUT_WORD, count=5)))
+
+    # reading of machine parameter for old an new style names
+    if con.get_versions()['Control'] in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
+        # new stype
+        print(con.get_machine_parameter('CfgDisplayLanguage.ncLanguage'))
+    else:
+        # old style
+        print(con.get_machine_parameter('7320.0'))
+    
+    # changing the value of a machine parameter
+    #con.login(pyLSV2.LOGIN_PLCDEBUG)
+    #con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
+    #con.logout(pyLSV2.LOGIN_PLCDEBUG)
+
+    # demo for sending key codes
+    con.login(pyLSV2.LOGIN_MONITOR)
+    con.set_keyboard_access(False)
+    con.send_key_code(pyLSV2.KEY_MODE_MANUAL)
+    time.sleep(3)
+    con.send_key_code(pyLSV2.KEY_MODE_PGM_EDIT)
+    con.set_keyboard_access(True)
+    con.logout(pyLSV2.LOGIN_MONITOR)
 
     con.disconnect()
