@@ -413,7 +413,7 @@ class LSV2():
         :rtype: bool
         """
         warnings.warn('Deprecation Warning! The definition of the LOGIN_ constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
-        
+
         if login in self._active_logins:
             logging.debug('login already active')
             return True
@@ -591,8 +591,8 @@ class LSV2():
             pgm_state = struct.unpack('!H', result)[0]
             logging.debug('successfuly read state of active program: %s', get_program_status_text(pgm_state))
             return pgm_state
-        else:
-            logging.error('an error occurred while querying program state')
+
+        logging.error('an error occurred while querying program state')
         return False
 
     def get_program_stack(self):
@@ -619,9 +619,8 @@ class LSV2():
             logging.debug(
                 'successfuly read active program stack and line number: %s', stack_info)
             return stack_info
-        else:
-            logging.error(
-                'an error occurred while querying active program state')
+
+        logging.error('an error occurred while querying active program state')
         return False
 
     def get_execution_status(self):
@@ -642,8 +641,8 @@ class LSV2():
             exec_state = struct.unpack('!H', result)[0]
             logging.debug('read execution state %d : %s', exec_state, get_execution_status_text(exec_state, 'en'))
             return exec_state
-        else:
-            logging.error('an error occurred while querying execution state')
+
+        logging.error('an error occurred while querying execution state')
         return False
 
     def get_directory_info(self, remote_directory=None):
@@ -676,8 +675,8 @@ class LSV2():
                 'successfuly received directory information %s', dir_info)
 
             return dir_info
-        else:
-            logging.error('an error occurred while querying directory info')
+
+        logging.error('an error occurred while querying directory info')
         return False
 
     def change_directory(self, remote_directory):
@@ -694,8 +693,8 @@ class LSV2():
         if self._send_recive_ack(LSV2.COMMAND_C_DC, payload=payload):
             logging.debug('changed working directory to %s', dir_path)
             return True
-        else:
-            logging.error('an error occurred while changing directory')
+
+        logging.error('an error occurred while changing directory')
         return False
 
     def get_file_info(self, remote_file_path):
@@ -723,9 +722,8 @@ class LSV2():
             logging.debug(
                 'successfuly received file information %s', file_info)
             return file_info
-        else:
-            logging.warning(
-                'an error occurred while querying file info this might also indicate that it does not exist %s', remote_file_path)
+
+        logging.warning('an error occurred while querying file info this might also indicate that it does not exist %s', remote_file_path)
         return False
 
     def get_directory_content(self):
@@ -751,8 +749,8 @@ class LSV2():
                 '\x00').replace('\\', '/')
             file_info['Attributs'] = struct.unpack('!L', entry[8:12])[0]
             dir_content.append(file_info)
-        logging.debug(
-            'successfuly received directory information %s', dir_content)
+
+        logging.debug('successfuly received directory information %s', dir_content)
         return dir_content
 
     def get_drive_info(self):
@@ -1293,9 +1291,8 @@ class LSV2():
             logging.debug(
                 'setting of machine parameter %s to value %s was successful', name, value)
             return True
-        else:
-            logging.warning(
-                'an error occurred while setting machine parameter %s to value %s', name, value)
+
+        logging.warning('an error occurred while setting machine parameter %s to value %s', name, value)
         return False
 
     def send_key_code(self, key_code):
@@ -1319,9 +1316,8 @@ class LSV2():
         if result:
             logging.debug('sending the key code %d was successful', key_code)
             return True
-        else:
-            logging.warning(
-                'an error occurred while sending the key code %d', key_code)
+
+        logging.warning('an error occurred while sending the key code %d', key_code)
         return False
 
     def _test_command(self, command_string, payload=None):
