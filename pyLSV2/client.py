@@ -107,7 +107,7 @@ class LSV2():
 
     # R_FI: file info - read info about a file, followed by a null terminated string
     COMMAND_R_FI = 'R_FI'
-    # R_FL: load a file from the control, followed by a null terminated with the filename string
+    # R_FL: load a file from the control, followed by a null terminated string with the filename
     COMMAND_R_FL = 'R_FL'
 
     # COMMAND_R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
@@ -115,7 +115,9 @@ class LSV2():
     # R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count
     COMMAND_R_MB = 'R_MB'
 
-    # COMMAND_R_MC = 'R_MC' # found via bruteforce test, purpose unknown!
+    # R_MC: read machine parameter, requires login INSPECT, followed by a null terminated string with the parameter number/path
+    COMMAND_R_MC = 'R_MC'
+
     # COMMAND_R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
     # COMMAND_R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
@@ -158,6 +160,9 @@ class LSV2():
 
     # S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data
     RESPONSE_S_MB = 'S_MB'
+
+    # S_MC: singnal that the command R_MC to read machine parameter was accepted, is followed by the actual data
+    RESPONSE_S_MC = 'S_MC'
 
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
     RESPONSE_S_PR = 'S_PR'
@@ -389,7 +394,7 @@ class LSV2():
             self._buffer_size = selected_size
         else:
             logging.debug('use buffer size of %d', selected_size)
-            if self.set_system_command(selected_size):
+            if self.set_system_command(selected_command):
                 self._buffer_size = selected_size
             else:
                 raise Exception('error in communication while setting buffer size to %d' % selected_size)
@@ -1265,8 +1270,28 @@ class LSV2():
                 'an error occurred changing the state of the keyboard lock')
         return False
 
+    def get_machine_parameter(self, name):
+        """Read machine parameter from control. Requires access INSPECT level to work.
+
+        :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
+        :returns: value of parameter or False if command not successfull
+        :rtype: str or bool
+        """
+        payload = bytearray()
+        payload.extend(map(ord, name))
+        payload.append(0x00)
+        result = self._send_recive(LSV2.COMMAND_R_MC, LSV2.RESPONSE_S_MC, payload=payload)
+        if result:
+            value = result.rstrip(b'\x00').decode('utf8')
+            logging.debug('machine parameter %s has value %s', name, value)
+            return value
+
+        logging.warning('an error occurred while reading machine parameter %s', name)
+        return False
+
     def set_machine_parameter(self, name, value, safe_to_disk=False):
-        """Set machine parameter on control. Requires access INSPECT level to work.
+        """Set machine parameter on control. Requires access PLCDEBUG level to work.
+           Writing a parameter takes some time, make shure to set timout sufficiently hight!
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
         :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
@@ -1277,9 +1302,9 @@ class LSV2():
         """
         payload = bytearray()
         if safe_to_disk:
-            payload.extend(struct.pack('!H', 0x00))
+            payload.extend(struct.pack('!L', 0x00))
         else:
-            payload.extend(struct.pack('!H', 0x01))
+            payload.extend(struct.pack('!L', 0x01))
         payload.extend(map(ord, name))
         payload.append(0x00)
         payload.extend(map(ord, value))
