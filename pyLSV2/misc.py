@@ -7,7 +7,7 @@ import struct
 def decode_system_parameters(result_set):
     """decode the result system parameter query
 
-    :param tupel result_set: bytes returnde by the system parameter query command R_PR
+    :param tuple result_set: bytes returnde by the system parameter query command R_PR
     :returns: dictionary with system parameter values
     :rtype: dict
     """

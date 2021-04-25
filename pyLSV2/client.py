@@ -198,7 +198,7 @@ class LSV2():
     SYSCMD_ACTIVATE_MFSK = 18
     SYSCMD_SECURE_FILE_SEND = 19 # set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER
     SYSCMD_DELETE_TABLE_ENTRY = 20
-    SYSCMD_GENERATE_OP_LOG = 27 # generate operations log file, parametes: filename, start time and date
+    SYSCMD_GENERATE_OP_LOG = 27 # generate operations log file, parameters: filename, start time and date
 
     # const for relegram R_RI
     RUN_INFO_EXEC_STATE = 23
@@ -412,7 +412,7 @@ class LSV2():
         :returns: True if execution was successful
         :rtype: bool
         """
-        warnings.warn('Deprecation Warning! The definition of the LOGIN_ constants was extracted from pyLSV.LSV2 to pyLSV2. Definiton in LSV2 will be removed in future versions')
+        warnings.warn('Deprecation Warning! The definition of the LOGIN_ constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
         
         if login in self._active_logins:
             logging.debug('login already active')
@@ -579,7 +579,7 @@ class LSV2():
         :returns: status code or False if something went wrong
         :rtype: int
         """
-        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definiton in LSV2 will be removed in future versions')
+        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
         self.login(login=L_C.LOGIN_DNC)
 
         payload = bytearray()
@@ -631,7 +631,7 @@ class LSV2():
         :returns: status code or False if something went wrong
         :rtype: int
         """
-        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definiton in LSV2 will be removed in future versions')
+        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
         self.login(login=L_C.LOGIN_DNC)
 
         payload = bytearray()
@@ -1272,7 +1272,7 @@ class LSV2():
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
         :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
-        :param bool safe_to_disk: If True the new value will be written to the harddisk ans stay permanent. If False (default) the value will only be availible until the next reboot.
+        :param bool safe_to_disk: If True the new value will be written to the harddisk and stay permanent. If False (default) the value will only be available until the next reboot.
 
         :returns: True or False if command was executed successfully
         :rtype: bool

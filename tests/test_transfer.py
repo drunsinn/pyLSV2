@@ -27,7 +27,7 @@ def test_file_recive(address, timeout):
 
 
 def test_file_transfer_binary(address, timeout):
-    """test if transfering a file in binary mode works"""
+    """test if transferring a file in binary mode works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 

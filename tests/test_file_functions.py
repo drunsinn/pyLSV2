@@ -18,7 +18,7 @@ def test_read_info(address, timeout):
 
 
 def test_directory_functions(address, timeout):
-    """test if functions to change, create and delete directorys work"""
+    """test if functions to change, create and delete directories work"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
     assert lsv2.change_directory('TNC:/nc_prog') is True

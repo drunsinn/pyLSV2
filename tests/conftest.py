@@ -8,7 +8,7 @@ import pytest
 def pytest_addoption(parser):
     """add commandline options to tests"""
     parser.addoption("--address", action="store",
-                     help="address of machine or programing station")
+                     help="address of machine or programming station")
     parser.addoption("--timeout", action="store",
                      help="number of seconds for network timeout")
 
