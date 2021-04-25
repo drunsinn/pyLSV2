@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """low level communication functions for LSV2"""
-import struct
 import logging
 import socket
+import struct
 
 
 class LLLSV2Com():
@@ -56,7 +56,7 @@ class LLLSV2Com():
 
     def disconnect(self):
         """Close connection
-        
+
         :raise: Exception if connection times out.
         :rtype: None
         """

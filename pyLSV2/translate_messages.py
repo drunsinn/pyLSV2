@@ -3,6 +3,8 @@
 """error code definitions and decoding, translation of status information into readable text"""
 import gettext
 import os
+import warnings
+
 from . import const as L_C
 
 # Error map
@@ -95,6 +97,8 @@ def get_error_text(error_type, error_code, language='en'):
     :return: error message in selected language
     :rtype: str
     """
+    warnings.warn('Deprecation Warning! The definition of the LSV2_ERROR_ constants was extracted from pyLSV.translate_mesages to pyLSV2. Definition in LSV2 will be removed in future versions')
+
     locale_path = os.path.dirname(__file__) + '/locales'
     translate = gettext.translation(
         'error_text', localedir=locale_path, languages=[language], fallback=True)

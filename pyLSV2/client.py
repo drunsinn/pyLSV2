@@ -8,7 +8,7 @@
    plugin https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any
    documentation beside the plugin some parts are based on re-engineering and might therefore be
    not correct.
-   Everything related to PLC or unknown/untested System functions was left out as these function
+   Everything related to unknown/untested System functions was left out as these function
    might compromise the control.
 """
 import datetime
