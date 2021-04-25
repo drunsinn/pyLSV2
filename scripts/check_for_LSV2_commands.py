@@ -4,25 +4,25 @@ import logging
 import string
 import time
 import struct
-from pyLSV2 import LSV2
+import pyLSV2
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.ERROR)
     
-    lsv2 = LSV2('192.168.56.103', safe_mode=False)
+    lsv2 = pyLSV2.LSV2('192.168.56.103', safe_mode=False)
 
     lsv2.connect()
-    lsv2.login(login=LSV2.LOGIN_INSPECT)
-    lsv2.login(login=LSV2.LOGIN_DNC)
-    lsv2.login(login=LSV2.LOGIN_INSPECT)
-    lsv2.login(login=LSV2.LOGIN_DIAG)
-    lsv2.login(login=LSV2.LOGIN_PLCDEBUG)
-    lsv2.login(login=LSV2.LOGIN_FILETRANSFER)
-    lsv2.login(login=LSV2.LOGIN_MONITOR)
-    lsv2.login(login=LSV2.LOGIN_DSP)
-    lsv2.login(login=LSV2.LOGIN_DNC)
-    lsv2.login(login=LSV2.LOGIN_SCOPE)
-    lsv2.login(login=LSV2.LOGIN_FILEPLC, password='807667')
+    lsv2.login(login=pyLSV2.LOGIN_INSPECT)
+    lsv2.login(login=pyLSV2.LOGIN_DNC)
+    lsv2.login(login=pyLSV2.LOGIN_INSPECT)
+    lsv2.login(login=pyLSV2.LOGIN_DIAG)
+    lsv2.login(login=pyLSV2.LOGIN_PLCDEBUG)
+    lsv2.login(login=pyLSV2.LOGIN_FILETRANSFER)
+    lsv2.login(login=pyLSV2.LOGIN_MONITOR)
+    lsv2.login(login=pyLSV2.LOGIN_DSP)
+    lsv2.login(login=pyLSV2.LOGIN_DNC)
+    lsv2.login(login=pyLSV2.LOGIN_SCOPE)
+    lsv2.login(login=pyLSV2.LOGIN_FILEPLC, password='807667')
 
     # base_string = 'A_'
     # with open('./out.txt', 'a') as fp:

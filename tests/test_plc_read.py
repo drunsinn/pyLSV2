@@ -10,11 +10,11 @@ def test_login(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
-    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_MARKER, count=1) is not False
-    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_WORD, count=1) is not False
-    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_DWORD, count=1) is not False
-    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_STRING, count=1) is not False
-    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_INPUT, count=1) is not False
-    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.LSV2.PLC_MEM_TYPE_OUTPUT_WORD, count=1) is not False
+    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_MARKER, count=1) is not False
+    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_WORD, count=1) is not False
+    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_DWORD, count=1) is not False
+    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_STRING, count=1) is not False
+    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_INPUT, count=1) is not False
+    assert lsv2.read_plc_memory(address=0, mem_type=pyLSV2.PLC_MEM_TYPE_OUTPUT_WORD, count=1) is not False
 
     lsv2.disconnect()

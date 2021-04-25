@@ -34,7 +34,7 @@ def test_file_transfer_binary(address, timeout):
     with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
         local_send_path = Path('./data/testdata.bmp')
         local_recive_path = Path(tmp_dir_name).joinpath('test.bmp')
-        remote_path = 'TNC:/' + local_send_path.name
+        remote_path = pyLSV2.DRIVE_TNC + '/' + local_send_path.name
 
         assert lsv2.get_file_info(remote_path) is False
 
