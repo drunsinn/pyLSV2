@@ -8,6 +8,12 @@ DRIVE_PLC = 'PLC:'
 DRIVE_LOG = 'LOG:'
 DRIVE_LOG = 'SYS:'
 
+# Majour control types
+TYPE_MILL_NEW_STYLE = 1
+TYPE_MILL_OLD_STYLE = 2
+TYPE_LATHE_NEW_STYLE = 3
+TYPE_UNKNOWN = -1
+
 # files system attributes
 FS_ENTRY_IS_HIDDEN = 0x08
 FS_ENTRY_IS_DRIVE = 0x10

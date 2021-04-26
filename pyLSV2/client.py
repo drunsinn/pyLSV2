@@ -269,6 +269,7 @@ class LSV2():
         self._versions = None
         self._sys_par = None
         self._secure_file_send = False
+        self._control_type = L_C.TYPE_UNKNOWN
 
     def connect(self):
         """connect to control"""
@@ -280,6 +281,18 @@ class LSV2():
         self.logout(login=None)
         self._llcom.disconnect()
         logging.debug('Connection to host closed')
+    
+    def is_itnc(self):
+        """return true if control is of a iTNC"""
+        return self._control_type == L_C.TYPE_MILL_OLD_STYLE
+
+    def is_tnc(self):
+        """return true if control is of a TNC"""
+        return self._control_type == L_C.TYPE_MILL_NEW_STYLE
+
+    def is_pilot(self):
+        """return true if control is of a CNCPILOT640"""
+        return self._control_type == L_C.TYPE_LATHE_NEW_STYLE
 
     @staticmethod
     def _decode_error(content):
@@ -364,6 +377,16 @@ class LSV2():
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
         logging.info('setting connection settings for %s and block length %s', control_type, max_block_length)
+
+        if control_type in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
+            self._control_type = L_C.TYPE_MILL_NEW_STYLE
+        elif control_type in ('iTNC530', 'iTNC530 Programm'):
+            self._control_type = L_C.TYPE_MILL_OLD_STYLE
+        elif control_type in ('CNCPILOT640'):
+            self._control_type = L_C.TYPE_LATHE_NEW_STYLE
+        else:
+            logging.warning('Unknown control type, treat machine as new style mill')
+            self._control_type = L_C.TYPE_MILL_NEW_STYLE
 
         selected_size = -1
         selected_command = None
@@ -560,17 +583,22 @@ class LSV2():
             if result:
                 info_data['ID'] = result.strip(b'\x00').decode('utf-8')
 
-            result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack(
-                '!B', LSV2.COMMAND_R_VR_TYPE_RELEASE_TYPE))
-            if result:
-                info_data['Release_Type'] = result.strip(
-                    b'\x00').decode('utf-8')
+            if self.is_itnc:
+                info_data['Release_Type'] = 'not supported'
+            else:
+                result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack(
+                    '!B', LSV2.COMMAND_R_VR_TYPE_RELEASE_TYPE))
+                if result:
+                    info_data['Release_Type'] = result.strip(
+                        b'\x00').decode('utf-8')
 
             result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack(
                 '!B', LSV2.COMMAND_R_VR_TYPE_SPLC_VERSION))
             if result:
                 info_data['SPLC_Version'] = result.strip(
                     b'\x00').decode('utf-8')
+            else:
+                info_data['SPLC_Version'] = 'not supported'
 
             logging.debug('got version info: %s', info_data)
             self._versions = info_data
