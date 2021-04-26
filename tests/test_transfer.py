@@ -13,15 +13,25 @@ def test_file_recive(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
+    if lsv2.is_itnc():
+        mdi_path = 'TNC:/$MDI.H'
+        tool_t_path = 'TNC:/TOOL.T'
+    elif lsv2.is_pilot():
+        mdi_path = 'TNC:/nc_prog/ncps/PGM01.nc'
+        tool_t_path = 'TNC:/table/toolturn.htt'
+    else:
+        mdi_path = 'TNC:/nc_prog/$mdi.h'
+        tool_t_path = 'TNC:/table/tool.t'
+
     with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
         local_mdi_path = Path(tmp_dir_name).joinpath('mdi.h')
         assert lsv2.recive_file(local_path=str(local_mdi_path),
-                                remote_path='TNC:/nc_prog/$mdi.h',
+                                remote_path=mdi_path,
                                 binary_mode=False) is True
 
         local_tool_table_path = Path(tmp_dir_name).joinpath('tool.t')
         assert lsv2.recive_file(local_path=str(local_tool_table_path),
-                                remote_path='TNC:/table/tool.t') is True
+                                remote_path=tool_t_path) is True
 
         lsv2.disconnect()
 
