@@ -34,15 +34,18 @@ if __name__ == "__main__":
     # reading of machine parameter for old an new style names
     if con.get_versions()['Control'] in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
         # new stype
-        print(con.get_machine_parameter('CfgDisplayLanguage.ncLanguage'))
+        print('Current Language: {}'.format(con.get_machine_parameter('CfgDisplayLanguage.ncLanguage')))
     else:
         # old style
-        print(con.get_machine_parameter('7320.0'))
+        print('Current Language: {}'.format(con.get_machine_parameter('7320.0')))
     
     # changing the value of a machine parameter
     #con.login(pyLSV2.LOGIN_PLCDEBUG)
     #con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
     #con.logout(pyLSV2.LOGIN_PLCDEBUG)
+
+    # read program stack
+    print('Current Program Stack: {}'.format(con.get_program_stack()))
 
     # demo for sending key codes
     con.login(pyLSV2.LOGIN_MONITOR)
