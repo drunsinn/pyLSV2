@@ -32,16 +32,17 @@ if __name__ == "__main__":
     print('PLC Word Output: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.PLC_MEM_TYPE_OUTPUT_WORD, count=5)))
 
     # reading of machine parameter for old an new style names
-    if con.get_versions()['Control'] in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
+    if not con.is_itnc():
         # new stype
         print('Current Language: {}'.format(con.get_machine_parameter('CfgDisplayLanguage.ncLanguage')))
     else:
         # old style
-        print('Current Language: {}'.format(con.get_machine_parameter('7320.0')))
+        print('Current Language: {}'.format(con.get_machine_parameter('7230.0')))
     
     # changing the value of a machine parameter
     #con.login(pyLSV2.LOGIN_PLCDEBUG)
-    #con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
+    #new style: con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
+    #old style: con.set_machine_parameter('7230.0', '2', safe_to_disk=False)
     #con.logout(pyLSV2.LOGIN_PLCDEBUG)
 
     # read program stack
