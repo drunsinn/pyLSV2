@@ -5,7 +5,7 @@
 import pyLSV2
 
 
-def test_login(address, timeout):
+def test_plc_read(address, timeout):
     """test to see if reading of plc data works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
