@@ -15,7 +15,7 @@ def test_read_pgm_status(address, timeout):
 
 def test_read_pgm_stack(address, timeout):
     """test if reading the program stack works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
     assert lsv2.get_program_stack() is not False
     lsv2.disconnect()

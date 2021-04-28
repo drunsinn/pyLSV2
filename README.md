@@ -26,11 +26,15 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
 
+## News and Releases
+check [the github release page](https://github.com/drunsinn/pyLSV2/releases) for information on the latest updates
+
 ## Contributors
 tfischer73
 drunsinn
 WouterElfrink
 kekec14
+Michal Navrátil
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
@@ -55,6 +59,8 @@ on programming stations but also with real hardware. Here is a list of versions 
 If you have tested it on one of your machines with a different software version, please let us know!
 
 ## Usage
+Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 to pyLSV2 directly!
+
 ### Basic example
 ```
  import pyLSV2
@@ -153,7 +159,7 @@ DNC login is only possible if the option is set on the control, without the opti
 
 # Testing
 To run the test you either need a machine or a programming station. The controls has to be on and the 
-PLC programm has to be running. You can add the IP-Address and timeout as a parameter
+PLC program has to be running. You can add the IP-Address and timeout as a parameter
 ```
 pytest --address=192.168.56.103 --timeout=0.1
 ```

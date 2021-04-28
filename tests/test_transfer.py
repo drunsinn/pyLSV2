@@ -13,28 +13,38 @@ def test_file_recive(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
+    if lsv2.is_itnc():
+        mdi_path = 'TNC:/$MDI.H'
+        tool_t_path = 'TNC:/TOOL.T'
+    elif lsv2.is_pilot():
+        mdi_path = 'TNC:/nc_prog/ncps/PGM01.nc'
+        tool_t_path = 'TNC:/table/toolturn.htt'
+    else:
+        mdi_path = 'TNC:/nc_prog/$mdi.h'
+        tool_t_path = 'TNC:/table/tool.t'
+
     with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
         local_mdi_path = Path(tmp_dir_name).joinpath('mdi.h')
         assert lsv2.recive_file(local_path=str(local_mdi_path),
-                                remote_path='TNC:/nc_prog/$mdi.h',
+                                remote_path=mdi_path,
                                 binary_mode=False) is True
 
         local_tool_table_path = Path(tmp_dir_name).joinpath('tool.t')
         assert lsv2.recive_file(local_path=str(local_tool_table_path),
-                                remote_path='TNC:/table/tool.t') is True
+                                remote_path=tool_t_path) is True
 
         lsv2.disconnect()
 
 
 def test_file_transfer_binary(address, timeout):
-    """test if transfering a file in binary mode works"""
+    """test if transferring a file in binary mode works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
         local_send_path = Path('./data/testdata.bmp')
         local_recive_path = Path(tmp_dir_name).joinpath('test.bmp')
-        remote_path = 'TNC:/' + local_send_path.name
+        remote_path = pyLSV2.DRIVE_TNC + '/' + local_send_path.name
 
         assert lsv2.get_file_info(remote_path) is False
 
