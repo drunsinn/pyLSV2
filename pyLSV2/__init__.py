@@ -4,5 +4,6 @@
 from .client import LSV2
 from .const import *
 from .translate_messages import *
+from .table_reader import *
 
 __version__ = '0.6.6'

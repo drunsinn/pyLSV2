@@ -17,33 +17,47 @@ class TableReader():
 
         with table_file.open(mode='r') as tfp:
             header_line = tfp.readline().strip()
-
-            header = re.match(
-                r"^BEGIN ([A-Z]*)\.([A-Z]{1,3}) (MM|INCH)(?: Version: \'Update:(\d+\.\d+)\')?$",
-                header_line)
+            logging.debug('Checking line for header: %s', header_line)
+            header = re.match(r"^BEGIN (?P<name>[A-Z_ 0-9]*)\.(?P<suffix>[A-Z0-9]{1,4})(?P<unit> MM| INCH)?(?P<version> Version: \'Update:(\d+\.\d+)\')?$", header_line)
 
             if header is None:
-                raise Exception(
-                    'File has wrong format: incorrect header for file %s' % table_path)
+                raise Exception('File has wrong format: incorrect header for file %s' % table_path)
 
-            self._name = header.group(1)
-            if 'MM' in header.group(3):
-                self._is_metric = True
+            self._name = header.group('name').strip()
+            self._suffix = header.group('suffix')
+            self._version = header.group('version')
+            
+            if header.group('unit') is not None:
+                self._has_unit = True
+                if 'MM' in header.group('unit'):
+                    self._is_metric = True
+                    logging.debug('Header Infomation for file "%s" Name "%s", file is metric, Version: "%s"', table_file, self._name, self._version)
+                else:
+                    self._is_metric = False
+                    logging.debug('Header Infomation for file "%s" Name "%s", file is inch, Version: "%s"', table_file, self._name, self._version)
             else:
-                self._is_metric = False
+                self._has_unit = False
+                self._is_metric = None
+                logging.debug('Header Infomation for file "%s" Name "%s", file has no units, Version: "%s"', table_file, self._name, self._version)
 
-            self._version = header.group(4)
+            next_line = tfp.readline()
+            if '#STRUCTBEGIN' in next_line or 'TableDescription' in next_line:
+                in_preamble = True
+                next_line = tfp.readline()
+                while in_preamble:
+                    if next_line.startswith('#'):
+                        in_preamble = False
+                    elif next_line.startswith(')'):
+                        in_preamble = False
+                    else:
+                        next_line = tfp.readline()
+                next_line = tfp.readline()
 
-            logging.debug('Header Infomation for file %s Name %s, file is metric %s, Version %s',
-                          table_file, self._name, self._is_metric, self._version)
-
-            column_header = tfp.readline()
-
+            column_header = next_line
             column_list = list()
-            column_pattern = re.compile(r"([A-Z-12\.]+)(?:\s+)")
+            column_pattern = re.compile(r"([A-Za-z-12\.]+)(?:\s+)")
             for column_match in column_pattern.finditer(column_header):
-                column_list.append({'start': column_match.start(
-                ), 'end': column_match.end()-1, 'name': column_match.group().strip()})
+                column_list.append({'start': column_match.start(), 'end': column_match.end()-1, 'name': column_match.group().strip()})
 
             logging.debug('Found %d columns', len(column_list))
 
@@ -56,8 +70,7 @@ class TableReader():
                 table_entry = dict()
 
                 for column in column_list:
-                    table_entry[column['name']
-                                ] = line[column['start']:column['end']].strip()
+                    table_entry[column['name']] = line[column['start']:column['end']].strip()
                 self._table_content.append(table_entry)
 
             logging.debug('Found %d entrys', len(self._table_content))
@@ -112,18 +125,3 @@ class ToolTable(TableReader):
             tools.append(t)
 
         logging.info('Found %d tool entries in table %s', len(tools), table_path)
-
-
-
-if __name__ == '__main__':
-    logging.basicConfig(
-        format='%(name)s  %(levelname)s : %(message)s', level=logging.DEBUG)
-    ToolTable('../data/tool.t')
-    ToolTable('../data/tool 2.t')
-    ToolTable('../data/tool 3.t')
-    ToolTable('../data/TOOL 4.t')
-    ToolTable('../data/TOOL 5.t')
-    ToolTable('../data/TOOL 6.t')
-    ToolTable('../data/TOOL 7.t')
-    ToolTable('../data/tool.t.bak')
-    ToolTable('../data/tool.t.bak 2')
