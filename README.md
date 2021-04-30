@@ -83,8 +83,31 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
  con.disconnect()
 ```
 
-### Accessing PLC data 
-see scripts/lsv2_demo.py
+### Accessing PLC data
+ To read values from the PLC memory you need to know the memory area/type and the memory adress. The following command reads 15 marker (bits) starting at address
+
+```
+ con.read_plc_memory(address=32, mem_type=pyLSV2.PLC_MEM_TYPE_MARKER, count=15)
+```
+ See scripts/lsv2_demo.py for more examples.
+
+ The availible memory aread and thier python data type
+| Memory Type              | Python Type |
+|--------------------------|-------------|
+| PLC_MEM_TYPE_MARKER      | bool        |
+| PLC_MEM_TYPE_INPUT       | bool        |
+| PLC_MEM_TYPE_OUTPUT      | bool        |
+| PLC_MEM_TYPE_COUNTER     | bool        |
+| PLC_MEM_TYPE_TIMER       | bool        |
+| PLC_MEM_TYPE_BYTE        | integer     |
+| PLC_MEM_TYPE_WORD        | integer     |
+| PLC_MEM_TYPE_DWORD       | integer     |
+| PLC_MEM_TYPE_STRING      | str         |
+| PLC_MEM_TYPE_INPUT_WORD  | integer     |
+| PLC_MEM_TYPE_OUTPUT_WORD | integer     |
+
+### SSH Tunnel
+Newer controls allow the use of ssh to encrypt the comunication via LSV2. See scripst/ssh_tunnel_demo.py for an example on how to use the python library 'sshtunnel' to achive a secure connection.
 
 ## Information on the protocol based on reverse engineering and prior work
  Each LSV2 telegram starts with a 32 bit length value followed by a command string consisting of exactly 4 characters. The length value does not include the command string, a telegram with only a command and no additional data will have a length value of 0x0000.
