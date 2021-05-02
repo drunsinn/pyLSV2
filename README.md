@@ -1,6 +1,6 @@
 # pyLSV2
  This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about the control files.
- Most of this library is based on the work of tfischer73 and his Eclipse plugin found at https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since there is no free  documentation beside the plugin, some parts are based purely on reverse engineering and might therefore be not correct.
+ Most of this library is based on the work of tfischer73 and his Eclipse plugin found at [his GitHub page](https://github.com/tfischer73/Eclipse-Plugin-Heidenhain). Since there is no free  documentation beside the plugin, some parts are based purely on reverse engineering and might therefore be not correct.
  Please consider the dangers of using this library on a production machine! This library is by no means complete and could damage the control or cause injuries! Everything beyond simple file manipulation is blocked by a lockout parameter. Use at your own risk!
 
 ## License
@@ -126,7 +126,7 @@ Newer controls allow the use of ssh to encrypt the comunication via LSV2. See sc
  The first 4 bytes might have something to do with the size but it is always reported as 0xFF FF FF FF which would decode to 4,2 Gbyte. It might also be an indicator of the remaining free size of the disk.
 
 ### Machine State
- Base on discussion from github.com https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
+ Base on discussion [here](https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1)
 
  Login with INSPECT
 ```
@@ -184,7 +184,7 @@ DNC login is only possible if the option is set on the control, without the opti
 To run the test you either need a machine or a programming station. The controls has to be on and the 
 PLC program has to be running. You can add the IP-Address and timeout as a parameter
 ```
-pytest --address=192.168.56.103 --timeout=0.1
+pytest --address=192.168.56.103 --timeout=5
 ```
 
 # Resources
