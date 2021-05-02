@@ -8,9 +8,9 @@ import struct
 
 class LLLSV2Com():
     """Implementation of the low level communication functions for sending and
-       receiving LSV"2 telegrams via TCP"""
+       receiving LSV2 telegrams via TCP"""
     DEFAULT_PORT = 19000  # Default port for LSV2 on control side
-    DEFAULT_BUFFER_SIZE = 256  # in the eclipse plugin it is set to 256-10, why ?
+    DEFAULT_BUFFER_SIZE = 256
 
     def __init__(self, hostname, port=19000, timeout=15.0):
         """Set connection parameters
@@ -35,7 +35,7 @@ class LLLSV2Com():
             logging.error('socket creation failed with error %s', err)
             raise
         self._is_connected = False
-        self._last_error_message = ''
+
         logging.debug(
             'Socket successfully created, host %s was resolved to IP %s', hostname, self._host_ip)
 
