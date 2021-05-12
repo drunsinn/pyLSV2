@@ -11,7 +11,6 @@
    Everything related to unknown/untested System functions was left out as these function
    might compromise the control.
 """
-import datetime
 import logging
 import struct
 import warnings
@@ -19,7 +18,7 @@ from pathlib import Path
 
 from . import const as L_C
 from .low_level_com import LLLSV2Com
-from .misc import decode_system_parameters
+from .misc import decode_system_parameters, decode_file_system_info
 from .translate_messages import (get_error_text, get_execution_status_text,
                                  get_program_status_text)
 
@@ -161,7 +160,7 @@ class LSV2():
     # S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data
     RESPONSE_S_MB = 'S_MB'
 
-    # S_MC: singnal that the command R_MC to read machine parameter was accepted, is followed by the actual data
+    # S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data
     RESPONSE_S_MC = 'S_MC'
 
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
@@ -281,7 +280,7 @@ class LSV2():
         self.logout(login=None)
         self._llcom.disconnect()
         logging.debug('Connection to host closed')
-    
+
     def is_itnc(self):
         """return true if control is of a iTNC"""
         return self._control_type == L_C.TYPE_MILL_OLD_STYLE
@@ -382,7 +381,7 @@ class LSV2():
             self._control_type = L_C.TYPE_MILL_NEW_STYLE
         elif control_type in ('iTNC530', 'iTNC530 Programm'):
             self._control_type = L_C.TYPE_MILL_OLD_STYLE
-        elif control_type in ('CNCPILOT640'):
+        elif control_type in ('CNCPILOT640', ):
             self._control_type = L_C.TYPE_LATHE_NEW_STYLE
         else:
             logging.warning('Unknown control type, treat machine as new style mill')
@@ -583,7 +582,7 @@ class LSV2():
             if result:
                 info_data['ID'] = result.strip(b'\x00').decode('utf-8')
 
-            if self.is_itnc:
+            if self.is_itnc():
                 info_data['Release_Type'] = 'not supported'
             else:
                 result = self._send_recive(LSV2.COMMAND_R_VR, LSV2.RESPONSE_S_VR, payload=struct.pack(
@@ -745,13 +744,7 @@ class LSV2():
         result = self._send_recive(
             LSV2.COMMAND_R_FI, LSV2.RESPONSE_S_FI, payload=payload)
         if result:
-            file_info = dict()
-            file_info['Size'] = struct.unpack('!L', result[:4])[0]
-            file_info['Timestamp'] = datetime.datetime.fromtimestamp(
-                struct.unpack('!L', result[4:8])[0])
-            file_info['Name'] = result[12:].decode().strip(
-                '\x00').replace('\\', '/')
-            file_info['Attributs'] = struct.unpack('!L', result[8:12])[0]
+            file_info = decode_file_system_info(result)
             logging.debug(
                 'successfuly received file information %s', file_info)
             return file_info
@@ -774,14 +767,7 @@ class LSV2():
         logging.debug(
             'received %d entries for directory content information', len(result))
         for entry in result:
-            file_info = dict()
-            file_info['Size'] = struct.unpack('!L', entry[:4])[0]
-            file_info['Timestamp'] = datetime.datetime.fromtimestamp(
-                struct.unpack('!L', entry[4:8])[0])
-            file_info['Name'] = entry[12:].decode().strip(
-                '\x00').replace('\\', '/')
-            file_info['Attributs'] = struct.unpack('!L', entry[8:12])[0]
-            dir_content.append(file_info)
+            dir_content.append(decode_file_system_info(entry))
 
         logging.debug('successfuly received directory information %s', dir_content)
         return dir_content
@@ -801,13 +787,7 @@ class LSV2():
         logging.debug(
             'received %d packet of for drive information', len(result))
         for entry in result:
-            info_list = entry.split(b':\x00')
-            for drive in info_list[:-1]:
-                drive_info = dict()
-                drive_name = drive[12:].decode().strip('\x00')
-                drive_info['Name'] = drive_name + ':/'
-                drive_info['unknown'] = drive
-                drives_list.append(drive_info)
+            drives_list.append(entry)
 
         logging.debug('successfuly received drive information %s', drives_list)
         return drives_list
@@ -1302,7 +1282,7 @@ class LSV2():
         """Read machine parameter from control. Requires access INSPECT level to work.
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
-        :returns: value of parameter or False if command not successfull
+        :returns: value of parameter or False if command not successful
         :rtype: str or bool
         """
         payload = bytearray()
@@ -1319,7 +1299,7 @@ class LSV2():
 
     def set_machine_parameter(self, name, value, safe_to_disk=False):
         """Set machine parameter on control. Requires access PLCDEBUG level to work.
-           Writing a parameter takes some time, make shure to set timout sufficiently hight!
+           Writing a parameter takes some time, make sure to set timeout sufficiently hight!
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
         :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.

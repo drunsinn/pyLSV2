@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 """misc helper functions for pyLSV2"""
 import struct
+from datetime import datetime
 
 
 def decode_system_parameters(result_set):
     """decode the result system parameter query
 
-    :param tuple result_set: bytes returnde by the system parameter query command R_PR
+    :param tuple result_set: bytes returned by the system parameter query command R_PR
     :returns: dictionary with system parameter values
     :rtype: dict
     """
@@ -19,7 +20,8 @@ def decode_system_parameters(result_set):
     elif message_length == 124:
         info_list = struct.unpack('!14L8B8L2BH4B2L2HLL', result_set)
     else:
-        raise ValueError('unexpected length {} of message content {}'.format(message_length, result_set))
+        raise ValueError('unexpected length {} of message content {}'.format(
+            message_length, result_set))
     sys_par = dict()
     sys_par['Marker_Start'] = info_list[0]
     sys_par['Markers'] = info_list[1]
@@ -53,3 +55,33 @@ def decode_system_parameters(result_set):
     sys_par['Scope_Channels'] = info_list[40]
     sys_par['PW_Encryption_Key'] = info_list[41]
     return sys_par
+
+
+def decode_file_system_info(data_set):
+    """decode result from file system entry
+
+    :param tuple result_set: bytes returned by the system parameter query command R_FI or CR_DR
+    :returns: dictionary with file system entry parameters
+    :rtype: dict
+    """
+    file_info = dict()
+    file_info['Size'] = struct.unpack('!L', data_set[:4])[0]
+    file_info['Timestamp'] =  datetime.fromtimestamp(struct.unpack('!L', data_set[4:8])[0])
+
+    arrtibutes = struct.unpack('!L', data_set[8:12])[0]
+    file_info['Attributs'] = arrtibutes
+    file_info['is_file'] = False
+    file_info['is_directory'] = False
+    file_info['is_drive'] = False
+    if arrtibutes & 0x10:
+        file_info['is_drive'] = True
+    elif arrtibutes & 0x20:
+        file_info['is_directory'] = True
+    else:
+        file_info['is_file'] = True
+
+    file_info['Name'] = data_set[12:].decode().strip('\x00').replace('\\', '/')
+
+    file_info['is_write_protected'] = bool(arrtibutes & 0x40)
+
+    return file_info
