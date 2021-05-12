@@ -160,7 +160,7 @@ class LSV2():
     # S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data
     RESPONSE_S_MB = 'S_MB'
 
-    # S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data
+    # S_MC: singnal that the command R_MC to read machine parameter was accepted, is followed by the actual data
     RESPONSE_S_MC = 'S_MC'
 
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
@@ -1282,7 +1282,7 @@ class LSV2():
         """Read machine parameter from control. Requires access INSPECT level to work.
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
-        :returns: value of parameter or False if command not successful
+        :returns: value of parameter or False if command not successfull
         :rtype: str or bool
         """
         payload = bytearray()
@@ -1299,7 +1299,7 @@ class LSV2():
 
     def set_machine_parameter(self, name, value, safe_to_disk=False):
         """Set machine parameter on control. Requires access PLCDEBUG level to work.
-           Writing a parameter takes some time, make sure to set timeout sufficiently hight!
+           Writing a parameter takes some time, make shure to set timout sufficiently hight!
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
         :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
@@ -1352,21 +1352,3 @@ class LSV2():
 
         logging.warning('an error occurred while sending the key code %d', key_code)
         return False
-
-    def _test_command(self, command_string, payload=None):
-        """check commands for validity"""
-        response, content = self._llcom.telegram(
-            command_string, payload, buffer_size=self._buffer_size)
-        if content is None:
-            response_length = -1
-        else:
-            response_length = len(content)
-        if response in LSV2.RESPONSE_T_ER:
-            if len(content) == 2:
-                byte_1, byte_2, = struct.unpack('!BB', content)
-                error_text = get_error_text(byte_1, byte_2)
-            else:
-                error_text = 'Unknown Error Number {}'.format(content)
-        else:
-            error_text = 'NONE'
-        return 'sent {} payload {} received {} message_length {} content {} error text : {}'.format(command_string, payload, response, response_length, content, error_text)
