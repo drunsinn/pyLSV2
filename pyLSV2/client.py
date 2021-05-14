@@ -18,7 +18,8 @@ from pathlib import Path
 
 from . import const as L_C
 from .low_level_com import LLLSV2Com
-from .misc import decode_system_parameters, decode_file_system_info
+from .misc import (decode_file_system_info, decode_system_parameters,
+                   decode_tool_information)
 from .translate_messages import (get_error_text, get_execution_status_text,
                                  get_program_status_text)
 
@@ -160,7 +161,7 @@ class LSV2():
     # S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data
     RESPONSE_S_MB = 'S_MB'
 
-    # S_MC: singnal that the command R_MC to read machine parameter was accepted, is followed by the actual data
+    # S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data
     RESPONSE_S_MC = 'S_MC'
 
     # S_PR: ignals that the command R_PR and the parameter was accepted, it is followed by more data
@@ -200,9 +201,11 @@ class LSV2():
     SYSCMD_OBSERVE_REMOVE_FILE = 16  # parameter: file name
     SYSCMD_OBSERVE_REMOVE_ALL = 17
     SYSCMD_ACTIVATE_MFSK = 18
-    SYSCMD_SECURE_FILE_SEND = 19 # set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER
+    # set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER
+    SYSCMD_SECURE_FILE_SEND = 19
     SYSCMD_DELETE_TABLE_ENTRY = 20
-    SYSCMD_GENERATE_OP_LOG = 27 # generate operations log file, parameters: filename, start time and date
+    # generate operations log file, parameters: filename, start time and date
+    SYSCMD_GENERATE_OP_LOG = 27
 
     # const for relegram R_RI
     RUN_INFO_EXEC_STATE = 23
@@ -375,7 +378,8 @@ class LSV2():
         self.login(login=L_C.LOGIN_INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
-        logging.info('setting connection settings for %s and block length %s', control_type, max_block_length)
+        logging.info('setting connection settings for %s and block length %s',
+                     control_type, max_block_length)
 
         if control_type in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
             self._control_type = L_C.TYPE_MILL_NEW_STYLE
@@ -384,7 +388,8 @@ class LSV2():
         elif control_type in ('CNCPILOT640', ):
             self._control_type = L_C.TYPE_LATHE_NEW_STYLE
         else:
-            logging.warning('Unknown control type, treat machine as new style mill')
+            logging.warning(
+                'Unknown control type, treat machine as new style mill')
             self._control_type = L_C.TYPE_MILL_NEW_STYLE
 
         selected_size = -1
@@ -419,7 +424,8 @@ class LSV2():
             if self.set_system_command(selected_command):
                 self._buffer_size = selected_size
             else:
-                raise Exception('error in communication while setting buffer size to %d' % selected_size)
+                raise Exception(
+                    'error in communication while setting buffer size to %d' % selected_size)
 
         if not self.set_system_command(LSV2.SYSCMD_SECURE_FILE_SEND):
             logging.warning('secure file transfer not supported? use fallback')
@@ -621,7 +627,8 @@ class LSV2():
             LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             pgm_state = struct.unpack('!H', result)[0]
-            logging.debug('successfuly read state of active program: %s', get_program_status_text(pgm_state))
+            logging.debug('successfuly read state of active program: %s',
+                          get_program_status_text(pgm_state))
             return pgm_state
 
         logging.error('an error occurred while querying program state')
@@ -668,10 +675,12 @@ class LSV2():
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_EXEC_STATE))
 
-        result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        result = self._send_recive(
+            LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             exec_state = struct.unpack('!H', result)[0]
-            logging.debug('read execution state %d : %s', exec_state, get_execution_status_text(exec_state, 'en'))
+            logging.debug('read execution state %d : %s', exec_state,
+                          get_execution_status_text(exec_state, 'en'))
             return exec_state
 
         logging.error('an error occurred while querying execution state')
@@ -749,7 +758,8 @@ class LSV2():
                 'successfuly received file information %s', file_info)
             return file_info
 
-        logging.warning('an error occurred while querying file info this might also indicate that it does not exist %s', remote_file_path)
+        logging.warning(
+            'an error occurred while querying file info this might also indicate that it does not exist %s', remote_file_path)
         return False
 
     def get_directory_content(self):
@@ -769,7 +779,8 @@ class LSV2():
         for entry in result:
             dir_content.append(decode_file_system_info(entry))
 
-        logging.debug('successfuly received directory information %s', dir_content)
+        logging.debug(
+            'successfuly received directory information %s', dir_content)
         return dir_content
 
     def get_drive_info(self):
@@ -1282,24 +1293,26 @@ class LSV2():
         """Read machine parameter from control. Requires access INSPECT level to work.
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
-        :returns: value of parameter or False if command not successfull
+        :returns: value of parameter or False if command not successful
         :rtype: str or bool
         """
         payload = bytearray()
         payload.extend(map(ord, name))
         payload.append(0x00)
-        result = self._send_recive(LSV2.COMMAND_R_MC, LSV2.RESPONSE_S_MC, payload=payload)
+        result = self._send_recive(
+            LSV2.COMMAND_R_MC, LSV2.RESPONSE_S_MC, payload=payload)
         if result:
             value = result.rstrip(b'\x00').decode('utf8')
             logging.debug('machine parameter %s has value %s', name, value)
             return value
 
-        logging.warning('an error occurred while reading machine parameter %s', name)
+        logging.warning(
+            'an error occurred while reading machine parameter %s', name)
         return False
 
     def set_machine_parameter(self, name, value, safe_to_disk=False):
         """Set machine parameter on control. Requires access PLCDEBUG level to work.
-           Writing a parameter takes some time, make shure to set timout sufficiently hight!
+           Writing a parameter takes some time, make sure to set timeout sufficiently high!
 
         :param str name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
         :param str value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
@@ -1325,7 +1338,8 @@ class LSV2():
                 'setting of machine parameter %s to value %s was successful', name, value)
             return True
 
-        logging.warning('an error occurred while setting machine parameter %s to value %s', name, value)
+        logging.warning(
+            'an error occurred while setting machine parameter %s to value %s', name, value)
         return False
 
     def send_key_code(self, key_code):
@@ -1350,5 +1364,26 @@ class LSV2():
             logging.debug('sending the key code %d was successful', key_code)
             return True
 
-        logging.warning('an error occurred while sending the key code %d', key_code)
+        logging.warning(
+            'an error occurred while sending the key code %d', key_code)
+        return False
+
+    def get_spindle_tool_status(self):
+        """Get information about the tool currently in the spindle
+
+        :returns: tool information or False if something went wrong
+        :rtype: dict
+        """
+        self.login(login=L_C.LOGIN_DNC)
+        payload = bytearray()
+        payload.extend(struct.pack('!H', L_C.RUN_INFO_CURRENT_TOOL))
+        result = self._send_recive(
+            LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        if result:
+            tool_info = decode_tool_information(result)
+            logging.debug(
+                'successfuly read info on current tool: %s', tool_info)
+            return tool_info
+        logging.warning(
+            'an error occurred while querying current tool information. This does not work for all control types')
         return False

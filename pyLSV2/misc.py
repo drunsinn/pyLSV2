@@ -85,3 +85,18 @@ def decode_file_system_info(data_set):
     file_info['is_write_protected'] = bool(arrtibutes & 0x40)
 
     return file_info
+
+def decode_tool_information(data_set):
+    """decode result from tool info
+
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for tool info
+    :returns: dictionary with tool info values
+    :rtype: dict
+    """
+    tool_info = dict()
+    tool_info['Number'] = struct.unpack('!L', data_set[0:4])[0]
+    tool_info['Index'] = struct.unpack('!H', data_set[4:6])[0]
+    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0], 'unknown')
+    tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
+    tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
+    return tool_info
