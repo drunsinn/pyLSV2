@@ -4,11 +4,11 @@
 ## Differences between different control versions
 Some functions are only available on certain controls and/or versions of the software. 
 
-|                         | TNC                   | iTNC            | CNCpilot              |
-|-------------------------|-----------------------|-----------------|-----------------------|
-| Tool Table              | TNC:/table/tool.t     | TNC:/TOOL.T     | TNC:/table/tool.t     |
-| Pocket Table            | TNC:/table/tool_p.tch | TNC:/TOOL_P.TCH | TNC:/table/tool_p.tch |
-| R_RI: current tool (51) | no                    | yes             | no                    |
+|                         | TNC                   | iTNC            | CNCpilot                |
+|-------------------------|-----------------------|-----------------|-------------------------|
+| Tool Table              | TNC:/table/tool.t     | TNC:/TOOL.T     |                         |
+| Pocket Table            | TNC:/table/tool_p.tch | TNC:/TOOL_P.TCH | TNC:/table/ToolAllo.tch |
+| R_RI: current tool (51) | no                    | yes             | no                      |
 
 ## Information on the protocol based on reverse engineering and prior work
  Each LSV2 telegram starts with a 32 bit length value followed by a command string consisting of exactly 4 characters. The length value does not include the command string, a telegram with only a command and no additional data will have a length value of 0x0000.
