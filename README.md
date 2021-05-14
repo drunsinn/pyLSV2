@@ -1,3 +1,6 @@
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/ansicolortags.svg)](https://pypi.python.org/pypi/pyLSV2/)
+[![PyPI version fury.io](https://badge.fury.io/py/ansicolortags.svg)](https://pypi.python.org/pypi/pyLSV2/)
+
 # pyLSV2
  This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about the control files.
  Most of this library is based on the work of tfischer73 and his Eclipse plugin found at [his GitHub page](https://github.com/tfischer73/Eclipse-Plugin-Heidenhain). Since there is no free  documentation beside the plugin, some parts are based purely on reverse engineering and might therefore be not correct.
@@ -58,7 +61,11 @@ on programming stations but also with real hardware. Here is a list of versions 
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
+Take a look at [LSV2.md](LSV2.md) for a more in depth explanation on the detials of LSV2.
+
 ## Usage
+See [lsv2_demo.py](scripts/lsv2_demo.py) for a demonstration of some of the functions.
+
 Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 to pyLSV2 directly!
 
 ### Basic example
@@ -83,15 +90,33 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
  con.disconnect()
 ```
 
+### File transfer
+```
+ import logging
+ import pyLSV2
+ 
+ logging.basicConfig(level=logging.DEBUG)
+ con = pyLSV2.LSV2('192.168.56.101', safe_mode=True)
+ con.connect()
+
+ con.send_file(local_path='./test.H', remote_path='TNC:/',
+               override_file=True, binary_mode=True)
+
+ con.recive_file(local_path='./', remote_path='TNC:/nc_prog/$mdi.h',
+                 override_file=True, binary_mode=True)
+
+ con.disconnect()
+```
+
 ### Accessing PLC data
- To read values from the PLC memory you need to know the memory area/type and the memory adress. The following command reads 15 marker (bits) starting at address
+ To read values from the PLC memory you need to know the memory area/type and the memory address. The following command reads 15 marker (bits) starting at address
 
 ```
  con.read_plc_memory(address=32, mem_type=pyLSV2.PLC_MEM_TYPE_MARKER, count=15)
 ```
  See scripts/lsv2_demo.py for more examples.
 
- The availible memory aread and thier python data type
+ The available memory aread and their python data type
 | Memory Type              | Python Type |
 |--------------------------|-------------|
 | PLC_MEM_TYPE_MARKER      | bool        |
@@ -107,84 +132,13 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
 | PLC_MEM_TYPE_OUTPUT_WORD | integer     |
 
 ### SSH Tunnel
-Newer controls allow the use of ssh to encrypt the comunication via LSV2. See scripst/ssh_tunnel_demo.py for an example on how to use the python library 'sshtunnel' to achive a secure connection.
-
-## Information on the protocol based on reverse engineering and prior work
- Each LSV2 telegram starts with a 32 bit length value followed by a command string consisting of exactly 4 characters. The length value does not include the command string, a telegram with only a command and no additional data will have a length value of 0x0000.
- If additional data has to be sent after the command string the value 0x00 is used as a separator.
- All values are transmitted with big-endian byte order.
-
-### File Info
- By using the command R_FI followed by a valid file path, the control responds with information about this file. This includes the file size, the unix-date and the filename.
- The message also contains some additional bytes which purpose is not yet confirmed. These bytes are probably attributes and/or access rights.
-
-### Directory info
- The command for reading the content of a directory seems to support an additional parameter. With 0x01 sent after the command, the control sends all entries at once and not one entry per packet.
- R_DI 0x01 -> all info at once and not in separate packets
-
- The directory information has also not been completely decoded yet. It contains the full path of the folder and a lot of zero bytes. By comparing results from different controls and directories it was determined that there seem to be a list of four byte-keys. their purpose is not yet known.
- The first 4 bytes might have something to do with the size but it is always reported as 0xFF FF FF FF which would decode to 4,2 Gbyte. It might also be an indicator of the remaining free size of the disk.
-
-### Machine State
- Base on discussion [here](https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1)
-
- Login with INSPECT
-```
-   > R_RI 0x0015 (21) -> you can read the X,Y,Z Axis.
-```
-
- Login with DNC
-```
-   > R_RI 0x0018 (24) -> you can read the name of the current program in execution.
-```
-
- Login with DNC
-```
-   > R_RI 0x001A (26) -> you can read the current program status
-```
-   The states of program can be:
-   0: Started
-   1: Stopped
-   2: Finished
-   3: Cancelled
-   4: Interrupted
-   5: Error
-   6: Error Cleared
-   7: Idle
-   8: Undefined
-
-DNC login is only possible if the option is set on the control, without the option you get an error when trying to login with DNC.
-
-### Creating a log file - not implemented
- By recording the communiction with Wireshark between the control and TNCremo the following sequence was accired.
-
-```
-   >....R_ST
-   <....S_ST............
-   >....C_ST............
-   <....T_OK
-   >...%C_CC..operation.log;12.09.2020;00:00:00;.
-   <....T_OK
-   <....M_CC...d 0x00 0x1b 0x00 0x64
-   >....C_ST............
-   <....T_OK
-   >....R_FLTNC:\operation.log.
-   <....S_FLOperation Logbook Version 1.0.Sy..
-```
-
- To trigger the generation of the log file, the telegram C_CC with command 27 is used. The parameters contain the filename of the log file an the start-date and time for the log entries.
- This is to acknowledge with a T_OK. After some time another telegram is receive: M_CC with data 0x00 1b 00 64. This seems to be the signal that the log file was created successfully and is ready to be copied.
- Afterwards a regular file copy takes place.
-
-### File transfer
- Transfer of files can happen in binary or ASCII mode. To enable binary mode, add 0x01 after the filename. In TNCremo you can find a list of file types for which binary mode is recommended.
- The functions recive_file and send_file can be configured with the parameter binary_mode.
+Newer controls allow the use of ssh to encrypt the communication via LSV2. See scripts/ssh_tunnel_demo.py for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
 # Testing
-To run the test you either need a machine or a programming station. The controls has to be on and the 
-PLC program has to be running. You can add the IP-Address and timeout as a parameter
+ To run the test you either need a machine or a programming station. The controls has to be on and the 
+ PLC program has to be running. You can add the IP-Address and timeout as a parameter
 ```
-pytest --address=192.168.56.103 --timeout=5
+ pytest --address=192.168.56.103 --timeout=5
 ```
 
 # Resources
