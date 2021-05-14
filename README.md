@@ -1,5 +1,5 @@
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/ansicolortags.svg)](https://pypi.python.org/pypi/pyLSV2/)
-[![PyPI version fury.io](https://badge.fury.io/py/ansicolortags.svg)](https://pypi.python.org/pypi/pyLSV2/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
+[![PyPI version fury.io](https://badge.fury.io/py/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 
 # pyLSV2
  This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about the control files.
