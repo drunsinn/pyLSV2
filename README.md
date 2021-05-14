@@ -33,16 +33,18 @@
 check [the github release page](https://github.com/drunsinn/pyLSV2/releases) for information on the latest updates
 
 ## Contributors
-tfischer73
-drunsinn
-WouterElfrink
-kekec14
-Michal Navrátil
+In chronological order:
+- tfischer73
+- drunsinn
+- WouterElfrink
+- kekec14
+- Michal Navrátil
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
 it is hard to say if this library is compatible with all of them. Most testing has been done 
-on programming stations but also with real hardware. Here is a list of versions have been tested:
+on programming stations but also with real hardware. Here is a list of versions that have
+been tested:
 
 ### Programming Stations
 | Control     | Software       |
