@@ -63,10 +63,10 @@ been tested:
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
-Take a look at [LSV2.md](LSV2.md) for a more in depth explanation on the detials of LSV2.
+Take a look at [LSV2.md](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/LSV2.md) for a more in depth explanation on the detials of LSV2.
 
 ## Usage
-See [lsv2_demo.py](scripts/lsv2_demo.py) for a demonstration of some of the functions.
+See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.
 
 Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 to pyLSV2 directly!
 
@@ -116,7 +116,7 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
 ```
  con.read_plc_memory(address=32, mem_type=pyLSV2.PLC_MEM_TYPE_MARKER, count=15)
 ```
- See scripts/lsv2_demo.py for more examples.
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for more examples.
 
  The available memory aread and their python data type
 | Memory Type              | Python Type |
