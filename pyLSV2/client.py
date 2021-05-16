@@ -19,7 +19,7 @@ from pathlib import Path
 from . import const as L_C
 from .low_level_com import LLLSV2Com
 from .misc import (decode_file_system_info, decode_system_parameters,
-                   decode_tool_information)
+                   decode_directory_info, decode_tool_information)
 from .translate_messages import (get_error_text, get_execution_status_text,
                                  get_program_status_text)
 
@@ -699,19 +699,7 @@ class LSV2():
 
         result = self._send_recive(LSV2.COMMAND_R_DI, LSV2.RESPONSE_S_DI)
         if result:
-            dir_info = dict()
-            dir_info['Free Size'] = struct.unpack('!L', result[:4])[0]
-
-            attribute_list = list()
-            for i in range(4, len(result[4:128]), 4):
-                attr = result[i:i + 4].decode().strip('\x00')
-                if len(attr) > 0:
-                    attribute_list.append(attr)
-
-            dir_info['Dir_Attributs'] = attribute_list
-            dir_info['unknown'] = result[128:164]
-            dir_info['Path'] = result[164:].decode().strip(
-                '\x00').replace('\\', '/')
+            dir_info = decode_directory_info(result)
             logging.debug(
                 'successfuly received directory information %s', dir_info)
 

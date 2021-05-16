@@ -73,18 +73,41 @@ def decode_file_system_info(data_set):
     file_info['is_file'] = False
     file_info['is_directory'] = False
     file_info['is_drive'] = False
-    if arrtibutes & 0x10:
-        file_info['is_drive'] = True
-    elif arrtibutes & 0x20:
-        file_info['is_directory'] = True
-    else:
-        file_info['is_file'] = True
+
+    if arrtibutes > 0:
+        if bool(arrtibutes & 0x10):
+            file_info['is_drive'] = True
+        elif bool(arrtibutes & 0x20):
+            file_info['is_directory'] = True
+        else:
+            file_info['is_file'] = True
+        file_info['is_write_protected'] = bool(arrtibutes & 0x40)
 
     file_info['Name'] = data_set[12:].decode().strip('\x00').replace('\\', '/')
 
-    file_info['is_write_protected'] = bool(arrtibutes & 0x40)
-
     return file_info
+
+def decode_directory_info(data_set):
+    """decode result from directory entry
+
+    :param tuple result_set: bytes returned by the system parameter query command R_DI
+    :returns: dictionary with file system entry parameters
+    :rtype: dict
+    """
+    dir_info = dict()
+    dir_info['Free Size'] = struct.unpack('!L', data_set[:4])[0]
+    attribute_list = list()
+    for i in range(4, len(data_set[4:132]), 4):
+        attr = data_set[i:i + 4].decode().strip('\x00')
+        if len(attr) > 0:
+            attribute_list.append(attr)
+    dir_info['Dir_Attributs'] = attribute_list
+
+    dir_info['Attributs'] = struct.unpack('!32B', data_set[132:164])
+
+
+    dir_info['Path'] = data_set[164:].decode().strip('\x00').replace('\\', '/')
+    return dir_info
 
 def decode_tool_information(data_set):
     """decode result from tool info
