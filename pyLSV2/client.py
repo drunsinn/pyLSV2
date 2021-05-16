@@ -18,8 +18,8 @@ from pathlib import Path
 
 from . import const as L_C
 from .low_level_com import LLLSV2Com
-from .misc import (decode_file_system_info, decode_system_parameters,
-                   decode_directory_info, decode_tool_information)
+from .misc import (decode_directory_info, decode_file_system_info,
+                   decode_system_parameters, decode_tool_information)
 from .translate_messages import (get_error_text, get_execution_status_text,
                                  get_program_status_text)
 
