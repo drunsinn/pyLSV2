@@ -19,7 +19,7 @@ from pathlib import Path
 from . import const as L_C
 from .low_level_com import LLLSV2Com
 from .misc import (decode_directory_info, decode_file_system_info,
-                   decode_system_parameters, decode_tool_information)
+                   decode_system_parameters, decode_tool_information, decode_override_information)
 from .translate_messages import (get_error_text, get_execution_status_text,
                                  get_program_status_text)
 
@@ -1374,4 +1374,24 @@ class LSV2():
             return tool_info
         logging.warning(
             'an error occurred while querying current tool information. This does not work for all control types')
+        return False
+
+    def get_override_info(self):
+        """Get information about the override info
+
+        :returns: override information or False if something went wrong
+        :rtype: dict
+        """
+        self.login(login=L_C.LOGIN_DNC)
+        payload = bytearray()
+        payload.extend(struct.pack('!H', L_C.RUN_INFO_OVERRIDE))
+        result = self._send_recive(
+            LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        if result:
+            override_info = decode_override_information(result)
+            logging.debug(
+                'successfuly read override info: %s', override_info)
+            return override_info
+        logging.warning(
+            'an error occurred while querying current override information. This does not work for all control types')
         return False

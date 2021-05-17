@@ -123,3 +123,17 @@ def decode_tool_information(data_set):
     tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
     tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
     return tool_info
+    
+def decode_override_information(data_set):
+    """decode result from override info
+
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for override info
+    :returns: dictionary with override info values
+    :rtype: dict
+    """
+    override_info = dict()
+    override_info['Feed_override']=struct.unpack('!L', data_set[0:4])[0]/100
+    override_info['Speed_override']=struct.unpack('!L', data_set[4:8])[0]/100
+    override_info['Rapid_override']=struct.unpack('!L', data_set[8:12])[0]/100
+
+    return override_info
