@@ -39,7 +39,7 @@ class TableReader():
             header_line = tfp.readline().strip()
             logging.debug('Checking line for header: %s', header_line)
             header = re.match(
-                r"^BEGIN (?P<name>[A-Z_ 0-9]*)\.(?P<suffix>[A-Z0-9]{1,4})(?P<unit> MM| INCH)?(?: Version: \'Update:(?P<version>\d+\.\d+)\')?$", header_line)
+                r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: Version: \'Update:(?P<version>\d+\.\d+)\')?$", header_line)
 
             if header is None:
                 raise Exception(
@@ -80,11 +80,11 @@ class TableReader():
 
             column_header = next_line
             column_list = list()
-            column_pattern = re.compile(r"([A-Za-z-12\.]+)(?:\s+)")
+            column_pattern = re.compile(r"([A-Za-z-12_:\.]+)(?:\s+)")
             for column_match in column_pattern.finditer(column_header):
                 column_list.append({'start': column_match.start(
                 ), 'end': column_match.end()-1, 'name': column_match.group().strip()})
-
+                
             logging.debug('Found %d columns', len(column_list))
 
             table_content = list()
