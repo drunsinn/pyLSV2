@@ -271,6 +271,7 @@ class LSV2():
         self._sys_par = None
         self._secure_file_send = False
         self._control_type = L_C.TYPE_UNKNOWN
+        self._last_error_code = None
 
     def connect(self):
         """connect to control"""
@@ -328,9 +329,11 @@ class LSV2():
 
             if response in LSV2.RESPONSE_T_ER:
                 self._decode_error(content)
+                self._last_error_code = content
             else:
                 logging.error(
                     'recived unexpected response %s to command %s. response code %s', response, command, content)
+                self._last_error_code = None
 
         return False
 
@@ -1110,9 +1113,11 @@ class LSV2():
                 if response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
                     logging.error('an error occurred while loading the first block of data for file %s : %s',
                                   remote_path, self._decode_error(content))
+                    self._last_error_code = content
                 else:
                     logging.error(
                         'could not load file with error %s', response)
+                    self._last_error_code = None
                 return False
 
         logging.info('received %d bytes transfer complete for file %s to %s',
