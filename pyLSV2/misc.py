@@ -66,7 +66,8 @@ def decode_file_system_info(data_set):
     """
     file_info = dict()
     file_info['Size'] = struct.unpack('!L', data_set[:4])[0]
-    file_info['Timestamp'] =  datetime.fromtimestamp(struct.unpack('!L', data_set[4:8])[0])
+    file_info['Timestamp'] = datetime.fromtimestamp(
+        struct.unpack('!L', data_set[4:8])[0])
 
     arrtibutes = struct.unpack('!L', data_set[8:12])[0]
     file_info['Attributs'] = arrtibutes
@@ -87,6 +88,7 @@ def decode_file_system_info(data_set):
 
     return file_info
 
+
 def decode_directory_info(data_set):
     """decode result from directory entry
 
@@ -105,9 +107,9 @@ def decode_directory_info(data_set):
 
     dir_info['Attributs'] = struct.unpack('!32B', data_set[132:164])
 
-
     dir_info['Path'] = data_set[164:].decode().strip('\x00').replace('\\', '/')
     return dir_info
+
 
 def decode_tool_information(data_set):
     """decode result from tool info
@@ -123,7 +125,8 @@ def decode_tool_information(data_set):
     tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
     tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
     return tool_info
-    
+
+
 def decode_override_information(data_set):
     """decode result from override info
 
@@ -132,8 +135,22 @@ def decode_override_information(data_set):
     :rtype: dict
     """
     override_info = dict()
-    override_info['Feed_override']=struct.unpack('!L', data_set[0:4])[0]/100
-    override_info['Speed_override']=struct.unpack('!L', data_set[4:8])[0]/100
-    override_info['Rapid_override']=struct.unpack('!L', data_set[8:12])[0]/100
+    override_info['Feed_override'] = struct.unpack('!L', data_set[0:4])[0]/100
+    override_info['Speed_override'] = struct.unpack('!L', data_set[4:8])[0]/100
+    override_info['Rapid_override'] = struct.unpack('!L', data_set[8:12])[0]/100
 
     return override_info
+
+
+def decode_error_message(data_set):
+    """decode result from reading error messages
+
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for first and next error
+    :returns: dictionary with error message values
+    :rtype: dict
+    """
+    error_info = dict()
+    error_info['unknown'] = struct.unpack('!L', data_set[0:4])[0]
+    error_info['Number'] = struct.unpack('!l', data_set[4:8])[0]
+    error_info['Text'] = data_set[8:].decode().strip('\x00')
+    return error_info
