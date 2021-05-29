@@ -87,4 +87,11 @@ if __name__ == "__main__":
             spindel = list(filter(lambda pocket: pocket['P'] == spindel_lable, pockets))[0]
             print('Current tool number {T} with name {TNAME}'.format(**spindel))
 
+    # read error messages via LSV2, works only on iTNC controls
+    if con.is_itnc():
+        e_m = con.get_error_messages()
+        print('Number of currently ative error messages: {:d}'.format(len(e_m)))
+        for i, msg in enumerate(e_m):
+            print('Error {:d} : {:s}'.format(i, msg['Text']))
+
     con.disconnect()

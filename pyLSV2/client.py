@@ -330,7 +330,7 @@ class LSV2():
 
             if response in LSV2.RESPONSE_T_ER:
                 self._decode_error(content)
-                self._last_error_code = content
+                self._last_error_code = struct.unpack('!BB', content)
             else:
                 logging.error(
                     'recived unexpected response %s to command %s. response code %s', response, command, content)
@@ -1114,7 +1114,7 @@ class LSV2():
                 if response in self.RESPONSE_T_ER or response in self.RESPONSE_T_BD:
                     logging.error('an error occurred while loading the first block of data for file %s : %s',
                                   remote_path, self._decode_error(content))
-                    self._last_error_code = content
+                    self._last_error_code = struct.unpack('!BB', content)
                 else:
                     logging.error(
                         'could not load file with error %s', response)
@@ -1401,7 +1401,7 @@ class LSV2():
             'an error occurred while querying current override information. This does not work for all control types')
         return False
 
-    def get_error_messages(self, next_error=False):
+    def get_error_messages(self):
         """Get information about the first or next error displayed on the control
 
         :param bool next_error: if True check if any furter error messages are availible
@@ -1419,19 +1419,24 @@ class LSV2():
             payload = bytearray()
             payload.extend(struct.pack('!H', L_C.RUN_INFO_NEXT_ERROR))
             result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+            logging.debug('successfuly read first error but further errors')
             
-            if result:
+            while result:
                 messages.append(decode_error_message(result))
-            elif self._last_error_code == translate_messages.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
-                logging.debug('successfuly read next error but further errors')
+                result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
             
+            if self._last_error_code[1] == translate_messages.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+                logging.debug('successfuly read all errors')
+            else:
+                logging.warning('an error occurred while querying error information.')
+
             return messages
 
-        elif self._last_error_code == translate_messages.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+        elif self._last_error_code[1] == translate_messages.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
             logging.debug('successfuly read first error but no error active')
             return messages
 
         logging.warning(
             'an error occurred while querying error information. This does not work for all control types')
-        print(self._last_error_code)
+
         return False
