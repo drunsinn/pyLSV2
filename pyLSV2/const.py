@@ -6,7 +6,7 @@
 DRIVE_TNC = 'TNC:'
 DRIVE_PLC = 'PLC:'
 DRIVE_LOG = 'LOG:'
-DRIVE_LOG = 'SYS:'
+DRIVE_SYS = 'SYS:'
 
 # Majour control types
 TYPE_MILL_NEW_STYLE = 1
@@ -33,6 +33,7 @@ LOGIN_SCOPE = 'OSZI'  # Remote Scope
 LOGIN_STREAMAXES = 'STREAMAXES'  # Streaming of axis data
 LOGIN_FILEPLC = 'FILEPLC'  # file system access to plc drive
 LOGIN_FILESYS = 'FILESYS'  # file system access to sys drive
+LOGIN_FILELOG = 'FILELOG'  # file system access to log drive
 
 # Memory types for reading from PLC memory
 PLC_MEM_TYPE_MARKER = 1
