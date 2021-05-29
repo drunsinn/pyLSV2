@@ -150,7 +150,8 @@ def decode_error_message(data_set):
     :rtype: dict
     """
     error_info = dict()
-    error_info['unknown'] = struct.unpack('!L', data_set[0:4])[0]
+    error_info['Class'] = struct.unpack('!H', data_set[0:2])[0]
+    error_info['Group'] = struct.unpack('!H', data_set[2:4])[0]
     error_info['Number'] = struct.unpack('!l', data_set[4:8])[0]
     error_info['Text'] = data_set[8:].decode().strip('\x00')
     return error_info
