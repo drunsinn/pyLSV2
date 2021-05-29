@@ -122,8 +122,12 @@ def decode_tool_information(data_set):
     tool_info['Number'] = struct.unpack('!L', data_set[0:4])[0]
     tool_info['Index'] = struct.unpack('!H', data_set[4:6])[0]
     tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0], 'unknown')
-    tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
-    tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
+    if len(data_set) > 8:
+        tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
+        tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
+    else:
+        tool_info['Length'] = None
+        tool_info['Radius'] = None
     return tool_info
 
 
