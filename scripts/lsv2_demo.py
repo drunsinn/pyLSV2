@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+"""This script contains examples on how to use different functions of pyLSV2
+   Not all functions are shown here, especially the file functions aren't shown here
+"""
 import logging
 import sys
 import tempfile
@@ -41,7 +43,7 @@ if __name__ == "__main__":
     else:
         # old style
         print('Current Language: {}'.format(con.get_machine_parameter('7230.0')))
-    
+
     # changing the value of a machine parameter
     #con.login(pyLSV2.LOGIN_PLCDEBUG)
     #new style: con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)

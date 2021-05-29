@@ -22,7 +22,7 @@ class TableReader():
 
         :param str or Path table_path: Path to the table file
 
-        :returns: list od dictionarys. key is the column name, value the content of the table cell
+        :returns: list od dictionaries. key is the column name, value the content of the table cell
         :rtype: list
         """
         self.name = None
@@ -54,15 +54,15 @@ class TableReader():
                 if 'MM' in header.group('unit'):
                     self.is_metric = True
                     logging.debug(
-                        'Header Infomation for file "%s" Name "%s", file is metric, Version: "%s"', table_file, self.name, self.version)
+                        'Header Information for file "%s" Name "%s", file is metric, Version: "%s"', table_file, self.name, self.version)
                 else:
                     self.is_metric = False
                     logging.debug(
-                        'Header Infomation for file "%s" Name "%s", file is inch, Version: "%s"', table_file, self.name, self.version)
+                        'Header Information for file "%s" Name "%s", file is inch, Version: "%s"', table_file, self.name, self.version)
             else:
                 self.has_unit = False
                 self.is_metric = False
-                logging.debug('Header Infomation for file "%s" Name "%s", file has no units, Version: "%s"',
+                logging.debug('Header Information for file "%s" Name "%s", file has no units, Version: "%s"',
                               table_file, self.name, self.version)
 
             next_line = tfp.readline()

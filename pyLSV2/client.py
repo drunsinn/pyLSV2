@@ -20,8 +20,7 @@ from . import const as L_C
 from .low_level_com import LLLSV2Com
 from .misc import *
 from .translate_messages import (get_error_text, get_execution_status_text,
-                                 get_program_status_text)
-from pyLSV2 import translate_messages
+                                 get_program_status_text, LSV2_ERROR_T_ER_NO_NEXT_ERROR)
 
 
 class LSV2():
@@ -1404,7 +1403,7 @@ class LSV2():
     def get_error_messages(self):
         """Get information about the first or next error displayed on the control
 
-        :param bool next_error: if True check if any furter error messages are availible
+        :param bool next_error: if True check if any further error messages are available
         :returns: error information or False if something went wrong
         :rtype: dict
         """
@@ -1420,19 +1419,19 @@ class LSV2():
             payload.extend(struct.pack('!H', L_C.RUN_INFO_NEXT_ERROR))
             result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
             logging.debug('successfuly read first error but further errors')
-            
+
             while result:
                 messages.append(decode_error_message(result))
                 result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
-            
-            if self._last_error_code[1] == translate_messages.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+
+            if self._last_error_code[1] == LSV2_ERROR_T_ER_NO_NEXT_ERROR:
                 logging.debug('successfuly read all errors')
             else:
                 logging.warning('an error occurred while querying error information.')
 
             return messages
 
-        elif self._last_error_code[1] == translate_messages.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+        elif self._last_error_code[1] == LSV2_ERROR_T_ER_NO_NEXT_ERROR:
             logging.debug('successfuly read first error but no error active')
             return messages
 

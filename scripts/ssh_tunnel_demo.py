@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ this is a demo script to show how to use lsv2 via an sshtunnel and paramiko
-For thist to work you have to:
+For this to work you have to:
 1. enable ssh connections on the control
-2. create a ssh key pair on yyour computer
+2. create a ssh key pair on your computer
 3. add the private key to one of the user accouts on the control (default is 'user')
-4. make shure ssh is allowd throug the firewall on the control
+4. make sure ssh is allowed through the firewall on the control
 5. install the python library 'sshtunnel'
 6. edit this file and set address, user name and path to the key file
 """
@@ -22,9 +22,11 @@ if __name__ == "__main__":
     private_key_file = '<path to private key file>'
     lsv2_port = 19000
 
-    print('Connecting to {}@{}:lsv2_port via ssh tunnel'.format(user_name, address, lsv2_port))
+    print(
+        'Connecting to {:s}@{:s}:{:d} via ssh tunnel'.format(user_name, address, lsv2_port))
     ssh_forwarder = SSHTunnelForwarder(
-        address, ssh_username=user_name, ssh_pkey=private_key_file, remote_bind_address=('127.0.0.1', lsv2_port))
+        address, ssh_username=user_name, ssh_pkey=private_key_file,
+        remote_bind_address=('127.0.0.1', lsv2_port))
     ssh_forwarder.start()
     print('SSH tunnel established. local port is {}'.format(
         ssh_forwarder.local_bind_port))
