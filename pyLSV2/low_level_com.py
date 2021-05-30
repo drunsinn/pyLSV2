@@ -109,7 +109,7 @@ class LLLSV2Com():
             self._tcpsock.send(telegram)
             if wait_for_response:
                 response = self._tcpsock.recv(buffer_size)
-        except:
+        except Exception:
             logging.error(
                 'somthing went wrong while waiting for new data to arrive, buffer was set to %d', buffer_size)
             raise
@@ -131,7 +131,7 @@ class LLLSV2Com():
                 try:
                     response_content.extend(self._tcpsock.recv(
                         response_length-len(response[8:])))
-                except:
+                except Exception:
                     logging.error(
                         'somthing went wrong while waiting for more data to arrive')
                     raise

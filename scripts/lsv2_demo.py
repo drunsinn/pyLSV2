@@ -45,10 +45,10 @@ if __name__ == "__main__":
         print('Current Language: {}'.format(con.get_machine_parameter('7230.0')))
 
     # changing the value of a machine parameter
-    #con.login(pyLSV2.LOGIN_PLCDEBUG)
-    #new style: con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
-    #old style: con.set_machine_parameter('7230.0', '2', safe_to_disk=False)
-    #con.logout(pyLSV2.LOGIN_PLCDEBUG)
+    # con.login(pyLSV2.LOGIN_PLCDEBUG)
+    # new style: con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
+    # old style: con.set_machine_parameter('7230.0', '2', safe_to_disk=False)
+    # con.logout(pyLSV2.LOGIN_PLCDEBUG)
 
     # read program stack
     print('Current Program Stack: {}'.format(con.get_program_stack()))
@@ -83,7 +83,9 @@ if __name__ == "__main__":
 
         with tempfile.TemporaryDirectory(suffix=None, prefix='pyLSV2_') as tmp_dir_name:
             local_recive_path = Path(tmp_dir_name).joinpath('tool_p.tch')
-            con.recive_file(local_path=str(local_recive_path), remote_path=pocket_table_path, binary_mode=transfer_binary)
+            con.recive_file(local_path=str(local_recive_path),
+                            remote_path=pocket_table_path,
+                            binary_mode=transfer_binary)
             tr = pyLSV2.TableReader()
             pockets = tr.parse_table(local_recive_path)
             spindel = list(filter(lambda pocket: pocket['P'] == spindel_lable, pockets))[0]

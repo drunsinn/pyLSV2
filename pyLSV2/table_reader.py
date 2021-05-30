@@ -84,7 +84,7 @@ class TableReader():
             for column_match in column_pattern.finditer(column_header):
                 column_list.append({'start': column_match.start(
                 ), 'end': column_match.end()-1, 'name': column_match.group().strip()})
-                
+
             logging.debug('Found %d columns', len(column_list))
 
             table_content = list()

@@ -206,6 +206,7 @@ def get_program_status_text(code, language='en'):
             L_C.PGM_STATE_IDLE: translate.gettext('PGM_STATE_IDLE'),
             L_C.PGM_STATE_UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
 
+
 def get_execution_status_text(code, language='en'):
     """Translate status code of execution state to text
     See https://github.com/drunsinn/pyLSV2/issues/1

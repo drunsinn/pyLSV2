@@ -12,14 +12,16 @@
    might compromise the control.
 """
 import logging
+import re
 import struct
 import warnings
 from pathlib import Path
-import re
 
 from . import const as L_C
 from .low_level_com import LLLSV2Com
-from .misc import *
+from .misc import (decode_directory_info, decode_error_message,
+                   decode_file_system_info, decode_override_information,
+                   decode_system_parameters, decode_tool_information)
 from .translate_messages import (get_error_text, get_execution_status_text,
                                  get_program_status_text)
 
@@ -772,7 +774,8 @@ class LSV2():
         logging.debug(
             'received %d entries for directory content information', len(result))
         for entry in result:
-            dir_content.append(decode_file_system_info(entry, self._control_type))
+            dir_content.append(decode_file_system_info(
+                entry, self._control_type))
 
         logging.debug(
             'successfuly received directory information %s', dir_content)
@@ -1082,9 +1085,7 @@ class LSV2():
             LSV2.COMMAND_R_FL, payload, buffer_size=self._buffer_size)
 
         with local_file.open('wb') as out_file:
-            #file_buffer = bytearray()
             if response in self.RESPONSE_S_FL:
-                # file_buffer.extend(content)
                 if binary_mode:
                     out_file.write(content)
                 else:
@@ -1096,7 +1097,6 @@ class LSV2():
                     response, content = self._llcom.telegram(
                         LSV2.RESPONSE_T_OK, payload=None, buffer_size=self._buffer_size)
                     if response in self.RESPONSE_S_FL:
-                        # file_buffer.extend(content)
                         if binary_mode:
                             out_file.write(content)
                         else:
@@ -1417,22 +1417,26 @@ class LSV2():
 
         payload = bytearray()
         payload.extend(struct.pack('!H', L_C.RUN_INFO_FIRST_ERROR))
-        result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+        result = self._send_recive(
+            LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
         if result:
             messages.append(decode_error_message(result))
             payload = bytearray()
             payload.extend(struct.pack('!H', L_C.RUN_INFO_NEXT_ERROR))
-            result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+            result = self._send_recive(
+                LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
             logging.debug('successfuly read first error but further errors')
 
             while result:
                 messages.append(decode_error_message(result))
-                result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
+                result = self._send_recive(
+                    LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
 
             if self._last_error_code[1] == L_C.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
                 logging.debug('successfuly read all errors')
             else:
-                logging.warning('an error occurred while querying error information.')
+                logging.warning(
+                    'an error occurred while querying error information.')
 
             return messages
 
@@ -1478,7 +1482,7 @@ class LSV2():
             if self.change_directory(path) is False:
                 logging.warning('could not change to directory')
                 return None
-        
+
         if pattern is None:
             file_list = self._walk_dir(descend)
         else:

@@ -71,14 +71,14 @@ def decode_file_system_info(data_set, control_type=L_C.TYPE_UNKNOWN):
         flag_is_dir = 0x20
     else:
         flag_is_dir = 0x40
-        
+
     file_info = dict()
     file_info['Size'] = struct.unpack('!L', data_set[:4])[0]
     file_info['Timestamp'] = datetime.fromtimestamp(
         struct.unpack('!L', data_set[4:8])[0])
 
     attributes = struct.unpack('!L', data_set[8:12])[0]
-    
+
     file_info['Attributs'] = attributes
     file_info['is_file'] = False
     file_info['is_directory'] = False

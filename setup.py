@@ -6,8 +6,9 @@ from pyLSV2 import __version__, __doc__
 
 setup(
     name='pyLSV2',
-    packages=find_packages(include=['pyLSV2',], exclude=['tests', 'data']),
-    package_data={'pyLSV2': ['locales/en/LC_MESSAGES/*.mo', 'locales/de/LC_MESSAGES/*.mo']},
+    packages=find_packages(include=['pyLSV2', ], exclude=['tests', 'data']),
+    package_data={'pyLSV2': ['locales/en/LC_MESSAGES/*.mo',
+                             'locales/de/LC_MESSAGES/*.mo']},
     version=__version__,
     description=__doc__,
     long_description=open('README.md').read(),
