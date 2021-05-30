@@ -1,9 +1,18 @@
+# pyLSV2
+
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 [![PyPI version fury.io](https://badge.fury.io/py/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 
-# pyLSV2
- This library is an attempt to implement the LSV2 communication protocol used by certain CNC controls. It's goal is to transfer file between the application and the control as well as collect information about the control files.
+
+ This library is an attempt to implement the LSV2 communication protocol used by certain
+ CNC controls. It's main goal is to transfer file between the application and the control as well
+ as collect information about said files. Over time more and more functions where added which
+ support gathering information from the control.
+
  Most of this library is based on the work of tfischer73 and his Eclipse plugin found at [his GitHub page](https://github.com/tfischer73/Eclipse-Plugin-Heidenhain). Since there is no free  documentation beside the plugin, some parts are based purely on reverse engineering and might therefore be not correct.
+
+ As long as no encrypted communication is necessary, no additional librarys are necessary.
+ 
  Please consider the dangers of using this library on a production machine! This library is by no means complete and could damage the control or cause injuries! Everything beyond simple file manipulation is blocked by a lockout parameter. Use at your own risk!
 
 ## License
@@ -51,6 +60,7 @@ been tested:
 |-------------|----------------|
 | TNC640      | 340595 08 SP1  |
 | TNC640      | 340595 10 SP2  |
+| TNC640      | 340595 11 SP1  |
 | iTNC530     | 606425 04 SP20 |
 | CNCpilot640 | 1230521 03 SP1 |
 
@@ -63,7 +73,7 @@ been tested:
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
-Take a look at [LSV2.md](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/LSV2.md) for a more in depth explanation on the detials of LSV2.
+Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/c0631b7cfbe033ce2727ea07fe5202e967e086c9/docs/protocol.rst) for a more in depth explanation on the detials of LSV2.
 
 ## Usage
 See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.

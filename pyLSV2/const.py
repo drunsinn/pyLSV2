@@ -2,26 +2,32 @@
 # -*- coding: utf-8 -*-
 """Constant values used in LSV2"""
 
-# TNC drive names
+#: drive name for partition TNC, contains NC programs and tables
 DRIVE_TNC = 'TNC:'
+
+#: drive name for partition PLC, contains PLC program and configuration data
 DRIVE_PLC = 'PLC:'
+
+#: drive name for partition LOG, contains log files. Not availible on all controls
 DRIVE_LOG = 'LOG:'
+
+#: drive name for partition SYS, ???
 DRIVE_SYS = 'SYS:'
 
-# Majour control types
+#: Majour control types
 TYPE_MILL_NEW_STYLE = 1
 TYPE_MILL_OLD_STYLE = 2
 TYPE_LATHE_NEW_STYLE = 3
 TYPE_UNKNOWN = -1
 
-# files system attributes
+#: files system attributes
 FS_ENTRY_IS_HIDDEN = 0x08
 FS_ENTRY_IS_DRIVE = 0x10
 FS_ENTRY_IS_DIRECTORY = 0x20
 FS_ENTRY_IS_PROTCTED = 0x40
 FS_ENTRY_IS_IN_USE = 0x80
 
-# const for login
+#: const for login
 LOGIN_INSPECT = 'INSPECT'  # login for read only functions
 LOGIN_DIAG = 'DIAGNOSTICS'  # Logbuch / Recover
 LOGIN_PLCDEBUG = 'PLCDEBUG'  # write access to PLC
@@ -35,7 +41,7 @@ LOGIN_FILEPLC = 'FILEPLC'  # file system access to plc drive
 LOGIN_FILESYS = 'FILESYS'  # file system access to sys drive
 LOGIN_FILELOG = 'FILELOG'  # file system access to log drive
 
-# Memory types for reading from PLC memory
+#: Memory types for reading from PLC memory
 PLC_MEM_TYPE_MARKER = 1
 PLC_MEM_TYPE_INPUT = 2
 PLC_MEM_TYPE_OUTPUT = 3
@@ -48,7 +54,7 @@ PLC_MEM_TYPE_STRING = 9
 PLC_MEM_TYPE_INPUT_WORD = 10
 PLC_MEM_TYPE_OUTPUT_WORD = 11
 
-# const for relegram R_RI
+#: const for relegram R_RI
 RUN_INFO_EXEC_STATE = 23
 RUN_INFO_SELECTED_PGM = 24
 RUN_INFO_PGM_STATE = 26
@@ -57,7 +63,7 @@ RUN_INFO_OVERRIDE = 25
 RUN_INFO_FIRST_ERROR = 27
 RUN_INFO_NEXT_ERROR = 28
 
-# known program states
+#: known program states
 PGM_STATE_STARTED = 0
 PGM_STATE_STOPPED = 1
 PGM_STATE_FINISHED = 2
@@ -68,7 +74,7 @@ PGM_STATE_ERROR_CLEARED = 6
 PGM_STATE_IDLE = 7
 PGM_STATE_UNDEFINED = 8
 
-# known execution states
+#: known execution states
 EXEC_STATE_MANUAL = 0
 EXEC_STATE_MDI = 1
 EXEC_STATE_PASS_REFERENCES = 2
@@ -76,7 +82,7 @@ EXEC_STATE_SINGLE_STEP = 3
 EXEC_STATE_AUTOMATIC = 4
 EXEC_STATE_UNDEFINED = 5
 
-# key codes
+#: key codes
 KEY_LOWER_A = 0x0061
 KEY_LOWER_B = 0x0062
 KEY_LOWER_C = 0x0063
@@ -240,7 +246,7 @@ KEY_HELP = 0x01ED
 KEY_INFO = 0x01EE
 KEY_CALC = 0x01EF
 
-# Error map
+#: Error map
 LSV2_ERROR_T_ER_BAD_FORMAT = 20
 LSV2_ERROR_T_ER_UNEXPECTED_TELE = 21
 LSV2_ERROR_T_ER_UNKNOWN_TELE = 22
@@ -319,6 +325,8 @@ LSV2_ERROR_T_BD_OSZI_OVERRUN = 112
 LSV2_ERROR_T_BD_FD = 200
 LSV2_ERROR_T_USER_ERROR = 255
 
-# collection of regex strings
+#: Regex pattern for Klartext file names
 REGEX_FILE_NAME_H = r'[\$A-Za-z0-9_-]*\.[hH]$'
+
+#: Regex pattern for DIN/ISO file names
 REGEX_FILE_NAME_I = r'[\$A-Za-z0-9_-]*\.[iI]$'

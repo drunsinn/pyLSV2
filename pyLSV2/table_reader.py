@@ -105,7 +105,7 @@ class TableReader():
 
     @staticmethod
     def format_entry_float(str_value):
-        """convert the string value o a table cell to float value"""
+        """convert the string value of a table cell to float value"""
         str_value = str_value.strip()
         if str_value == '-' or len(str_value) == 0:
             return None
@@ -114,7 +114,7 @@ class TableReader():
 
     @staticmethod
     def format_entry_int(str_value):
-        """convert the string value o a table cell to int value"""
+        """convert the string value of a table cell to int value"""
         str_value = str_value.strip()
         if str_value == '-' or len(str_value) == 0:
             return None
@@ -123,7 +123,7 @@ class TableReader():
 
     @staticmethod
     def format_entry_bool(str_value):
-        """convert the string value o a table cell to boolean value"""
+        """convert the string value of a table cell to boolean value"""
         str_value = str_value.strip()
         if len(str_value) == 0:
             return None
