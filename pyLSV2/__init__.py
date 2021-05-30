@@ -6,4 +6,4 @@ from .const import *
 from .table_reader import *
 from .translate_messages import *
 
-__version__ = '0.6.9'
+__version__ = '0.6.10'
