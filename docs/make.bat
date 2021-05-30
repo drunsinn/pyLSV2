@@ -25,6 +25,7 @@ if errorlevel 9009 (
 	exit /b 1
 )
 
+xcopy /y ..\README.md .
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 goto end
 
