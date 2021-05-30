@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pyLSV2
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     address = '192.168.56.101'
@@ -95,5 +95,11 @@ if __name__ == "__main__":
         print('Number of currently ative error messages: {:d}'.format(len(e_m)))
         for i, msg in enumerate(e_m):
             print('Error {:d} : {:s}'.format(i, msg['Text']))
+
+    # list all NC-Programms in TNC partition
+    h_files = con.get_file_list(path='TNC:', pattern=r'[\$A-Za-z0-9_-]*\.[hH]$')
+    print('Found {:d} Klartext programms: {:}'.format(len(h_files), h_files))
+    i_files = con.get_file_list(path='TNC:', pattern=r'[\$A-Za-z0-9_-]*\.[iI]$')
+    print('Found {:d} DIN/ISO programms: {:}'.format(len(i_files), i_files))
 
     con.disconnect()
