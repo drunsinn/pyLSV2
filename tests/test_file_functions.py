@@ -22,6 +22,11 @@ def test_read_info(address, timeout):
     assert lsv2.get_file_info(remote_file_path=mdi_path) is not False
     assert lsv2.get_directory_content() is not False
     assert lsv2.get_drive_info() is not False
+
+    result1 = lsv2.get_file_list('TNC:', descend=False)
+    result2 = lsv2.get_file_list('TNC:', descend=True)
+    assert (len(result2) > len(result1)) is True
+
     lsv2.disconnect()
 
 
