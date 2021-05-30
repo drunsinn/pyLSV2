@@ -1,12 +1,8 @@
-pyLSV2 package
-================
+pyLSV2 package content
+======================
 
-Module contents
----------------
-
-
-pyLSV2
-----------------------
+pyLSV2 base
+-----------
 
 .. automodule:: pyLSV2
 
@@ -14,15 +10,19 @@ pyLSV2
 
 .. autoclass:: pyLSV2.LSV2
     :members:
-    :undoc-members:
-    :show-inheritance:
 
-pyLSV2 Table reader
-----------------------
+Table reader
+------------
 
 .. automodule:: pyLSV2.table_reader
 
 .. autoclass:: pyLSV2.TableReader
     :members:
-    :undoc-members:
-    :show-inheritance:
+
+Contants
+--------
+
+.. automodule:: pyLSV2.const
+    :members:
+    :private-members:
+    
