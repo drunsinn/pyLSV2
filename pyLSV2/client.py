@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Python 3 LSV2 library
-   This library is an attempt to implement the LSV2 communication protocol used by certain
-   CNC controls. It's goal is to transfer file between the application and the control as well
-   as collect information about said files.
+"""This library is an attempt to implement the LSV2 communication protocol used by certain
+   CNC controls. It's main goal is to transfer file between the application and the control as well
+   as collect information about said files. Over time more and more functions where added which
+   support gathering information from the control.
    Most of this library is based on the work of tfischer73 and his Eclipse
    plugin https://github.com/tfischer73/Eclipse-Plugin-Heidenhain . Since I could not find any
    documentation beside the plugin some parts are based on re-engineering and might therefore be
    not correct.
-   Everything related to unknown/untested System functions was left out as these function
-   might compromise the control.
+   As long as no encrypted communication is necessary, no additional librarys are necessary.
+   Please consider the dangers of using this library on a production machine! This library is
+   by no means complete and could damage the control or cause injuries! Everything beyond simple
+   file manipulation is blocked by a lockout parameter. Use at your own risk!
 """
 import logging
 import re
@@ -27,8 +29,7 @@ from .translate_messages import (get_error_text, get_execution_status_text,
 
 
 class LSV2():
-    """Implementation of the LSV2 protocol used to communicate with certain CNC controls.
-       This is just a test implementation that will get worked into a complete Python library."""
+    """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
 
     DRIVE_TNC = 'TNC:'
     DRIVE_TNC = 'PLC:'
