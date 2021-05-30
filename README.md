@@ -8,8 +8,11 @@
  CNC controls. It's main goal is to transfer file between the application and the control as well
  as collect information about said files. Over time more and more functions where added which
  support gathering information from the control.
+
  Most of this library is based on the work of tfischer73 and his Eclipse plugin found at [his GitHub page](https://github.com/tfischer73/Eclipse-Plugin-Heidenhain). Since there is no free  documentation beside the plugin, some parts are based purely on reverse engineering and might therefore be not correct.
+
  As long as no encrypted communication is necessary, no additional librarys are necessary.
+ 
  Please consider the dangers of using this library on a production machine! This library is by no means complete and could damage the control or cause injuries! Everything beyond simple file manipulation is blocked by a lockout parameter. Use at your own risk!
 
 ## License
@@ -70,7 +73,7 @@ been tested:
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
-Take a look at [protocol.rst](...) for a more in depth explanation on the detials of LSV2.
+Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/c0631b7cfbe033ce2727ea07fe5202e967e086c9/docs/protocol.rst) for a more in depth explanation on the detials of LSV2.
 
 ## Usage
 See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.
