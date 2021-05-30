@@ -2,6 +2,7 @@
 
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 [![PyPI version fury.io](https://badge.fury.io/py/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
+[![Documentation Status](https://readthedocs.org/projects/pylsv2/badge/?version=latest)](https://pylsv2.readthedocs.io/en/latest/?badge=latest)
 
 
  This library is an attempt to implement the LSV2 communication protocol used by certain
