@@ -14,6 +14,7 @@ Welcome to pyLSV2's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   README.md
    package
    protocol
 

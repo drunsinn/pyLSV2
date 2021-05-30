@@ -1,7 +1,9 @@
+# pyLSV2
+
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 [![PyPI version fury.io](https://badge.fury.io/py/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 
-# pyLSV2
+
  This library is an attempt to implement the LSV2 communication protocol used by certain
  CNC controls. It's main goal is to transfer file between the application and the control as well
  as collect information about said files. Over time more and more functions where added which
@@ -55,6 +57,7 @@ been tested:
 |-------------|----------------|
 | TNC640      | 340595 08 SP1  |
 | TNC640      | 340595 10 SP2  |
+| TNC640      | 340595 11 SP1  |
 | iTNC530     | 606425 04 SP20 |
 | CNCpilot640 | 1230521 03 SP1 |
 
@@ -67,7 +70,7 @@ been tested:
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
-Take a look at [LSV2.md](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/LSV2.md) for a more in depth explanation on the detials of LSV2.
+Take a look at [protocol.rst](...) for a more in depth explanation on the detials of LSV2.
 
 ## Usage
 See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.
