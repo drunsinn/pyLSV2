@@ -15,12 +15,13 @@ import logging
 import struct
 import warnings
 from pathlib import Path
+import re
 
 from . import const as L_C
 from .low_level_com import LLLSV2Com
 from .misc import *
 from .translate_messages import (get_error_text, get_execution_status_text,
-                                 get_program_status_text, LSV2_ERROR_T_ER_NO_NEXT_ERROR)
+                                 get_program_status_text)
 
 
 class LSV2():
@@ -260,7 +261,7 @@ class LSV2():
             logging.info(
                 'safe mode is off, login and system commands are not restricted. Use with caution!')
             self._known_logins = (L_C.LOGIN_INSPECT, L_C.LOGIN_DIAG, L_C.LOGIN_PLCDEBUG, L_C.LOGIN_FILETRANSFER, L_C.LOGIN_MONITOR, L_C.LOGIN_DSP,
-                                  L_C.LOGIN_DNC, L_C.LOGIN_SCOPE, L_C.LOGIN_STREAMAXES, L_C.LOGIN_FILEPLC, L_C.LOGIN_FILESYS)
+                                  L_C.LOGIN_DNC, L_C.LOGIN_SCOPE, L_C.LOGIN_STREAMAXES, L_C.LOGIN_FILEPLC, L_C.LOGIN_FILESYS, L_C.LOGIN_FILELOG)
             self._known_sys_cmd = (LSV2.SYSCMD_RESET_TNC, LSV2.SYSCMD_STOP_TIMEUPDATE, LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512,
                                    LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096, LSV2.SYSCMD_SECURE_FILE_SEND,
                                    LSV2.SYSCMD_RESET_DNC, LSV2.SYSCMD_RESET_LSV2, LSV2.SYSCMD_UPDATE_TNCOPT, LSV2.SYSCMD_PUSH_PRESET_INTO_LOG,
@@ -320,10 +321,10 @@ class LSV2():
 
             if response in expected_response:
                 if content is not None and len(content) > 0:
-                    logging.info(
+                    logging.debug(
                         'command %s executed successfully, received %s with %d bytes payload', command, response, len(content))
                     return content
-                logging.info(
+                logging.debug(
                     'command %s executed successfully, received %s without any payload', command, response)
                 return True
 
@@ -346,6 +347,8 @@ class LSV2():
 
         if response in LSV2.RESPONSE_T_ER:
             self._decode_error(content)
+        elif response in self.RESPONSE_T_FD:
+            logging.debug('Transfer is finished with no content')
         elif response not in expected_response:
             logging.error(
                 'recived unexpected response %s block read for command %s. response code %s', response, command, content)
@@ -743,7 +746,7 @@ class LSV2():
         result = self._send_recive(
             LSV2.COMMAND_R_FI, LSV2.RESPONSE_S_FI, payload=payload)
         if result:
-            file_info = decode_file_system_info(result)
+            file_info = decode_file_system_info(result, self._control_type)
             logging.debug(
                 'successfuly received file information %s', file_info)
             return file_info
@@ -753,7 +756,9 @@ class LSV2():
         return False
 
     def get_directory_content(self):
-        """Query content of current working directory from the control
+        """Query content of current working directory from the control.
+        In some situations it is necessary to fist call get_directory_info() or else
+        the attributes won't be correct.
 
         :returns: list of dict with info about directory entries
         :rtype: list
@@ -767,7 +772,7 @@ class LSV2():
         logging.debug(
             'received %d entries for directory content information', len(result))
         for entry in result:
-            dir_content.append(decode_file_system_info(entry))
+            dir_content.append(decode_file_system_info(entry, self._control_type))
 
         logging.debug(
             'successfuly received directory information %s', dir_content)
@@ -1424,14 +1429,14 @@ class LSV2():
                 messages.append(decode_error_message(result))
                 result = self._send_recive(LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
 
-            if self._last_error_code[1] == LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+            if self._last_error_code[1] == L_C.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
                 logging.debug('successfuly read all errors')
             else:
                 logging.warning('an error occurred while querying error information.')
 
             return messages
 
-        elif self._last_error_code[1] == LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+        elif self._last_error_code[1] == L_C.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
             logging.debug('successfuly read first error but no error active')
             return messages
 
@@ -1439,3 +1444,47 @@ class LSV2():
             'an error occurred while querying error information. This does not work for all control types')
 
         return False
+
+    def _walk_dir(self, descend=True):
+        """helber function to recursively search in directories for files
+
+        :param bool descend: control if search should run recursively
+        :returns: list of files found in directory
+        :rtype: list
+        """
+        current_path = self.get_directory_info()['Path']
+        content = list()
+        for entry in self.get_directory_content():
+            if entry['Name'] == '.' or entry['Name'] == '..' or entry['Name'].endswith(':'):
+                continue
+            if entry['is_directory'] is True and descend is True:
+                if self.change_directory(current_path + entry['Name']):
+                    content.extend(self._walk_dir())
+            else:
+                content.append(current_path + entry['Name'])
+        self.change_directory(current_path)
+        return content
+
+    def get_file_list(self, path=None, descend=True, pattern=None):
+        """Get list of files in directory structure.
+
+        :param str path: path of the directory where files should be searched. if None than the current directory is used
+        :param bool descend: control if search should run recursiv
+        :param str pattern: regex string to filter the file names
+        :returns: list of files found in directory
+        :rtype: list
+        """
+        if path is not None:
+            if self.change_directory(path) is False:
+                logging.warning('could not change to directory')
+                return None
+        
+        if pattern is None:
+            file_list = self._walk_dir(descend)
+        else:
+            file_list = list()
+            for entry in self._walk_dir(descend):
+                file_name = entry.split('/')[-1]
+                if re.match(pattern, file_name):
+                    file_list.append(entry)
+        return file_list

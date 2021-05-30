@@ -318,3 +318,7 @@ LSV2_ERROR_T_BD_CANCELLED = 111
 LSV2_ERROR_T_BD_OSZI_OVERRUN = 112
 LSV2_ERROR_T_BD_FD = 200
 LSV2_ERROR_T_USER_ERROR = 255
+
+# collection of regex strings
+REGEX_FILE_NAME_H = r'[\$A-Za-z0-9_-]*\.[hH]$'
+REGEX_FILE_NAME_I = r'[\$A-Za-z0-9_-]*\.[iI]$'

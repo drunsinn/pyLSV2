@@ -4,6 +4,8 @@
 import struct
 from datetime import datetime
 
+from . import const as L_C
+
 
 def decode_system_parameters(result_set):
     """decode the result system parameter query
@@ -57,32 +59,36 @@ def decode_system_parameters(result_set):
     return sys_par
 
 
-def decode_file_system_info(data_set):
+def decode_file_system_info(data_set, control_type=L_C.TYPE_UNKNOWN):
     """decode result from file system entry
 
     :param tuple result_set: bytes returned by the system parameter query command R_FI or CR_DR
     :returns: dictionary with file system entry parameters
     :rtype: dict
     """
+    flag_is_protected = 0x08
+    if control_type in (L_C.TYPE_UNKNOWN, L_C.TYPE_MILL_NEW_STYLE, L_C.TYPE_LATHE_NEW_STYLE):
+        flag_is_dir = 0x20
+    else:
+        flag_is_dir = 0x40
+        
     file_info = dict()
     file_info['Size'] = struct.unpack('!L', data_set[:4])[0]
     file_info['Timestamp'] = datetime.fromtimestamp(
         struct.unpack('!L', data_set[4:8])[0])
 
-    arrtibutes = struct.unpack('!L', data_set[8:12])[0]
-    file_info['Attributs'] = arrtibutes
+    attributes = struct.unpack('!L', data_set[8:12])[0]
+    
+    file_info['Attributs'] = attributes
     file_info['is_file'] = False
     file_info['is_directory'] = False
-    file_info['is_drive'] = False
 
-    if arrtibutes > 0:
-        if bool(arrtibutes & 0x10):
-            file_info['is_drive'] = True
-        elif bool(arrtibutes & 0x20):
-            file_info['is_directory'] = True
-        else:
-            file_info['is_file'] = True
-        file_info['is_write_protected'] = bool(arrtibutes & 0x40)
+    if bool(attributes & flag_is_dir):
+        file_info['is_directory'] = True
+    else:
+        file_info['is_file'] = True
+
+    file_info['is_write_protected'] = bool(attributes & flag_is_protected)
 
     file_info['Name'] = data_set[12:].decode().strip('\x00').replace('\\', '/')
 
@@ -108,6 +114,7 @@ def decode_directory_info(data_set):
     dir_info['Attributs'] = struct.unpack('!32B', data_set[132:164])
 
     dir_info['Path'] = data_set[164:].decode().strip('\x00').replace('\\', '/')
+
     return dir_info
 
 
