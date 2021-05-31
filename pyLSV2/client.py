@@ -13,6 +13,8 @@ import warnings
 from pathlib import Path
 
 from . import const as L_C
+from .const import ControlType, Login
+
 from .low_level_com import LLLSV2Com
 from .misc import (decode_directory_info, decode_error_message,
                    decode_file_system_info, decode_override_information,
@@ -24,9 +26,9 @@ from .translate_messages import (get_error_text, get_execution_status_text,
 class LSV2():
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
 
-    DRIVE_TNC = 'TNC:'
-    DRIVE_TNC = 'PLC:'
-    DRIVE_LOG = 'LOG:'
+    #DRIVE_TNC = 'TNC:'
+    #DRIVE_TNC = 'PLC:'
+    #DRIVE_LOG = 'LOG:'
 
     BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
                  '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi', '.he', '.ioc',
@@ -34,17 +36,17 @@ class LSV2():
                  '.sds', '.sk', '.str', '.xml', '.xls', '.xrs', '.zip')
 
     # const for login
-    LOGIN_INSPECT = 'INSPECT'  # nur lesende Funktionen ausführbar
-    LOGIN_DIAG = 'DIAGNOSTICS'  # Logbuch / Recover
-    LOGIN_PLCDEBUG = 'PLCDEBUG'  # Schreibender PLC
-    LOGIN_FILETRANSFER = 'FILE'  # Dateisystem
-    LOGIN_MONITOR = 'MONITOR'  # TNC Fernbedienung und Screendump
-    LOGIN_DSP = 'DSP'  # DSP Funktionen
-    LOGIN_DNC = 'DNC'  # DNC-Funktionen
-    LOGIN_SCOPE = 'OSZI'  # Remote Scope
-    LOGIN_STREAMAXES = 'STREAMAXES'  # Streamen von Achsdaten
-    LOGIN_FILEPLC = 'FILEPLC'  # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
-    LOGIN_FILESYS = 'FILESYS'  # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
+    #LOGIN_INSPECT = 'INSPECT'  # nur lesende Funktionen ausführbar
+    #LOGIN_DIAG = 'DIAGNOSTICS'  # Logbuch / Recover
+    #LOGIN_PLCDEBUG = 'PLCDEBUG'  # Schreibender PLC
+    #LOGIN_FILETRANSFER = 'FILE'  # Dateisystem
+    #LOGIN_MONITOR = 'MONITOR'  # TNC Fernbedienung und Screendump
+    #LOGIN_DSP = 'DSP'  # DSP Funktionen
+    #LOGIN_DNC = 'DNC'  # DNC-Funktionen
+    #LOGIN_SCOPE = 'OSZI'  # Remote Scope
+    #LOGIN_STREAMAXES = 'STREAMAXES'  # Streamen von Achsdaten
+    #LOGIN_FILEPLC = 'FILEPLC'  # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
+    #LOGIN_FILESYS = 'FILESYS'  # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
 
     # known lsv2 telegrams
     # A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password
@@ -209,23 +211,23 @@ class LSV2():
     RUN_INFO_PGM_STATE = 26
 
     # known program states
-    PGM_STATE_STARTED = 0
-    PGM_STATE_STOPPED = 1
-    PGM_STATE_FINISHED = 2
-    PGM_STATE_CANCELLED = 3
-    PGM_STATE_INTERRUPTED = 4
-    PGM_STATE_ERROR = 5
-    PGM_STATE_ERROR_CLEARED = 6
-    PGM_STATE_IDLE = 7
-    PGM_STATE_UNDEFINED = 8
+    #PGM_STATE_STARTED = 0
+    #PGM_STATE_STOPPED = 1
+    #PGM_STATE_FINISHED = 2
+    #PGM_STATE_CANCELLED = 3
+    #PGM_STATE_INTERRUPTED = 4
+    #PGM_STATE_ERROR = 5
+    #PGM_STATE_ERROR_CLEARED = 6
+    #PGM_STATE_IDLE = 7
+    #PGM_STATE_UNDEFINED = 8
 
     # known execution states
-    EXEC_STATE_MANUAL = 0
-    EXEC_STATE_MDI = 1
-    EXEC_STATE_PASS_REFERENCES = 2
-    EXEC_STATE_SINGLE_STEP = 3
-    EXEC_STATE_AUTOMATIC = 4
-    EXEC_STATE_UNDEFINED = 5
+    #EXEC_STATE_MANUAL = 0
+    #EXEC_STATE_MDI = 1
+    #EXEC_STATE_PASS_REFERENCES = 2
+    #EXEC_STATE_SINGLE_STEP = 3
+    #EXEC_STATE_AUTOMATIC = 4
+    #EXEC_STATE_UNDEFINED = 5
 
     # known modes for command R_DR
     # mode switch for command R_DR to only read one entry at a time
@@ -250,14 +252,14 @@ class LSV2():
         if safe_mode:
             logging.info(
                 'safe mode is active, login and system commands are restricted')
-            self._known_logins = (L_C.LOGIN_INSPECT, L_C.LOGIN_FILETRANSFER)
+            self._known_logins = (Login.INSPECT, Login.FILETRANSFER)
             self._known_sys_cmd = (LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512, LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096,
                                    LSV2.SYSCMD_SECURE_FILE_SEND, LSV2.SYSCMD_GENERATE_OP_LOG)
         else:
             logging.info(
                 'safe mode is off, login and system commands are not restricted. Use with caution!')
-            self._known_logins = (L_C.LOGIN_INSPECT, L_C.LOGIN_DIAG, L_C.LOGIN_PLCDEBUG, L_C.LOGIN_FILETRANSFER, L_C.LOGIN_MONITOR, L_C.LOGIN_DSP,
-                                  L_C.LOGIN_DNC, L_C.LOGIN_SCOPE, L_C.LOGIN_STREAMAXES, L_C.LOGIN_FILEPLC, L_C.LOGIN_FILESYS, L_C.LOGIN_FILELOG)
+            self._known_logins = (Login.INSPECT, Login.DIAG, Login.PLCDEBUG, Login.FILETRANSFER, Login.MONITOR, Login.DSP,
+                                  Login.DNC, Login.SCOPE, Login.STREAMAXES, Login.FILEPLC, Login.FILESYS, Login.FILELOG)
             self._known_sys_cmd = (LSV2.SYSCMD_RESET_TNC, LSV2.SYSCMD_STOP_TIMEUPDATE, LSV2.SYSCMD_SET_BUF1024, LSV2.SYSCMD_SET_BUF512,
                                    LSV2.SYSCMD_SET_BUF2048, LSV2.SYSCMD_SET_BUF3072, LSV2.SYSCMD_SET_BUF4096, LSV2.SYSCMD_SECURE_FILE_SEND,
                                    LSV2.SYSCMD_RESET_DNC, LSV2.SYSCMD_RESET_LSV2, LSV2.SYSCMD_UPDATE_TNCOPT, LSV2.SYSCMD_PUSH_PRESET_INTO_LOG,
@@ -267,7 +269,7 @@ class LSV2():
         self._versions = None
         self._sys_par = None
         self._secure_file_send = False
-        self._control_type = L_C.TYPE_UNKNOWN
+        self._control_type = ControlType.UNKNOWN
         self._last_error_code = None
 
     def connect(self):
@@ -283,15 +285,15 @@ class LSV2():
 
     def is_itnc(self):
         """return true if control is of a iTNC"""
-        return self._control_type == L_C.TYPE_MILL_OLD_STYLE
+        return self._control_type == ControlType.MILL_OLD_STYLE
 
     def is_tnc(self):
         """return true if control is of a TNC"""
-        return self._control_type == L_C.TYPE_MILL_NEW_STYLE
+        return self._control_type == ControlType.MILL_NEW_STYLE
 
     def is_pilot(self):
         """return true if control is of a CNCPILOT640"""
-        return self._control_type == L_C.TYPE_LATHE_NEW_STYLE
+        return self._control_type == ControlType.LATHE_NEW_STYLE
 
     @staticmethod
     def _decode_error(content):
@@ -376,22 +378,22 @@ class LSV2():
 
         :rtype: None
         """
-        self.login(login=L_C.LOGIN_INSPECT)
+        self.login(login=Login.INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
         logging.info('setting connection settings for %s and block length %s',
                      control_type, max_block_length)
 
         if control_type in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
-            self._control_type = L_C.TYPE_MILL_NEW_STYLE
+            self._control_type = ControlType.TYPE_MILL_NEW
         elif control_type in ('iTNC530', 'iTNC530 Programm'):
-            self._control_type = L_C.TYPE_MILL_OLD_STYLE
+            self._control_type = ControlType.TYPE_MILL_OLD
         elif control_type in ('CNCPILOT640', ):
-            self._control_type = L_C.TYPE_LATHE_NEW_STYLE
+            self._control_type = ControlType.TYPE_LATHE_NEW
         else:
             logging.warning(
                 'Unknown control type, treat machine as new style mill')
-            self._control_type = L_C.TYPE_MILL_NEW_STYLE
+            self._control_type = ControlType.TYPE_MILL_NEW
 
         selected_size = -1
         selected_command = None
@@ -434,7 +436,7 @@ class LSV2():
         else:
             self._secure_file_send = True
 
-        self.login(login=L_C.LOGIN_FILETRANSFER)
+        self.login(login=Login.FILETRANSFER)
         logging.info(
             'successfully configured connection parameters and basic logins. selected buffer size is %d, use secure file send: %s', self._buffer_size, self._secure_file_send)
 
@@ -619,7 +621,7 @@ class LSV2():
         :rtype: int
         """
         warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
-        self.login(login=L_C.LOGIN_DNC)
+        self.login(login=Login.DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_PGM_STATE))
@@ -642,7 +644,7 @@ class LSV2():
         :returns: dictionary with line number, main program and current program or False if something went wrong
         :rtype: dict
         """
-        self.login(login=L_C.LOGIN_DNC)
+        self.login(login=Login.DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_SELECTED_PGM))
@@ -671,7 +673,7 @@ class LSV2():
         :rtype: int
         """
         warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
-        self.login(login=L_C.LOGIN_DNC)
+        self.login(login=Login.DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', self.RUN_INFO_EXEC_STATE))
@@ -1148,7 +1150,7 @@ class LSV2():
         if self._sys_par is None:
             self.get_system_parameter()
 
-        self.login(login=L_C.LOGIN_PLCDEBUG)
+        self.login(login=Login.PLCDEBUG)
 
         if mem_type is L_C.PLC_MEM_TYPE_MARKER:
             start_address = self._sys_par['Marker_Start']
@@ -1365,7 +1367,7 @@ class LSV2():
         :returns: tool information or False if something went wrong
         :rtype: dict
         """
-        self.login(login=L_C.LOGIN_DNC)
+        self.login(login=Login.DNC)
         payload = bytearray()
         payload.extend(struct.pack('!H', L_C.RUN_INFO_CURRENT_TOOL))
         result = self._send_recive(
@@ -1385,7 +1387,7 @@ class LSV2():
         :returns: override information or False if something went wrong
         :rtype: dict
         """
-        self.login(login=L_C.LOGIN_DNC)
+        self.login(login=Login.DNC)
         payload = bytearray()
         payload.extend(struct.pack('!H', L_C.RUN_INFO_OVERRIDE))
         result = self._send_recive(
@@ -1407,7 +1409,7 @@ class LSV2():
         :rtype: dict
         """
         messages = list()
-        self.login(login=L_C.LOGIN_DNC)
+        self.login(login=Login.DNC)
 
         payload = bytearray()
         payload.extend(struct.pack('!H', L_C.RUN_INFO_FIRST_ERROR))

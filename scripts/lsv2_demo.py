@@ -45,22 +45,22 @@ if __name__ == "__main__":
         print('Current Language: {}'.format(con.get_machine_parameter('7230.0')))
 
     # changing the value of a machine parameter
-    # con.login(pyLSV2.LOGIN_PLCDEBUG)
+    # con.login(pyLSV2.Login.PLCDEBUG)
     # new style: con.set_machine_parameter('CfgDisplayLanguage.ncLanguage', 'CZECH', safe_to_disk=False)
     # old style: con.set_machine_parameter('7230.0', '2', safe_to_disk=False)
-    # con.logout(pyLSV2.LOGIN_PLCDEBUG)
+    # con.logout(pyLSV2.Login.PLCDEBUG)
 
     # read program stack
     print('Current Program Stack: {}'.format(con.get_program_stack()))
 
     # demo for sending key codes
-    con.login(pyLSV2.LOGIN_MONITOR)
+    con.login(pyLSV2.Login.MONITOR)
     con.set_keyboard_access(False)
     con.send_key_code(pyLSV2.KEY_MODE_MANUAL)
     time.sleep(3)
     con.send_key_code(pyLSV2.KEY_MODE_PGM_EDIT)
     con.set_keyboard_access(True)
-    con.logout(pyLSV2.LOGIN_MONITOR)
+    con.logout(pyLSV2.Login.MONITOR)
 
     # demo for reading the current tool with fallback if it is not supported by control
     t_info = con.get_spindle_tool_status()

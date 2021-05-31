@@ -6,6 +6,7 @@ import os
 import warnings
 
 from . import const as L_C
+from .const import ExecState, PgmState
 
 # Error map
 LSV2_ERROR_T_ER_BAD_FORMAT = 20
@@ -196,15 +197,15 @@ def get_program_status_text(code, language='en'):
     locale_path = os.path.dirname(__file__) + '/locales'
     translate = gettext.translation(
         'message_text', localedir=locale_path, languages=[language], fallback=True)
-    return {L_C.PGM_STATE_STARTED: translate.gettext('PGM_STATE_STARTED'),
-            L_C.PGM_STATE_STOPPED: translate.gettext('PGM_STATE_STOPPED'),
-            L_C.PGM_STATE_FINISHED: translate.gettext('PGM_STATE_FINISHED'),
-            L_C.PGM_STATE_CANCELLED: translate.gettext('PGM_STATE_CANCELLED'),
-            L_C.PGM_STATE_INTERRUPTED: translate.gettext('PGM_STATE_INTERRUPTED'),
-            L_C.PGM_STATE_ERROR: translate.gettext('PGM_STATE_ERROR'),
-            L_C.PGM_STATE_ERROR_CLEARED: translate.gettext('PGM_STATE_ERROR_CLEARED'),
-            L_C.PGM_STATE_IDLE: translate.gettext('PGM_STATE_IDLE'),
-            L_C.PGM_STATE_UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
+    return {PgmState.STARTED: translate.gettext('PGM_STATE_STARTED'),
+            PgmState.STOPPED: translate.gettext('PGM_STATE_STOPPED'),
+            PgmState.FINISHED: translate.gettext('PGM_STATE_FINISHED'),
+            PgmState.CANCELLED: translate.gettext('PGM_STATE_CANCELLED'),
+            PgmState.INTERRUPTED: translate.gettext('PGM_STATE_INTERRUPTED'),
+            PgmState.ERROR: translate.gettext('PGM_STATE_ERROR'),
+            PgmState.ERROR_CLEARED: translate.gettext('PGM_STATE_ERROR_CLEARED'),
+            PgmState.IDLE: translate.gettext('PGM_STATE_IDLE'),
+            PgmState.UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
 
 
 def get_execution_status_text(code, language='en'):
@@ -219,9 +220,9 @@ def get_execution_status_text(code, language='en'):
     locale_path = os.path.dirname(__file__) + '/locales'
     translate = gettext.translation(
         'message_text', localedir=locale_path, languages=[language], fallback=True)
-    return {L_C.EXEC_STATE_MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
-            L_C.EXEC_STATE_MDI: translate.gettext('EXEC_STATE_MDI'),
-            L_C.EXEC_STATE_PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
-            L_C.EXEC_STATE_SINGLE_STEP: translate.gettext('EXEC_STATE_SINGLE_STEP'),
-            L_C.EXEC_STATE_AUTOMATIC: translate.gettext('EXEC_STATE_AUTOMATIC'),
-            L_C.EXEC_STATE_UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))
+    return {ExecState.MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
+            ExecState.MDI: translate.gettext('EXEC_STATE_MDI'),
+            ExecState.PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
+            ExecState.SINGLE_STEP: translate.gettext('EXEC_STATE_SINGLE_STEP'),
+            ExecState.AUTOMATIC: translate.gettext('EXEC_STATE_AUTOMATIC'),
+            ExecState.UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))

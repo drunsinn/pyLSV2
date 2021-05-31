@@ -1,24 +1,118 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Constant values used in LSV2"""
+from enum import Enum, IntEnum
 
-#: drive name for partition TNC, contains NC programs and tables
-DRIVE_TNC = 'TNC:'
 
-#: drive name for partition PLC, contains PLC program and configuration data
-DRIVE_PLC = 'PLC:'
+class DriveName(str, Enum):
+    """Enum for drive names found on TNC controls"""
 
-#: drive name for partition LOG, contains log files. Not availible on all controls
-DRIVE_LOG = 'LOG:'
+    TNC = 'TNC:'
+    """partition TNC, contains NC programs and tables"""
 
-#: drive name for partition SYS, ???
-DRIVE_SYS = 'SYS:'
+    PLC = 'PLC:'
+    """partition PLC, contains PLC program and configuration data"""
 
-#: Majour control types
-TYPE_MILL_NEW_STYLE = 1
-TYPE_MILL_OLD_STYLE = 2
-TYPE_LATHE_NEW_STYLE = 3
-TYPE_UNKNOWN = -1
+    LOG = 'LOG:'
+    """partition LOG, contains log files. Not availible on all controls"""
+
+    SYS = 'SYS:'
+    """partition SYS, ???"""
+
+
+class ControlType(IntEnum):
+    """Enum for generation and type of control"""
+
+    MILL_NEW = 1
+    """new style interface for milling controls: TNC128, TNC320, TNC620 and TNC640"""
+
+    MILL_OLD = 2
+    """old style interface for milling controls: iTNC530"""
+
+    LATHE_NEW = 3
+    """new stype interface for lathe controls: CNCpilot640"""
+
+    LATHE_OLD = 4
+    """old stype interface for lathe controls: ?"""
+
+    UNKNOWN = -1
+    """unknown control type"""
+
+
+class Login(str, Enum):
+    """Enum for the different login roles"""
+
+    INSPECT = 'INSPECT'
+    """enables read only functions"""
+
+    DIAG = 'DIAGNOSTICS'
+    """enables logbook / recover"""
+
+    PLCDEBUG = 'PLCDEBUG'
+    """enables write access to PLC"""
+
+    FILETRANSFER = 'FILE'
+    """enables filesystem access to tnc drive"""
+
+    MONITOR = 'MONITOR'
+    """enables TNC remote access and screen dump"""
+
+    DSP = 'DSP'
+    """enables DSP functions"""
+
+    DNC = 'DNC'
+    """enables DNC functions"""
+
+    SCOPE = 'OSZI'
+    """enables Remote Scope"""
+
+    STREAMAXES = 'STREAMAXES'
+    """enables Streaming of axis data"""
+
+    FILEPLC = 'FILEPLC'
+    """enables file system access to plc drive"""
+
+    FILESYS = 'FILESYS'
+    """enables file system access to sys drive"""
+
+    FILELOG = 'FILELOG'
+    """enables file system access to log drive"""
+
+
+class ExecState(IntEnum):
+    """Enum for execution states"""
+
+    MANUAL = 0
+    """Manual mode"""
+
+    MDI = 1
+    """MDI/manual data input mode"""
+
+    PASS_REFERENCES = 2
+    """pass axis ref mode"""
+
+    SINGLE_STEP = 3
+    """program execution in single step mode"""
+
+    AUTOMATIC = 4
+    """program execution in automatic mode"""
+
+    UNDEFINED = 5
+    """execution mode undefined"""
+
+
+class PgmState(IntEnum):
+    """Enum for state of selected program"""
+
+    STARTED = 0
+    STOPPED = 1
+    FINISHED = 2
+    CANCELLED = 3
+    INTERRUPTED = 4
+    ERROR = 5
+    ERROR_CLEARED = 6
+    IDLE = 7
+    UNDEFINED = 8
 
 #: files system attributes
 FS_ENTRY_IS_HIDDEN = 0x08
@@ -26,20 +120,6 @@ FS_ENTRY_IS_DRIVE = 0x10
 FS_ENTRY_IS_DIRECTORY = 0x20
 FS_ENTRY_IS_PROTCTED = 0x40
 FS_ENTRY_IS_IN_USE = 0x80
-
-#: const for login
-LOGIN_INSPECT = 'INSPECT'  # login for read only functions
-LOGIN_DIAG = 'DIAGNOSTICS'  # Logbuch / Recover
-LOGIN_PLCDEBUG = 'PLCDEBUG'  # write access to PLC
-LOGIN_FILETRANSFER = 'FILE'  # filesystem access to tnc drive
-LOGIN_MONITOR = 'MONITOR'  # TNC remote access and screen dump
-LOGIN_DSP = 'DSP'  # DSP functions
-LOGIN_DNC = 'DNC'  # DNC functions
-LOGIN_SCOPE = 'OSZI'  # Remote Scope
-LOGIN_STREAMAXES = 'STREAMAXES'  # Streaming of axis data
-LOGIN_FILEPLC = 'FILEPLC'  # file system access to plc drive
-LOGIN_FILESYS = 'FILESYS'  # file system access to sys drive
-LOGIN_FILELOG = 'FILELOG'  # file system access to log drive
 
 #: Memory types for reading from PLC memory
 PLC_MEM_TYPE_MARKER = 1
@@ -62,25 +142,6 @@ RUN_INFO_CURRENT_TOOL = 51
 RUN_INFO_OVERRIDE = 25
 RUN_INFO_FIRST_ERROR = 27
 RUN_INFO_NEXT_ERROR = 28
-
-#: known program states
-PGM_STATE_STARTED = 0
-PGM_STATE_STOPPED = 1
-PGM_STATE_FINISHED = 2
-PGM_STATE_CANCELLED = 3
-PGM_STATE_INTERRUPTED = 4
-PGM_STATE_ERROR = 5
-PGM_STATE_ERROR_CLEARED = 6
-PGM_STATE_IDLE = 7
-PGM_STATE_UNDEFINED = 8
-
-#: known execution states
-EXEC_STATE_MANUAL = 0
-EXEC_STATE_MDI = 1
-EXEC_STATE_PASS_REFERENCES = 2
-EXEC_STATE_SINGLE_STEP = 3
-EXEC_STATE_AUTOMATIC = 4
-EXEC_STATE_UNDEFINED = 5
 
 #: key codes
 KEY_LOWER_A = 0x0061

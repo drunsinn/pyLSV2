@@ -31,9 +31,9 @@ def test_rw_machine_parameter(address, timeout):
         # new stype
         parameter_name = 'CfgDisplayLanguage.ncLanguage'
 
-    lsv2.login(pyLSV2.LOGIN_PLCDEBUG)
+    lsv2.login(pyLSV2.Login.PLCDEBUG)
     current_value = lsv2.get_machine_parameter(parameter_name)
     assert lsv2.set_machine_parameter(parameter_name, current_value, safe_to_disk=False) is not False
-    lsv2.logout(pyLSV2.LOGIN_PLCDEBUG)
+    lsv2.logout(pyLSV2.Login.PLCDEBUG)
 
     lsv2.disconnect()

@@ -4,7 +4,7 @@
 import struct
 from datetime import datetime
 
-from . import const as L_C
+from .const import ControlType
 
 
 def decode_system_parameters(result_set):
@@ -59,7 +59,7 @@ def decode_system_parameters(result_set):
     return sys_par
 
 
-def decode_file_system_info(data_set, control_type=L_C.TYPE_UNKNOWN):
+def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
     """decode result from file system entry
 
     :param tuple result_set: bytes returned by the system parameter query command R_FI or CR_DR
@@ -67,7 +67,7 @@ def decode_file_system_info(data_set, control_type=L_C.TYPE_UNKNOWN):
     :rtype: dict
     """
     flag_is_protected = 0x08
-    if control_type in (L_C.TYPE_UNKNOWN, L_C.TYPE_MILL_NEW_STYLE, L_C.TYPE_LATHE_NEW_STYLE):
+    if control_type in (ControlType.UNKNOWN, ControlType.MILL_NEW, ControlType.LATHE_NEW):
         flag_is_dir = 0x20
     else:
         flag_is_dir = 0x40
