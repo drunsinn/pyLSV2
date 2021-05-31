@@ -11,15 +11,6 @@ FS_ENTRY_IS_DIRECTORY = 0x20
 FS_ENTRY_IS_PROTCTED = 0x40
 FS_ENTRY_IS_IN_USE = 0x80
 
-#: const for relegram R_RI
-RUN_INFO_EXEC_STATE = 23
-RUN_INFO_SELECTED_PGM = 24
-RUN_INFO_PGM_STATE = 26
-RUN_INFO_CURRENT_TOOL = 51
-RUN_INFO_OVERRIDE = 25
-RUN_INFO_FIRST_ERROR = 27
-RUN_INFO_NEXT_ERROR = 28
-
 #: Regex pattern for Klartext file names
 REGEX_FILE_NAME_H = r'[\$A-Za-z0-9_-]*\.[hH]$'
 
@@ -398,3 +389,207 @@ class KeyCode(IntEnum):
     HELP = 0x01ED
     INFO = 0x01EE
     CALC = 0x01EF
+
+
+class CMD(str, Enum):
+    """Enum of all known LSV2 command telegrams"""
+
+    A_LG = 'A_LG'
+    """A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password"""
+    
+    A_LO = 'A_LO'
+    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name"""
+
+    C_CC = 'C_CC'
+    """C_CC: used to set system commands"""
+
+    C_DC = 'C_DC'
+    """C_DC: change the working directory for future file operations, followed by a null terminated string"""
+
+    # C_DS: found via bruteforce test, purpose unknown!
+    # C_DS = 'C_DS'
+
+    C_DD = 'C_DD'
+    """C_DD: delete a directory, followed by a null terminated string"""
+
+    C_DM = 'C_DM'
+    """C_DM: create a new directory, followed by a null terminated string"""
+
+    C_EK = 'C_EK'
+    """C_EK: send key code to control. Behaves as if the associated key was pressed on the keyboard"""
+
+    # C_FA: found via bruteforce test, purpose unknown!
+    # C_FA = 'C_FA'
+
+    C_FC = 'C_FC'
+    """C_FC: local file copy from current directory, filename + null + target path + null"""
+
+    C_FD = 'C_FD'
+    """C_FD: delete a file, followed by a null terminated string"""
+
+    C_FL = 'C_FL'
+    """C_FL: send a file to the control, followed by a null terminated with the filename string"""
+
+    C_FR = 'C_FR'
+    """C_FR: move local file from current directory, filename + null + target path + null"""
+
+    # C_GC = 'C_GC' # found via bruteforce test, purpose unknown!
+
+    C_LK = 'C_LK'
+    """C_LK: lock and unlock keyboard input on control, followed by a switch if lock or unlock"""
+
+    # C_MB = 'C_MB' # found via bruteforce test, purpose unknown!
+
+    C_MC = 'C_MC'
+    """C_MC: set machine parameter, followed by flags, name and value"""
+
+    # C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
+    # C_ST = 'C_ST' # found via bruteforce test, purpose unknown!
+    # C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
+    # R_CI = 'R_CI' # found via bruteforce test, purpose unknown!
+
+    R_DI = 'R_DI'
+    """R_DI: directory info - read info about the selected directory"""
+
+    R_DR = 'R_DR'
+    """_DR: get info about directory content"""
+
+    # R_DS = 'R_DS' # found via bruteforce test, purpose unknown!
+    # R_DT = 'R_DT' # found via bruteforce test, purpose unknown!
+
+    R_FI = 'R_FI'
+    """R_FI: file info - read info about a file, followed by a null terminated string"""
+
+    R_FL = 'R_FL'
+    """R_FL: load a file from the control, followed by a null terminated string with the filename"""
+
+    # R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
+
+    R_MB = 'R_MB'
+    """R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count"""
+
+    R_MC = 'R_MC'
+    """R_MC: read machine parameter, requires login INSPECT, followed by a null terminated string with the parameter number/path"""
+
+    # R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
+    # R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
+    # R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
+    # R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
+
+    R_PR = 'R_PR'
+    """R_PR: read parameter from the control"""
+
+    R_RI = 'R_RI'
+    """R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)"""
+
+    # R_ST = 'R_ST' # found via bruteforce test, purpose unknown!
+
+    R_VR = 'R_VR'
+    """R_VR: read general info about the control itself"""
+
+
+class RSP(str, Enum):
+    """Enum of all known response telegrams"""
+
+    T_OK = 'T_OK'
+    """T_OK: signals that the last transaction was completed, no additional data is sent?"""
+
+    T_ER = 'T_ER'
+    """T_ER: signals that An error occurred during the last transaction, followed by An error code?"""
+
+    T_FD = 'T_FD'
+    """T_FD: signals that all file data has been sent and the transfer is finished"""
+
+    T_BD = 'T_BD'
+    """T_BD: signals that An error occurred during the file transfer, it is followed by more data"""
+
+    M_CC = 'M_CC'
+    """M_CC: signals that a poeration some king of operation was completed that took some time to complete, ??? response to C_CC??"""
+
+    S_DI = 'S_DI'
+    """S_DI: signals that the command R_DI was accepted, it is followed by more data"""
+
+    S_DR = 'S_DR'
+    """S_DR: ??? signals that the command R_DR was accepted, it is followed by more data"""
+ 
+    S_FI = 'S_FI'
+    """S_FI: signals that the command R_FI was accepted, it is followed by more data"""
+
+    S_FL = 'S_FL'
+    """S_FL: used to transfer blocks of file data to the control, signals that the command R_FL was accepted, it is followed by more data"""
+
+    # S_IN = 'S_IN'
+    # S_IN: found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
+
+    S_MB = 'S_MB'
+    """S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data"""
+
+    S_MC = 'S_MC'
+    """S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data"""
+
+    S_PR = 'S_PR'
+    """S_PR: signals that the command R_PR and the parameter was accepted, it is followed by more data"""
+
+    S_RI = 'S_RI'
+    """S_RI: signals that the command R_RI was accepted, it is followed by more data"""
+
+    # S_ST = 'S_ST'
+    #"""S_ST: found via bruteforce test, signals that the command R_ST was accepted, purpose unknown!"""
+
+    S_VR = 'S_VR'
+    """S_VR: signals that the command R_VR was accepted, it is followed by more data"""
+
+class C_CC(IntEnum):
+    """enum for telegram C_CC / SetSysCmd"""
+    RESET_TNC = 1
+    STOP_TIMEUPDATE = 2
+    SET_BUF1024 = 3
+    SET_BUF512 = 4
+    SET_BUF2048 = 5
+    SET_BUF3072 = 6
+    SET_BUF4096 = 7
+    RESET_DNC = 8
+    RESET_LSV2 = 9  # not implemented
+    UPDATE_TNCOPT = 10
+    PUSH_PRESET_INTO_LOG = 11
+    SCREENDUMP = 12
+    ACTIVATE_PLCPGM = 13  # parameter: file name
+    OBSERVE_ADD_FILE = 15  # parameter: file name
+    OBSERVE_REMOVE_FILE = 16  # parameter: file name
+    OBSERVE_REMOVE_ALL = 17
+    ACTIVATE_MFSK = 18
+    # set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER
+    SECURE_FILE_SEND = 19
+    DELETE_TABLE_ENTRY = 20
+    # generate operations log file, parameters: filename, start time and date
+    GENERATE_OP_LOG = 27
+
+
+class R_VR(IntEnum):
+    CONTROL = 1
+    NC_VERSION = 2
+    PLC_VERSION = 3
+    OPTIONS = 4
+    ID = 5
+    RELEASE_TYPE = 6
+    SPLC_VERSION = 7
+
+
+class R_RI(IntEnum):
+    # const for relegram R_RI
+    EXEC_STATE = 23
+    SELECTED_PGM = 24
+    OVERRIDE = 25
+    PGM_STATE = 26
+    FIRST_ERROR = 27
+    NEXT_ERROR = 28
+    CURRENT_TOOL = 51
+
+class R_DR(IntEnum):
+    # known modes for command R_DR
+    # mode switch for command R_DR to only read one entry at a time
+    SINGLE = 0x00
+    # mode switch for command R_DR to only read multiple entries at a time, needs larger telegram size
+    MULTI = 0x01
+    # mode switch for command R_DR to read drive information
+    DRIVES = 0x02
