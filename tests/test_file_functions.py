@@ -23,8 +23,8 @@ def test_read_info(address, timeout):
     assert lsv2.get_directory_content() is not False
     assert lsv2.get_drive_info() is not False
 
-    result1 = lsv2.get_file_list('TNC:', descend=False)
-    result2 = lsv2.get_file_list('TNC:', descend=True)
+    result1 = lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=False)
+    result2 = lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=True)
     assert (len(result2) > len(result1)) is True
 
     lsv2.disconnect()

@@ -9,11 +9,10 @@
 import logging
 import re
 import struct
-import warnings
 from pathlib import Path
 
 from . import const as L_C
-from .const import ControlType, Login
+from .const import ControlType, Login, MemoryType, LSV2Err
 
 from .low_level_com import LLLSV2Com
 from .misc import (decode_directory_info, decode_error_message,
@@ -25,28 +24,11 @@ from .translate_messages import (get_error_text, get_execution_status_text,
 
 class LSV2():
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
-
-    #DRIVE_TNC = 'TNC:'
-    #DRIVE_TNC = 'PLC:'
-    #DRIVE_LOG = 'LOG:'
-
     BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
                  '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi', '.he', '.ioc',
                  '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf', '.pdf', '.png', '.pyc', '.s',
                  '.sds', '.sk', '.str', '.xml', '.xls', '.xrs', '.zip')
 
-    # const for login
-    #LOGIN_INSPECT = 'INSPECT'  # nur lesende Funktionen ausführbar
-    #LOGIN_DIAG = 'DIAGNOSTICS'  # Logbuch / Recover
-    #LOGIN_PLCDEBUG = 'PLCDEBUG'  # Schreibender PLC
-    #LOGIN_FILETRANSFER = 'FILE'  # Dateisystem
-    #LOGIN_MONITOR = 'MONITOR'  # TNC Fernbedienung und Screendump
-    #LOGIN_DSP = 'DSP'  # DSP Funktionen
-    #LOGIN_DNC = 'DNC'  # DNC-Funktionen
-    #LOGIN_SCOPE = 'OSZI'  # Remote Scope
-    #LOGIN_STREAMAXES = 'STREAMAXES'  # Streamen von Achsdaten
-    #LOGIN_FILEPLC = 'FILEPLC'  # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
-    #LOGIN_FILESYS = 'FILESYS'  # Dateisystem mit Zugriff auf PLC:-Drive, Passwort notwendig
 
     # known lsv2 telegrams
     # A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password
@@ -210,25 +192,6 @@ class LSV2():
     RUN_INFO_SELECTED_PGM = 24
     RUN_INFO_PGM_STATE = 26
 
-    # known program states
-    #PGM_STATE_STARTED = 0
-    #PGM_STATE_STOPPED = 1
-    #PGM_STATE_FINISHED = 2
-    #PGM_STATE_CANCELLED = 3
-    #PGM_STATE_INTERRUPTED = 4
-    #PGM_STATE_ERROR = 5
-    #PGM_STATE_ERROR_CLEARED = 6
-    #PGM_STATE_IDLE = 7
-    #PGM_STATE_UNDEFINED = 8
-
-    # known execution states
-    #EXEC_STATE_MANUAL = 0
-    #EXEC_STATE_MDI = 1
-    #EXEC_STATE_PASS_REFERENCES = 2
-    #EXEC_STATE_SINGLE_STEP = 3
-    #EXEC_STATE_AUTOMATIC = 4
-    #EXEC_STATE_UNDEFINED = 5
-
     # known modes for command R_DR
     # mode switch for command R_DR to only read one entry at a time
     COMMAND_R_DR_MODE_SINGLE = 0x00
@@ -285,15 +248,15 @@ class LSV2():
 
     def is_itnc(self):
         """return true if control is of a iTNC"""
-        return self._control_type == ControlType.MILL_OLD_STYLE
+        return self._control_type == ControlType.MILL_OLD
 
     def is_tnc(self):
         """return true if control is of a TNC"""
-        return self._control_type == ControlType.MILL_NEW_STYLE
+        return self._control_type == ControlType.MILL_NEW
 
     def is_pilot(self):
         """return true if control is of a CNCPILOT640"""
-        return self._control_type == ControlType.LATHE_NEW_STYLE
+        return self._control_type == ControlType.LATHE_NEW
 
     @staticmethod
     def _decode_error(content):
@@ -385,15 +348,15 @@ class LSV2():
                      control_type, max_block_length)
 
         if control_type in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
-            self._control_type = ControlType.TYPE_MILL_NEW
+            self._control_type = ControlType.MILL_NEW
         elif control_type in ('iTNC530', 'iTNC530 Programm'):
-            self._control_type = ControlType.TYPE_MILL_OLD
+            self._control_type = ControlType.MILL_OLD
         elif control_type in ('CNCPILOT640', ):
-            self._control_type = ControlType.TYPE_LATHE_NEW
+            self._control_type = ControlType.LATHE_NEW
         else:
             logging.warning(
                 'Unknown control type, treat machine as new style mill')
-            self._control_type = ControlType.TYPE_MILL_NEW
+            self._control_type = ControlType.MILL_NEW
 
         selected_size = -1
         selected_command = None
@@ -448,7 +411,6 @@ class LSV2():
         :returns: True if execution was successful
         :rtype: bool
         """
-        warnings.warn('Deprecation Warning! The definition of the LOGIN_ constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
 
         if login in self._active_logins:
             logging.debug('login already active')
@@ -620,7 +582,6 @@ class LSV2():
         :returns: status code or False if something went wrong
         :rtype: int
         """
-        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
         self.login(login=Login.DNC)
 
         payload = bytearray()
@@ -672,7 +633,6 @@ class LSV2():
         :returns: status code or False if something went wrong
         :rtype: int
         """
-        warnings.warn('Deprecation Warning! The definition of the RUN_INFO constants was extracted from pyLSV.LSV2 to pyLSV2. Definition in LSV2 will be removed in future versions')
         self.login(login=Login.DNC)
 
         payload = bytearray()
@@ -1152,57 +1112,57 @@ class LSV2():
 
         self.login(login=Login.PLCDEBUG)
 
-        if mem_type is L_C.PLC_MEM_TYPE_MARKER:
+        if mem_type is MemoryType.MARKER:
             start_address = self._sys_par['Marker_Start']
             max_count = self._sys_par['Markers']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is L_C.PLC_MEM_TYPE_INPUT:
+        elif mem_type is MemoryType.INPUT:
             start_address = self._sys_par['Input_Start']
             max_count = self._sys_par['Inputs']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is L_C.PLC_MEM_TYPE_OUTPUT:
+        elif mem_type is MemoryType.OUTPUT:
             start_address = self._sys_par['Output_Start']
             max_count = self._sys_par['Outputs']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is L_C.PLC_MEM_TYPE_COUNTER:
+        elif mem_type is MemoryType.COUNTER:
             start_address = self._sys_par['Counter_Start']
             max_count = self._sys_par['Counters']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is L_C.PLC_MEM_TYPE_TIMER:
+        elif mem_type is MemoryType.TIMER:
             start_address = self._sys_par['Timer_Start']
             max_count = self._sys_par['Timers']
             mem_byte_count = 1
             unpack_string = '!?'
-        elif mem_type is L_C.PLC_MEM_TYPE_BYTE:
+        elif mem_type is MemoryType.BYTE:
             start_address = self._sys_par['Word_Start']
             max_count = self._sys_par['Words'] * 2
             mem_byte_count = 1
             unpack_string = '!B'
-        elif mem_type is L_C.PLC_MEM_TYPE_WORD:
+        elif mem_type is MemoryType.WORD:
             start_address = self._sys_par['Word_Start']
             max_count = self._sys_par['Words']
             mem_byte_count = 2
             unpack_string = '<H'
-        elif mem_type is L_C.PLC_MEM_TYPE_DWORD:
+        elif mem_type is MemoryType.DWORD:
             start_address = self._sys_par['Word_Start']
             max_count = self._sys_par['Words'] / 4
             mem_byte_count = 4
             unpack_string = '<L'
-        elif mem_type is L_C.PLC_MEM_TYPE_STRING:
+        elif mem_type is MemoryType.STRING:
             start_address = self._sys_par['String_Start']
             max_count = self._sys_par['Strings']
             mem_byte_count = self._sys_par['String_Length']
             unpack_string = '{}s'.format(mem_byte_count)
-        elif mem_type is L_C.PLC_MEM_TYPE_INPUT_WORD:
+        elif mem_type is MemoryType.INPUT_WORD:
             start_address = self._sys_par['Input_Word_Start']
             max_count = self._sys_par['Input']
             mem_byte_count = 2
             unpack_string = '<H'
-        elif mem_type is L_C.PLC_MEM_TYPE_OUTPUT_WORD:
+        elif mem_type is MemoryType.OUTPUT_WORD:
             start_address = self._sys_par['Output_Word_Start']
             max_count = self._sys_par['Output_Words']
             mem_byte_count = 2
@@ -1218,7 +1178,7 @@ class LSV2():
 
         plc_values = list()
 
-        if mem_type is L_C.PLC_MEM_TYPE_STRING:
+        if mem_type is MemoryType.STRING:
             # advance address if necessary
             address = address + (count - 1) * mem_byte_count
             for i in range(count):
@@ -1340,7 +1300,7 @@ class LSV2():
            To work correctly you first have to lock the keyboard and unlock it afterwards!:
 
            set_keyboard_access(False)
-           send_key_code(KEY_SPEC_CE)
+           send_key_code(KeyCode.CE)
            set_keyboard_access(True)
 
         :param int key_code: code number of the keyboard key
@@ -1428,7 +1388,7 @@ class LSV2():
                 result = self._send_recive(
                     LSV2.COMMAND_R_RI, LSV2.RESPONSE_S_RI, payload)
 
-            if self._last_error_code[1] == L_C.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+            if self._last_error_code[1] == LSV2Err.T_ER_NO_NEXT_ERROR:
                 logging.debug('successfuly read all errors')
             else:
                 logging.warning(
@@ -1436,7 +1396,7 @@ class LSV2():
 
             return messages
 
-        elif self._last_error_code[1] == L_C.LSV2_ERROR_T_ER_NO_NEXT_ERROR:
+        elif self._last_error_code[1] == LSV2Err.T_ER_NO_NEXT_ERROR:
             logging.debug('successfuly read first error but no error active')
             return messages
 
