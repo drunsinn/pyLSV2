@@ -11,8 +11,8 @@ import re
 import struct
 from pathlib import Path
 
-#from . import const as L_C
-from .const import ControlType, Login, MemoryType, LSV2Err, CMD, RSP, C_CC, R_VR, R_RI, R_DR
+from .const import (ControlType, Login, MemoryType, LSV2Err, CMD, RSP,
+                    ParCCC, ParRVR, ParRRI, ParRDR, BIN_FILES, MODE_BINARY)
 
 from .low_level_com import LLLSV2Com
 from .misc import (decode_directory_info, decode_error_message,
@@ -24,13 +24,6 @@ from .translate_messages import (get_error_text, get_execution_status_text,
 
 class LSV2():
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
-    BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
-                 '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi', '.he', '.ioc',
-                 '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf', '.pdf', '.png', '.pyc', '.s',
-                 '.sds', '.sk', '.str', '.xml', '.xls', '.xrs', '.zip')
-
-    C_FL_MODE_BINARY = 0x01  # is set by TNCcmd, seems to work for all filetypes
-    R_FL_MODE_BINARY = 0x01  # enable binary file transfer, see also C_FL_MODE_BINARY
 
     def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
         """init object variables and create socket"""
@@ -45,14 +38,13 @@ class LSV2():
             logging.info(
                 'safe mode is active, login and system commands are restricted')
             self._known_logins = (Login.INSPECT, Login.FILETRANSFER)
-            self._known_sys_cmd = (C_CC.SET_BUF1024, C_CC.SET_BUF512, C_CC.SET_BUF2048,
-                                   C_CC.SET_BUF3072, C_CC.SET_BUF4096,
-                                   C_CC.SECURE_FILE_SEND, C_CC.GENERATE_OP_LOG)
+            self._known_sys_cmd = (ParCCC.SET_BUF1024, ParCCC.SET_BUF512, ParCCC.SET_BUF2048,
+                                   ParCCC.SET_BUF3072, ParCCC.SET_BUF4096, ParCCC.SECURE_FILE_SEND)
         else:
             logging.info(
                 'safe mode is off, login and system commands are not restricted. Use with caution!')
             self._known_logins = list(Login)
-            self._known_sys_cmd = list(C_CC)
+            self._known_sys_cmd = list(ParCCC)
 
         self._versions = None
         self._sys_par = None
@@ -72,15 +64,15 @@ class LSV2():
         logging.debug('Connection to host closed')
 
     def is_itnc(self):
-        """return true if control is of a iTNC"""
+        """return true if control is a iTNC"""
         return self._control_type == ControlType.MILL_OLD
 
     def is_tnc(self):
-        """return true if control is of a TNC"""
+        """return true if control is a TNC"""
         return self._control_type == ControlType.MILL_NEW
 
     def is_pilot(self):
-        """return true if control is of a CNCPILOT640"""
+        """return true if control is a CNCPILOT640"""
         return self._control_type == ControlType.LATHE_NEW
 
     @staticmethod
@@ -128,8 +120,7 @@ class LSV2():
         """takes a command and payload, sends it to the control and continues reading
             until the expected response is received."""
         response_buffer = list()
-        response, content = self._llcom.telegram(
-            command, payload, buffer_size=self._buffer_size)
+        response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
 
         if response in RSP.T_ER:
             self._decode_error(content)
@@ -142,14 +133,12 @@ class LSV2():
         else:
             while response in expected_response:
                 response_buffer.append(content)
-                response, content = self._llcom.telegram(
-                    RSP.T_OK, buffer_size=self._buffer_size)
+                response, content = self._llcom.telegram(RSP.T_OK, buffer_size=self._buffer_size)
         return response_buffer
 
     def _send_recive_ack(self, command, payload=None):
         """sends command and pyload to control, returns True on T_OK"""
-        response, content = self._llcom.telegram(
-            command, payload, buffer_size=self._buffer_size)
+        response, content = self._llcom.telegram(command, payload, buffer_size=self._buffer_size)
         if response in RSP.T_OK:
             return True
 
@@ -169,8 +158,7 @@ class LSV2():
         self.login(login=Login.INSPECT)
         control_type = self.get_versions()['Control']
         max_block_length = self.get_system_parameter()['Max_Block_Length']
-        logging.info('setting connection settings for %s and block length %s',
-                     control_type, max_block_length)
+        logging.info('setting connection settings for %s and block length %s', control_type, max_block_length)
 
         if control_type in ('TNC640', 'TNC620', 'TNC320', 'TNC128'):
             self._control_type = ControlType.MILL_NEW
@@ -187,19 +175,19 @@ class LSV2():
         selected_command = None
         if max_block_length >= 4096:
             selected_size = 4096
-            selected_command = C_CC.SET_BUF4096
+            selected_command = ParCCC.SET_BUF4096
         elif 3072 <= max_block_length < 4096:
             selected_size = 3072
-            selected_command = C_CC.SET_BUF3072
+            selected_command = ParCCC.SET_BUF3072
         elif 2048 <= max_block_length < 3072:
             selected_size = 2048
-            selected_command = C_CC.SET_BUF2048
+            selected_command = ParCCC.SET_BUF2048
         elif 1024 <= max_block_length < 2048:
             selected_size = 1024
-            selected_command = C_CC.SET_BUF1024
+            selected_command = ParCCC.SET_BUF1024
         elif 512 <= max_block_length < 1024:
             selected_size = 512
-            selected_command = C_CC.SET_BUF512
+            selected_command = ParCCC.SET_BUF512
         elif 256 <= max_block_length < 512:
             selected_size = 256
         else:
@@ -218,7 +206,7 @@ class LSV2():
                 raise Exception(
                     'error in communication while setting buffer size to %d' % selected_size)
 
-        if not self.set_system_command(C_CC.SECURE_FILE_SEND):
+        if not self.set_system_command(ParCCC.SECURE_FILE_SEND):
             logging.warning('secure file transfer not supported? use fallback')
             self._secure_file_send = False
         else:
@@ -236,7 +224,6 @@ class LSV2():
         :returns: True if execution was successful
         :rtype: bool
         """
-
         if login in self._active_logins:
             logging.debug('login already active')
             return True
@@ -350,7 +337,7 @@ class LSV2():
             info_data = dict()
 
             result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                '!B', R_VR.CONTROL))
+                '!B', ParRVR.CONTROL))
             if result:
                 info_data['Control'] = result.strip(b'\x00').decode('utf-8')
             else:
@@ -358,23 +345,23 @@ class LSV2():
                     'Could not read version information from control')
 
             result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                '!B', R_VR.NC_VERSION))
+                '!B', ParRVR.NC_VERSION))
             if result:
                 info_data['NC_Version'] = result.strip(b'\x00').decode('utf-8')
 
             result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                '!B', R_VR.PLC_VERSION))
+                '!B', ParRVR.PLC_VERSION))
             if result:
                 info_data['PLC_Version'] = result.strip(
                     b'\x00').decode('utf-8')
 
             result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                '!B', R_VR.OPTIONS))
+                '!B', ParRVR.OPTIONS))
             if result:
                 info_data['Options'] = result.strip(b'\x00').decode('utf-8')
 
             result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                '!B', R_VR.ID))
+                '!B', ParRVR.ID))
             if result:
                 info_data['ID'] = result.strip(b'\x00').decode('utf-8')
 
@@ -382,13 +369,13 @@ class LSV2():
                 info_data['Release_Type'] = 'not supported'
             else:
                 result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                    '!B', R_VR.RELEASE_TYPE))
+                    '!B', ParRVR.RELEASE_TYPE))
                 if result:
                     info_data['Release_Type'] = result.strip(
                         b'\x00').decode('utf-8')
 
             result = self._send_recive(CMD.R_VR, RSP.S_VR, payload=struct.pack(
-                '!B', R_VR.SPLC_VERSION))
+                '!B', ParRVR.SPLC_VERSION))
             if result:
                 info_data['SPLC_Version'] = result.strip(
                     b'\x00').decode('utf-8')
@@ -410,7 +397,7 @@ class LSV2():
         self.login(login=Login.DNC)
 
         payload = bytearray()
-        payload.extend(struct.pack('!H', R_RI.PGM_STATE))
+        payload.extend(struct.pack('!H', ParRRI.PGM_STATE))
 
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
@@ -432,7 +419,7 @@ class LSV2():
         self.login(login=Login.DNC)
 
         payload = bytearray()
-        payload.extend(struct.pack('!H', R_RI.SELECTED_PGM))
+        payload.extend(struct.pack('!H', ParRRI.SELECTED_PGM))
 
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload=payload)
         if result:
@@ -459,7 +446,7 @@ class LSV2():
         self.login(login=Login.DNC)
 
         payload = bytearray()
-        payload.extend(struct.pack('!H', R_RI.EXEC_STATE))
+        payload.extend(struct.pack('!H', ParRRI.EXEC_STATE))
 
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
@@ -544,14 +531,13 @@ class LSV2():
         """
         dir_content = list()
         payload = bytearray()
-        payload.append(R_DR.SINGLE)
+        payload.append(ParRDR.SINGLE)
 
         result = self._send_recive_block(CMD.R_DR, RSP.S_DR, payload)
         logging.debug(
             'received %d entries for directory content information', len(result))
         for entry in result:
-            dir_content.append(decode_file_system_info(
-                entry, self._control_type))
+            dir_content.append(decode_file_system_info(entry, self._control_type))
 
         logging.debug(
             'successfuly received directory information %s', dir_content)
@@ -565,11 +551,10 @@ class LSV2():
         """
         drives_list = list()
         payload = bytearray()
-        payload.append(R_DR.DRIVES)
+        payload.append(ParRDR.DRIVES)
 
         result = self._send_recive_block(CMD.R_DR, RSP.S_DR, payload)
-        logging.debug(
-            'received %d packet of for drive information', len(result))
+        logging.debug('received %d packet of for drive information', len(result))
         for entry in result:
             drives_list.append(entry)
 
@@ -583,8 +568,7 @@ class LSV2():
         :returns: True if creating of directory completed successfully
         :rtype: bool
         """
-        path_parts = dir_path.replace(
-            '\\', '/').split('/')  # convert path to unix style
+        path_parts = dir_path.replace('\\', '/').split('/') # convert path to unix style
         path_to_check = ''
         for part in path_parts:
             path_to_check += part + '/'
@@ -707,8 +691,7 @@ class LSV2():
         logging.debug('prepare to move file %s from %s to %s',
                       source_file_name, source_directory, target_path)
         if not self._send_recive_ack(command=CMD.C_FR, payload=payload):
-            logging.warning(
-                'an error occurred moving file %s to %s', source_path, target_path)
+            logging.warning('an error occurred moving file %s to %s', source_path, target_path)
             return False
         logging.debug('successfuly moved file %s', source_path)
         return True
@@ -762,8 +745,7 @@ class LSV2():
                     raise Exception('something went wrong while deleting file {}'.format(
                         remote_directory + '/' + remote_file_name))
             else:
-                logging.warning(
-                    'remote file already exists, override was not set')
+                logging.warning('remote file already exists, override was not set')
                 return False
 
         logging.debug('ready to send file from %s to %s',
@@ -773,10 +755,9 @@ class LSV2():
         payload.extend(map(ord, remote_directory + '/' + remote_file_name))
         payload.append(0x00)
         if binary_mode or self._is_file_type_binary(local_path):
-            payload.append(LSV2.C_FL_MODE_BINARY)
+            payload.append(MODE_BINARY)
             logging.info('selecting binary transfer mode for this file type')
-        response, content = self._llcom.telegram(
-            CMD.C_FL, payload, buffer_size=self._buffer_size)
+        response, content = self._llcom.telegram(CMD.C_FL, payload, buffer_size=self._buffer_size)
 
         if response in RSP.T_OK:
             with local_file.open('rb') as input_buffer:
@@ -795,8 +776,7 @@ class LSV2():
                         if response in RSP.T_ER:
                             self._decode_error(content)
                         else:
-                            logging.error(
-                                'could not send data with error %s', response)
+                            logging.error('could not send data with error %s', response)
                         return False
 
             # signal that no more data is being sent
@@ -829,7 +809,6 @@ class LSV2():
         :returns: True if transfer completed successfully
         :rtype: bool
         """
-
         remote_file_info = self.get_file_info(remote_path)
         if not remote_file_info:
             logging.error('remote file does not exist: %s', remote_path)
@@ -854,10 +833,9 @@ class LSV2():
         payload.extend(map(ord, remote_path))
         payload.append(0x00)
         if binary_mode or self._is_file_type_binary(remote_path):
-            payload.append(LSV2.R_FL_MODE_BINARY)  # force binary transfer
+            payload.append(MODE_BINARY)  # force binary transfer
             logging.info('useing binary transfer mode')
-        response, content = self._llcom.telegram(
-            CMD.R_FL, payload, buffer_size=self._buffer_size)
+        response, content = self._llcom.telegram(CMD.R_FL, payload, buffer_size=self._buffer_size)
 
         with local_file.open('wb') as out_file:
             if response in RSP.S_FL:
@@ -912,7 +890,7 @@ class LSV2():
         :returns: True if file matches know binary file type
         :rtype: bool
         """
-        for bin_type in self.BIN_FILES:
+        for bin_type in BIN_FILES:
             if file_name.endswith(bin_type):
                 return True
         return False
@@ -1007,8 +985,7 @@ class LSV2():
                 payload.extend(struct.pack('!B', mem_byte_count))
                 result = self._send_recive(CMD.R_MB, RSP.S_MB, payload=payload)
                 if result:
-                    logging.debug('read string %d', address +
-                                  i * mem_byte_count)
+                    logging.debug('read string %d', address + i * mem_byte_count)
                     plc_values.append(struct.unpack(unpack_string, result)[
                                       0].rstrip(b'\x00').decode('utf8'))
                 else:
@@ -1021,8 +998,7 @@ class LSV2():
             payload.extend(struct.pack('!B', count * mem_byte_count))
             result = self._send_recive(CMD.R_MB, RSP.S_MB, payload=payload)
             if result:
-                logging.debug('read %d value(s) from address %d',
-                              count, address)
+                logging.debug('read %d value(s) from address %d', count, address)
                 for i in range(0, len(result), mem_byte_count):
                     plc_values.append(struct.unpack(
                         unpack_string, result[i:i+mem_byte_count])[0])
@@ -1110,8 +1086,9 @@ class LSV2():
         return False
 
     def send_key_code(self, key_code):
-        """Send key code to control. Behaves as if the associated key was pressed on the keyboard. Requires access MONITOR level to work.
-           To work correctly you first have to lock the keyboard and unlock it afterwards!:
+        """Send key code to control. Behaves as if the associated key was pressed on the
+           keyboard. Requires access MONITOR level to work. To work correctly you first
+           have to lock the keyboard and unlock it afterwards!:
 
            set_keyboard_access(False)
            send_key_code(KeyCode.CE)
@@ -1142,7 +1119,7 @@ class LSV2():
         """
         self.login(login=Login.DNC)
         payload = bytearray()
-        payload.extend(struct.pack('!H', R_RI.CURRENT_TOOL))
+        payload.extend(struct.pack('!H', ParRRI.CURRENT_TOOL))
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
             tool_info = decode_tool_information(result)
@@ -1161,7 +1138,7 @@ class LSV2():
         """
         self.login(login=Login.DNC)
         payload = bytearray()
-        payload.extend(struct.pack('!H', R_RI.OVERRIDE))
+        payload.extend(struct.pack('!H', ParRRI.OVERRIDE))
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
             override_info = decode_override_information(result)
@@ -1183,12 +1160,12 @@ class LSV2():
         self.login(login=Login.DNC)
 
         payload = bytearray()
-        payload.extend(struct.pack('!H', R_RI.FIRST_ERROR))
+        payload.extend(struct.pack('!H', ParRRI.FIRST_ERROR))
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
             messages.append(decode_error_message(result))
             payload = bytearray()
-            payload.extend(struct.pack('!H', R_RI.NEXT_ERROR))
+            payload.extend(struct.pack('!H', ParRRI.NEXT_ERROR))
             result = self._send_recive(
                 CMD.R_RI, RSP.S_RI, payload)
             logging.debug('successfuly read first error but further errors')

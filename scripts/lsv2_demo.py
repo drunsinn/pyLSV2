@@ -100,8 +100,8 @@ if __name__ == "__main__":
 
     # list all NC-Programms in TNC partition
     h_files = con.get_file_list(path='TNC:', pattern=r'[\$A-Za-z0-9_-]*\.[hH]$')
-    print('Found {:d} Klartext programms: {:}'.format(len(h_files), h_files))
+    print('Found {:d} Klartext programs: {:}'.format(len(h_files), h_files))
     i_files = con.get_file_list(path='TNC:', pattern=r'[\$A-Za-z0-9_-]*\.[iI]$')
-    print('Found {:d} DIN/ISO programms: {:}'.format(len(i_files), i_files))
+    print('Found {:d} DIN/ISO programs: {:}'.format(len(i_files), i_files))
 
     con.disconnect()

@@ -3,19 +3,28 @@
 """Constant values used in LSV2"""
 from enum import Enum, IntEnum
 
+# #: files system attributes
+# FS_ENTRY_IS_HIDDEN = 0x08
+# FS_ENTRY_IS_DRIVE = 0x10
+# FS_ENTRY_IS_DIRECTORY = 0x20
+# FS_ENTRY_IS_PROTCTED = 0x40
+# FS_ENTRY_IS_IN_USE = 0x80
 
-#: files system attributes
-FS_ENTRY_IS_HIDDEN = 0x08
-FS_ENTRY_IS_DRIVE = 0x10
-FS_ENTRY_IS_DIRECTORY = 0x20
-FS_ENTRY_IS_PROTCTED = 0x40
-FS_ENTRY_IS_IN_USE = 0x80
+#: enable binary file transfer for C_FL and R_FL
+MODE_BINARY = 0x01
 
 #: Regex pattern for Klartext file names
 REGEX_FILE_NAME_H = r'[\$A-Za-z0-9_-]*\.[hH]$'
 
 #: Regex pattern for DIN/ISO file names
 REGEX_FILE_NAME_I = r'[\$A-Za-z0-9_-]*\.[iI]$'
+
+#: List of file types which should be transferred in binary mode
+BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
+             '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi',
+             '.he', '.ioc', '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf',
+             '.pdf', '.png', '.pyc', '.s', '.sds', '.sk', '.str', '.xml', '.xls',
+             '.xrs', '.zip')
 
 
 class DriveName(str, Enum):
@@ -28,7 +37,7 @@ class DriveName(str, Enum):
     """partition PLC, contains PLC program and configuration data"""
 
     LOG = 'LOG:'
-    """partition LOG, contains log files. Not availible on all controls"""
+    """partition LOG, contains log files. Not available on all controls"""
 
     SYS = 'SYS:'
     """partition SYS, ???"""
@@ -128,6 +137,7 @@ class PgmState(IntEnum):
     IDLE = 7
     UNDEFINED = 8
 
+
 class MemoryType(IntEnum):
     """Enum of memory types for reading from PLC memory"""
 
@@ -142,6 +152,7 @@ class MemoryType(IntEnum):
     STRING = 9
     INPUT_WORD = 10
     OUTPUT_WORD = 11
+
 
 class LSV2Err(IntEnum):
     """Enum for LSV2 protocol error numbers"""
@@ -227,7 +238,7 @@ class LSV2Err(IntEnum):
 
 class KeyCode(IntEnum):
     """Keycodes"""
-    
+
     #: key codes
     LOWER_A = 0x0061
     LOWER_B = 0x0062
@@ -331,7 +342,7 @@ class KeyCode(IntEnum):
     CARIDGE_RETURN = 0x000D
     SPACE = 0x020
     COLON = 0x03A
- 
+
     SK_NEXT = 0x019D
     SK_PREVIOUS = 0x019E
     ARROW_UP = 0x01A0
@@ -396,7 +407,7 @@ class CMD(str, Enum):
 
     A_LG = 'A_LG'
     """A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password"""
-    
+
     A_LO = 'A_LO'
     """A_LO: used to drop access to certain parts of the control, followed by an optional logon name"""
 
@@ -511,7 +522,7 @@ class RSP(str, Enum):
 
     S_DR = 'S_DR'
     """S_DR: ??? signals that the command R_DR was accepted, it is followed by more data"""
- 
+
     S_FI = 'S_FI'
     """S_FI: signals that the command R_FI was accepted, it is followed by more data"""
 
@@ -539,8 +550,10 @@ class RSP(str, Enum):
     S_VR = 'S_VR'
     """S_VR: signals that the command R_VR was accepted, it is followed by more data"""
 
-class C_CC(IntEnum):
+
+class ParCCC(IntEnum):
     """enum for telegram C_CC / SetSysCmd"""
+
     RESET_TNC = 1
     STOP_TIMEUPDATE = 2
     SET_BUF1024 = 3
@@ -549,23 +562,30 @@ class C_CC(IntEnum):
     SET_BUF3072 = 6
     SET_BUF4096 = 7
     RESET_DNC = 8
-    RESET_LSV2 = 9  # not implemented
+    RESET_LSV2 = 9
+    """not implemented"""
+
     UPDATE_TNCOPT = 10
     PUSH_PRESET_INTO_LOG = 11
     SCREENDUMP = 12
-    ACTIVATE_PLCPGM = 13  # parameter: file name
-    OBSERVE_ADD_FILE = 15  # parameter: file name
-    OBSERVE_REMOVE_FILE = 16  # parameter: file name
+    ACTIVATE_PLCPGM = 13
+    """parameter: file name"""
+    OBSERVE_ADD_FILE = 15
+    """parameter: file name"""
+    OBSERVE_REMOVE_FILE = 16
+    """parameter: file name"""
     OBSERVE_REMOVE_ALL = 17
     ACTIVATE_MFSK = 18
-    # set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER
+    """set behavior of C_FL: T_FD will be akknowleged with T_OK or T_ER"""
     SECURE_FILE_SEND = 19
     DELETE_TABLE_ENTRY = 20
-    # generate operations log file, parameters: filename, start time and date
+    """generate operations log file, parameters: filename, start time and date"""
     GENERATE_OP_LOG = 27
 
 
-class R_VR(IntEnum):
+class ParRVR(IntEnum):
+    """enum of parameters used with command R_VR"""
+
     CONTROL = 1
     NC_VERSION = 2
     PLC_VERSION = 3
@@ -575,8 +595,9 @@ class R_VR(IntEnum):
     SPLC_VERSION = 7
 
 
-class R_RI(IntEnum):
-    # const for relegram R_RI
+class ParRRI(IntEnum):
+    """enum of parameters used with command R_RI"""
+
     EXEC_STATE = 23
     SELECTED_PGM = 24
     OVERRIDE = 25
@@ -585,11 +606,15 @@ class R_RI(IntEnum):
     NEXT_ERROR = 28
     CURRENT_TOOL = 51
 
-class R_DR(IntEnum):
-    # known modes for command R_DR
-    # mode switch for command R_DR to only read one entry at a time
+
+class ParRDR(IntEnum):
+    """enum of parameters used with command R_DR"""
+
     SINGLE = 0x00
-    # mode switch for command R_DR to only read multiple entries at a time, needs larger telegram size
+    """mode switch to only read one entry at a time"""
+
     MULTI = 0x01
-    # mode switch for command R_DR to read drive information
+    """mode switch to read multiple entries at a time, needs larger telegram size"""
+
     DRIVES = 0x02
+    """mode switch to read drive information"""
