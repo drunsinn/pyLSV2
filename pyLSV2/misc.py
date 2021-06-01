@@ -16,7 +16,6 @@ def decode_system_parameters(result_set):
     """
     message_length = len(result_set)
     info_list = list()
-    # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
     if message_length == 120:
         info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result_set)
     elif message_length == 124:
@@ -128,7 +127,8 @@ def decode_tool_information(data_set):
     tool_info = dict()
     tool_info['Number'] = struct.unpack('!L', data_set[0:4])[0]
     tool_info['Index'] = struct.unpack('!H', data_set[4:6])[0]
-    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0], 'unknown')
+    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0],
+                                                                   'unknown')
     if len(data_set) > 8:
         tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
         tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
@@ -141,7 +141,8 @@ def decode_tool_information(data_set):
 def decode_override_information(data_set):
     """decode result from override info
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for override info
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+                             override info
     :returns: dictionary with override info values
     :rtype: dict
     """
@@ -156,7 +157,8 @@ def decode_override_information(data_set):
 def decode_error_message(data_set):
     """decode result from reading error messages
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for first and next error
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+                             first and next error
     :returns: dictionary with error message values
     :rtype: dict
     """

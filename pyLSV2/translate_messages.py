@@ -101,7 +101,8 @@ def get_error_text(error_type, error_code, language='en'):
             LSV2Err.T_BD_CANCELLED: _('LSV2_ERROR_T_BD_CANCELLED'),
             LSV2Err.T_BD_OSZI_OVERRUN: _('LSV2_ERROR_T_BD_OSZI_OVERRUN'),
             LSV2Err.T_BD_FD: _('LSV2_ERROR_T_BD_FD'),
-            LSV2Err.T_USER_ERROR: _('LSV2_ERROR_T_USER_ERROR')}.get(error_code, _('LSV2_ERROR_UNKNOWN_CODE'))
+            LSV2Err.T_USER_ERROR: _('LSV2_ERROR_T_USER_ERROR')
+            }.get(error_code, _('LSV2_ERROR_UNKNOWN_CODE'))
 
 
 def get_program_status_text(code, language='en'):
@@ -123,7 +124,8 @@ def get_program_status_text(code, language='en'):
             PgmState.ERROR: translate.gettext('PGM_STATE_ERROR'),
             PgmState.ERROR_CLEARED: translate.gettext('PGM_STATE_ERROR_CLEARED'),
             PgmState.IDLE: translate.gettext('PGM_STATE_IDLE'),
-            PgmState.UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')}.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
+            PgmState.UNDEFINED: translate.gettext('PGM_STATE_UNDEFINED')
+            }.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
 
 
 def get_execution_status_text(code, language='en'):
@@ -143,4 +145,5 @@ def get_execution_status_text(code, language='en'):
             ExecState.PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
             ExecState.SINGLE_STEP: translate.gettext('EXEC_STATE_SINGLE_STEP'),
             ExecState.AUTOMATIC: translate.gettext('EXEC_STATE_AUTOMATIC'),
-            ExecState.UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')}.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))
+            ExecState.UNDEFINED: translate.gettext('EXEC_STATE_UNDEFINED')
+            }.get(code, translate.gettext('EXEC_STATE_UNKNOWN'))
