@@ -150,8 +150,8 @@ class LSV2():
         return False
 
     def _configure_connection(self):
-        """Set up the communication parameters for file transfer. Buffer size and secure file transfere are
-        enabled based on the capabilitys of the control.
+        """Set up the communication parameters for file transfer. Buffer size and secure file
+        transfere are enabled based on the capabilitys of the control.
 
         :rtype: None
         """
@@ -234,10 +234,10 @@ class LSV2():
 
         payload = bytearray()
         payload.extend(map(ord, login))
-        payload.append(0x00)  # terminate string
+        payload.append(0x00)
         if password is not None:
             payload.extend(map(ord, password))
-            payload.append(0x00)  # terminate string
+            payload.append(0x00)
 
         if not self._send_recive_ack(CMD.A_LG, payload):
             logging.error('an error occurred during login for login %s', login)
