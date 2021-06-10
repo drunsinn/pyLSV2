@@ -1,7 +1,7 @@
 pyLSV2 package content
 ======================
 
-pyLSV2 base
+pyLSV2 Base
 -----------
 
 .. automodule:: pyLSV2
@@ -24,5 +24,10 @@ Contants
 
 .. automodule:: pyLSV2.const
     :members:
-    :private-members:
+    
+Additions
+---------
+    
+.. automodule:: pyLSV2.misc
+    :members:
     

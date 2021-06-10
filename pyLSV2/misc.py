@@ -4,7 +4,7 @@
 import struct
 from datetime import datetime
 
-from . import const as L_C
+from .const import ControlType
 
 
 def decode_system_parameters(result_set):
@@ -16,7 +16,6 @@ def decode_system_parameters(result_set):
     """
     message_length = len(result_set)
     info_list = list()
-    # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
     if message_length == 120:
         info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result_set)
     elif message_length == 124:
@@ -59,7 +58,7 @@ def decode_system_parameters(result_set):
     return sys_par
 
 
-def decode_file_system_info(data_set, control_type=L_C.TYPE_UNKNOWN):
+def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
     """decode result from file system entry
 
     :param tuple result_set: bytes returned by the system parameter query command R_FI or CR_DR
@@ -67,7 +66,7 @@ def decode_file_system_info(data_set, control_type=L_C.TYPE_UNKNOWN):
     :rtype: dict
     """
     flag_is_protected = 0x08
-    if control_type in (L_C.TYPE_UNKNOWN, L_C.TYPE_MILL_NEW_STYLE, L_C.TYPE_LATHE_NEW_STYLE):
+    if control_type in (ControlType.UNKNOWN, ControlType.MILL_NEW, ControlType.LATHE_NEW):
         flag_is_dir = 0x20
     else:
         flag_is_dir = 0x40
@@ -128,7 +127,8 @@ def decode_tool_information(data_set):
     tool_info = dict()
     tool_info['Number'] = struct.unpack('!L', data_set[0:4])[0]
     tool_info['Index'] = struct.unpack('!H', data_set[4:6])[0]
-    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0], 'unknown')
+    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0],
+                                                                   'unknown')
     if len(data_set) > 8:
         tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
         tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
@@ -141,7 +141,8 @@ def decode_tool_information(data_set):
 def decode_override_information(data_set):
     """decode result from override info
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for override info
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+                             override info
     :returns: dictionary with override info values
     :rtype: dict
     """
@@ -156,7 +157,8 @@ def decode_override_information(data_set):
 def decode_error_message(data_set):
     """decode result from reading error messages
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for first and next error
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+                             first and next error
     :returns: dictionary with error message values
     :rtype: dict
     """

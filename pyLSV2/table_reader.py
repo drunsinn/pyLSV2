@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""module with reader for TNC tables"""
 import logging
 import re
 from pathlib import Path
 
 
 class TableReader():
-    """generic parser for table files commonly used by TNC, iTNC, CNCPILOT and MANUALplus controls"""
+    """generic parser for table files commonly used by TNC, iTNC, CNCPILOT and
+       MANUALplus controls
+    """
 
     def __init__(self):
         """init object variables logging"""
@@ -39,7 +42,8 @@ class TableReader():
             header_line = tfp.readline().strip()
             logging.debug('Checking line for header: %s', header_line)
             header = re.match(
-                r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: Version: \'Update:(?P<version>\d+\.\d+)\')?$", header_line)
+                r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: Version: \'Update:(?P<version>\d+\.\d+)\')?$",
+                header_line)
 
             if header is None:
                 raise Exception(
@@ -54,11 +58,13 @@ class TableReader():
                 if 'MM' in header.group('unit'):
                     self.is_metric = True
                     logging.debug(
-                        'Header Information for file "%s" Name "%s", file is metric, Version: "%s"', table_file, self.name, self.version)
+                        'Header Information for file "%s" Name "%s", file is metric, Version: "%s"',
+                        table_file, self.name, self.version)
                 else:
                     self.is_metric = False
                     logging.debug(
-                        'Header Information for file "%s" Name "%s", file is inch, Version: "%s"', table_file, self.name, self.version)
+                        'Header Information for file "%s" Name "%s", file is inch, Version: "%s"',
+                        table_file, self.name, self.version)
             else:
                 self.has_unit = False
                 self.is_metric = False
@@ -70,9 +76,7 @@ class TableReader():
                 in_preamble = True
                 next_line = tfp.readline()
                 while in_preamble:
-                    if next_line.startswith('#'):
-                        in_preamble = False
-                    elif next_line.startswith(')'):
+                    if next_line.startswith('#') or next_line.startswith(')'):
                         in_preamble = False
                     else:
                         next_line = tfp.readline()
@@ -82,8 +86,9 @@ class TableReader():
             column_list = list()
             column_pattern = re.compile(r"([A-Za-z-12_:\.]+)(?:\s+)")
             for column_match in column_pattern.finditer(column_header):
-                column_list.append({'start': column_match.start(
-                ), 'end': column_match.end()-1, 'name': column_match.group().strip()})
+                column_list.append({'start': column_match.start(),
+                                    'end': column_match.end()-1,
+                                    'name': column_match.group().strip()})
 
             logging.debug('Found %d columns', len(column_list))
 
@@ -118,7 +123,6 @@ class TableReader():
         str_value = str_value.strip()
         if str_value == '-' or len(str_value) == 0:
             return None
-
         return int(str_value)
 
     @staticmethod
@@ -129,5 +133,4 @@ class TableReader():
             return None
         elif str_value == '1':
             return True
-
         return False
