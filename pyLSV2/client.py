@@ -891,7 +891,10 @@ class LSV2():
         :rtype: bool
         """
         for bin_type in BIN_FILES:
-            if file_name.endswith(bin_type):
+            if isinstance(file_name, Path):
+                if file_name.suffix == bin_type:
+                    return True
+            elif file_name.endswith(bin_type):
                 return True
         return False
 
