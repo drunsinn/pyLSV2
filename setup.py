@@ -18,7 +18,7 @@ setup(
     url='https://github.com/drunsinn/pyLSV2',
     license='MIT',
     install_requires=[],
-    scripts=['scripts/check_for_LSV2_commands.py', 'scripts/lsv2_demo.py'],
+    scripts=['scripts/lsv2cmd.py'],
     zip_safe=True,
     keywords="LSV2 cnc communication transfer plc",
     classifiers=[
