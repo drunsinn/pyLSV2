@@ -17,8 +17,8 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='command line script for functions in pyLSV2')
-    parser.add_argument("source", help='souce file', type=str)
-    parser.add_argument("destination", help="destination file or path", type=str)
+    parser.add_argument("source", help='souce file. Either local path or URL with format lsv2://<hostname_or_ip>:<port>/TNC:/<path_to_file>', type=str)
+    parser.add_argument("destination", help="destination file. Either local path or URL with format lsv2://<hostname_or_ip>:<port>/TNC:/<path_to_file>", type=str)
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument("-d", "--debug", help='enable log level DEBUG',
                            action="store_const", dest="loglevel", const=logging.DEBUG,
