@@ -1238,3 +1238,32 @@ class LSV2():
                 if re.match(pattern, file_name):
                     file_list.append(entry)
         return file_list
+
+    def read_data_path(self, path):
+        if not self.is_itnc():
+            logging.warning('this might not work on non iTNC controls!')
+
+        path = path.replace('/', '\\')
+
+        self.login(login=Login.DATA)
+        payload = bytearray()
+        payload.extend(b'\x00') # <- ???
+        payload.extend(b'\x00') # <- ???
+        payload.extend(b'\x00') # <- ???
+        payload.extend(b'\x00') # <- ???
+        payload.extend(map(ord, path))
+        payload.append(0x00) # escape string
+        payload.append(0x00) # <- ???
+
+        result = self._send_recive(CMD.R_DP, RSP.S_DP, payload)
+
+        if result:
+            data_value = result
+            print(struct.unpack('!L', data_value[0:4])[0]) # <- ???
+            print(struct.unpack('!l', data_value[4:8])[0]) # <- This is the actual value
+            logging.debug(
+                'successfuly read data path: %s and got value %s', path, data_value)
+            return data_value
+        logging.warning(
+            'an error occurred while querying data path. This does not work for all control types')
+        return False
