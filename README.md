@@ -71,6 +71,7 @@ been tested:
 | TNC640      | 340595 08 SP1  |
 | iTNC530     | 340480 14 SP4  |
 | iTNC530     | 606420 02 SP14 |
+| iTNC530     | 606420 02 SP3  |
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
@@ -122,7 +123,10 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
 ```
 
 ### Accessing PLC data
- To read values from the PLC memory you need to know the memory area/type and the memory address. The following command reads 15 marker (bits) starting at address
+ To read values from the PLC memory you need to know the memory area/type and the memory address. There are two ways to read these values.
+ 
+#### Reading via memory address
+ The following command reads 15 marker (bits) starting at address
 
 ```
  con.read_plc_memory(address=32, mem_type=pyLSV2.PLC_MEM_TYPE_MARKER, count=15)
@@ -143,6 +147,18 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
 | PLC_MEM_TYPE_STRING      | str         |
 | PLC_MEM_TYPE_INPUT_WORD  | integer     |
 | PLC_MEM_TYPE_OUTPUT_WORD | integer     |
+
+#### Reading via Data Path
+ The following command reads values from the control not via a memory address but via supplying a data access path. This will only work on iTNC controls!
+ The advantage is that it also allows you to access tables like the tool table without reading the complete file.
+
+```
+ con.read_data_path('/PLC/memory/K/1')
+ con.read_data_path('/TABLE/TOOL/T/1/DOC')
+```
+ 
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for more examples.
+
 
 ### SSH Tunnel
 Newer controls allow the use of ssh to encrypt the communication via LSV2. See scripts/ssh_tunnel_demo.py for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.

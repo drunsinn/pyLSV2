@@ -101,6 +101,9 @@ class Login(str, Enum):
     FILELOG = 'FILELOG'
     """enables file system access to log drive, requires password"""
 
+    DATA = 'DATA'
+    """??? used for R_DP ???"""
+
 
 class ExecState(IntEnum):
     """Enum for execution states"""
@@ -462,6 +465,9 @@ class CMD(str, Enum):
     R_DI = 'R_DI'
     """R_DI: directory info - read info about the selected directory"""
 
+    R_DP = 'R_DP'
+    """R_DP: read data from data path, only availible on iTNC530 starting with 34049x 03 and 60642x 01"""
+
     R_DR = 'R_DR'
     """_DR: get info about directory content"""
 
@@ -519,6 +525,9 @@ class RSP(str, Enum):
 
     S_DI = 'S_DI'
     """S_DI: signals that the command R_DI was accepted, it is followed by more data"""
+
+    S_DP = 'S_DP'
+    """S_DP: signals that the commadn R_DP was accepted, is followed by data value"""
 
     S_DR = 'S_DR'
     """S_DR: ??? signals that the command R_DR was accepted, it is followed by more data"""

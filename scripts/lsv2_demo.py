@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pyLSV2
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 if __name__ == "__main__":
-    address = '192.168.56.101'
+    address = '192.168.56.102'
     if len(sys.argv) > 1:
         address = sys.argv[1]
 
@@ -29,12 +29,29 @@ if __name__ == "__main__":
     print('Drive Info: {}'.format(con.get_drive_info()))
     print('Current Folder {Path} Free Space: {Free Size} Attrib: {Dir_Attributs}'.format(**con.get_directory_info()))
 
-    print('PLC Marker: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.MARKER, count=15)))
-    print('PLC Word: {}'.format(con.read_plc_memory(address=6, mem_type=pyLSV2.MemoryType.WORD, count=10)))
-    print('PLC Double Word: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.DWORD, count=10)))
-    print('PLC String: {}'.format(con.read_plc_memory(address=2, mem_type=pyLSV2.MemoryType.STRING, count=2)))
-    print('PLC Input: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.INPUT, count=5)))
-    print('PLC Word Output: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.MemoryType.OUTPUT_WORD, count=5)))
+    # reading PLC values via telegram R_MB, should work on all control types
+    print('PLC Marker 0 to 15: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.MARKER, count=15)))
+    print('PLC Word 6 to 16: {}'.format(con.read_plc_memory(address=6, mem_type=pyLSV2.MemoryType.WORD, count=10)))
+    print('PLC Double Word 0 to 10: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.DWORD, count=10)))
+    print('PLC String 2 to 4: {}'.format(con.read_plc_memory(address=2, mem_type=pyLSV2.MemoryType.STRING, count=2)))
+    print('PLC Input 10 to 15: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.MemoryType.INPUT, count=5)))
+    print('PLC Word Output 10 to 15: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.MemoryType.OUTPUT_WORD, count=5)))
+
+    # read values from PLC and other locations with telegram R_DP. Only works on iTNC
+    if con.is_itnc():
+        print('PLC Double Word 7928: {}'.format(con.read_data_path('/PLC/memory/D/7928')))
+        print('PLC Constant 1: {}'.format(con.read_data_path('/PLC/memory/K/1')))
+        print('PLC Marker 211: {}'.format(con.read_data_path('/PLC/memory/M/211')))
+        print('PLC Byte 7192: {}'.format(con.read_data_path('/PLC/memory/B/7192')))
+        print('PLC Word 10908: {}'.format(con.read_data_path('/PLC/memory/W/10908')))
+        print('PLC Input 11: {}'.format(con.read_data_path('/PLC/memory/I/11')))
+        print('PLC String 30: {}'.format(con.read_data_path('/PLC/memory/S/30')))
+        print('DOC column of tool 1: {}'.format(con.read_data_path('/TABLE/TOOL/T/1/DOC')))
+        print('L column of tool 1: {}'.format(con.read_data_path('/TABLE/TOOL/T/1/L')))
+        print('R column of tool 1: {}'.format(con.read_data_path('/TABLE/TOOL/T/1/R')))
+        print('PLC column of tool 1: {}'.format(con.read_data_path('/TABLE/TOOL/T/1/PLC')))
+        print('TMAT column of tool 1: {}'.format(con.read_data_path('/TABLE/TOOL/T/1/TMAT')))
+        print('LAST_USE column of tool 1: {}'.format(con.read_data_path('/TABLE/TOOL/T/1/LAST_USE')))
 
     # reading of machine parameter for old an new style names
     if not con.is_itnc():
