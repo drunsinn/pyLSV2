@@ -1240,12 +1240,19 @@ class LSV2():
         return file_list
 
     def read_data_path(self, path):
-        if not self.is_itnc():
-            logging.warning('this might not work on non iTNC controls!')
+        """Read values from control via data path. Only works on iTNC controls.
+        For ease of use, the path is formatted by replacing / by \\ and " by '.
 
-        path = path.replace('/', '\\')
+        :param str path: data path from which to read the value.
+        :returns: data value read from control formatted in nativ data type or None if reading was not successful
+        """
+        if not self.is_itnc():
+            logging.warning('Reading values from data path does not work on non iTNC controls!')
+
+        path = path.replace('/', '\\').replace('"', '\'')
 
         self.login(login=Login.DATA)
+
         payload = bytearray()
         payload.extend(b'\x00') # <- ???
         payload.extend(b'\x00') # <- ???
@@ -1253,17 +1260,31 @@ class LSV2():
         payload.extend(b'\x00') # <- ???
         payload.extend(map(ord, path))
         payload.append(0x00) # escape string
-        payload.append(0x00) # <- ???
 
         result = self._send_recive(CMD.R_DP, RSP.S_DP, payload)
 
         if result:
-            data_value = result
-            print(struct.unpack('!L', data_value[0:4])[0]) # <- ???
-            print(struct.unpack('!l', data_value[4:8])[0]) # <- This is the actual value
-            logging.debug(
-                'successfuly read data path: %s and got value %s', path, data_value)
+            value_type = struct.unpack('!L', result[0:4])[0]
+            if value_type == 2:
+                data_value = struct.unpack('!h', result[4:6])[0]
+            elif value_type == 3:
+                data_value = struct.unpack('!l', result[4:8])[0]
+            elif value_type == 5:
+                data_value = struct.unpack('<d', result[4:12])[0]
+            elif value_type == 8:
+                data_value = result[4:].strip(b'\x00').decode('utf-8')
+            elif value_type == 11:
+                data_value = struct.unpack('!?', result[4:5])[0]
+            elif value_type == 16:
+                data_value = struct.unpack('!b', result[4:5])[0]
+            elif value_type == 17:
+                data_value = struct.unpack('!B', result[4:5])[0]
+            else:
+                raise Exception('unknown return type: %d for %s' % (value_type, result[4:]))
+
+            logging.info(
+                'successfuly read data path: %s and got value "%s"', path, data_value)
             return data_value
         logging.warning(
-            'an error occurred while querying data path. This does not work for all control types')
-        return False
+            'an error occurred while querying data path "%s". This does not work for all control types', path)
+        return None
