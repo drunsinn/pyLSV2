@@ -42,7 +42,7 @@ if __name__ == '__main__':
     lsv2.login(login=pyLSV2.LOGIN_DSP)
     lsv2.login(login=pyLSV2.LOGIN_DNC)
     lsv2.login(login=pyLSV2.LOGIN_SCOPE)
-    lsv2.login(login=pyLSV2.LOGIN_FILEPLC, password='807667')
+    lsv2.login(login=pyLSV2.LOGIN_FILEPLC, password='<PLC_PASSWORD>')
 
     # base_string = 'A_'
     # with open('./out.txt', 'a') as fp:

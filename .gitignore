@@ -137,3 +137,5 @@ dmypy.json
 
 # IDE Settings
 .vscode/settings.json
+scripts/test.py
+docs/README.md

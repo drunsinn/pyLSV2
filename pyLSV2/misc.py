@@ -4,6 +4,8 @@
 import struct
 from datetime import datetime
 
+from .const import ControlType
+
 
 def decode_system_parameters(result_set):
     """decode the result system parameter query
@@ -14,7 +16,6 @@ def decode_system_parameters(result_set):
     """
     message_length = len(result_set)
     info_list = list()
-    # as per comment in eclipse plugin, there might be a difference between a programming station and a real machine
     if message_length == 120:
         info_list = struct.unpack('!14L8B8L2BH4B2L2HL', result_set)
     elif message_length == 124:
@@ -57,34 +58,64 @@ def decode_system_parameters(result_set):
     return sys_par
 
 
-def decode_file_system_info(data_set):
+def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
     """decode result from file system entry
 
     :param tuple result_set: bytes returned by the system parameter query command R_FI or CR_DR
     :returns: dictionary with file system entry parameters
     :rtype: dict
     """
+    flag_is_protected = 0x08
+    if control_type in (ControlType.UNKNOWN, ControlType.MILL_NEW, ControlType.LATHE_NEW):
+        flag_is_dir = 0x20
+    else:
+        flag_is_dir = 0x40
+
     file_info = dict()
     file_info['Size'] = struct.unpack('!L', data_set[:4])[0]
-    file_info['Timestamp'] =  datetime.fromtimestamp(struct.unpack('!L', data_set[4:8])[0])
+    file_info['Timestamp'] = datetime.fromtimestamp(
+        struct.unpack('!L', data_set[4:8])[0])
 
-    arrtibutes = struct.unpack('!L', data_set[8:12])[0]
-    file_info['Attributs'] = arrtibutes
+    attributes = struct.unpack('!L', data_set[8:12])[0]
+
+    file_info['Attributs'] = attributes
     file_info['is_file'] = False
     file_info['is_directory'] = False
-    file_info['is_drive'] = False
-    if arrtibutes & 0x10:
-        file_info['is_drive'] = True
-    elif arrtibutes & 0x20:
+
+    if bool(attributes & flag_is_dir):
         file_info['is_directory'] = True
     else:
         file_info['is_file'] = True
 
+    file_info['is_write_protected'] = bool(attributes & flag_is_protected)
+
     file_info['Name'] = data_set[12:].decode().strip('\x00').replace('\\', '/')
 
-    file_info['is_write_protected'] = bool(arrtibutes & 0x40)
-
     return file_info
+
+
+def decode_directory_info(data_set):
+    """decode result from directory entry
+
+    :param tuple result_set: bytes returned by the system parameter query command R_DI
+    :returns: dictionary with file system entry parameters
+    :rtype: dict
+    """
+    dir_info = dict()
+    dir_info['Free Size'] = struct.unpack('!L', data_set[:4])[0]
+    attribute_list = list()
+    for i in range(4, len(data_set[4:132]), 4):
+        attr = data_set[i:i + 4].decode().strip('\x00')
+        if len(attr) > 0:
+            attribute_list.append(attr)
+    dir_info['Dir_Attributs'] = attribute_list
+
+    dir_info['Attributs'] = struct.unpack('!32B', data_set[132:164])
+
+    dir_info['Path'] = data_set[164:].decode().strip('\x00').replace('\\', '/')
+
+    return dir_info
+
 
 def decode_tool_information(data_set):
     """decode result from tool info
@@ -96,7 +127,44 @@ def decode_tool_information(data_set):
     tool_info = dict()
     tool_info['Number'] = struct.unpack('!L', data_set[0:4])[0]
     tool_info['Index'] = struct.unpack('!H', data_set[4:6])[0]
-    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0], 'unknown')
-    tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
-    tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
+    tool_info['Axis'] = {0: 'X', 1: 'Y', 2: 'Z'}.get(struct.unpack('!H', data_set[6:8])[0],
+                                                                   'unknown')
+    if len(data_set) > 8:
+        tool_info['Length'] = struct.unpack('<d', data_set[8:16])[0]
+        tool_info['Radius'] = struct.unpack('<d', data_set[16:24])[0]
+    else:
+        tool_info['Length'] = None
+        tool_info['Radius'] = None
     return tool_info
+
+
+def decode_override_information(data_set):
+    """decode result from override info
+
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+                             override info
+    :returns: dictionary with override info values
+    :rtype: dict
+    """
+    override_info = dict()
+    override_info['Feed_override'] = struct.unpack('!L', data_set[0:4])[0]/100
+    override_info['Speed_override'] = struct.unpack('!L', data_set[4:8])[0]/100
+    override_info['Rapid_override'] = struct.unpack('!L', data_set[8:12])[0]/100
+
+    return override_info
+
+
+def decode_error_message(data_set):
+    """decode result from reading error messages
+
+    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+                             first and next error
+    :returns: dictionary with error message values
+    :rtype: dict
+    """
+    error_info = dict()
+    error_info['Class'] = struct.unpack('!H', data_set[0:2])[0]
+    error_info['Group'] = struct.unpack('!H', data_set[2:4])[0]
+    error_info['Number'] = struct.unpack('!l', data_set[4:8])[0]
+    error_info['Text'] = data_set[8:].decode().strip('\x00')
+    return error_info
