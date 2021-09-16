@@ -49,6 +49,7 @@ In chronological order:
 - WouterElfrink
 - kekec14
 - Michal Navrátil
+- PandaRoux8
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
