@@ -9,7 +9,9 @@ import tempfile
 import time
 from pathlib import Path
 
+
 import pyLSV2
+from pyLSV2.const import MemoryType
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -29,13 +31,12 @@ if __name__ == "__main__":
     print('Drive Info: {}'.format(con.get_drive_info()))
     print('Current Folder {Path} Free Space: {Free Size} Attrib: {Dir_Attributs}'.format(**con.get_directory_info()))
 
-    # reading PLC values via telegram R_MB, should work on all control types
-    print('PLC Marker 0 to 15: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.MARKER, count=15)))
-    print('PLC Word 6 to 16: {}'.format(con.read_plc_memory(address=6, mem_type=pyLSV2.MemoryType.WORD, count=10)))
-    print('PLC Double Word 0 to 10: {}'.format(con.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.DWORD, count=10)))
-    print('PLC String 2 to 4: {}'.format(con.read_plc_memory(address=2, mem_type=pyLSV2.MemoryType.STRING, count=2)))
-    print('PLC Input 10 to 15: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.MemoryType.INPUT, count=5)))
-    print('PLC Word Output 10 to 15: {}'.format(con.read_plc_memory(address=10, mem_type=pyLSV2.MemoryType.OUTPUT_WORD, count=5)))
+    print('PLC Marker: {}'.format(con.read_plc_memory(address=0, mem_type=MemoryType.MARKER, count=15)))
+    print('PLC Word: {}'.format(con.read_plc_memory(address=6, mem_type=MemoryType.WORD, count=10)))
+    print('PLC Double Word: {}'.format(con.read_plc_memory(address=0, mem_type=MemoryType.DWORD, count=10)))
+    print('PLC String: {}'.format(con.read_plc_memory(address=2, mem_type=MemoryType.STRING, count=2)))
+    print('PLC Input: {}'.format(con.read_plc_memory(address=0, mem_type=MemoryType.INPUT, count=5)))
+    print('PLC Word Output: {}'.format(con.read_plc_memory(address=10, mem_type=MemoryType.OUTPUT_WORD, count=5)))
 
     # read values from PLC and other locations with telegram R_DP. Only works on iTNC
     if con.is_itnc():
