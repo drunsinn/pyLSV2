@@ -3,6 +3,7 @@
 """module with reader for TNC tables"""
 import logging
 import re
+import json
 from pathlib import Path
 
 
