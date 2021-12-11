@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 class TableReader():
-    """generic parser for table files commonly used by TNC, iTNC, CNCPILOT and
-       MANUALplus controls
+    """generic parser for table files commonly used by TNC, iTNC, CNCPILOT,
+       MANUALplus and 6000i CNC
     """
 
     def __init__(self):
@@ -124,8 +124,8 @@ class TableReader():
 
 
 class NCTabel():
-    """generic object for table files commonly used by TNC, iTNC, CNCPILOT and
-       MANUALplus controls
+    """generic object for table files commonly used by TTNC, iTNC, CNCPILOT,
+       MANUALplus and 6000i CNC
     """
 
     def __init__(self, name=None, suffix=None, version=None, has_unit=False, is_metric=False):
