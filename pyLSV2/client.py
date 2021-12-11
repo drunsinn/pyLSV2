@@ -8,6 +8,7 @@
 """
 import logging
 import re
+import os
 import struct
 from pathlib import Path
 
@@ -25,7 +26,7 @@ from .translate_messages import (get_error_text, get_execution_status_text,
 class LSV2():
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
 
-    def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True):
+    def __init__(self, hostname, port=0, timeout=15.0, safe_mode=True, locale_path=None):
         """init object variables and create socket"""
         logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -52,6 +53,11 @@ class LSV2():
         self._control_type = ControlType.UNKNOWN
         self._last_error_code = None
 
+        if locale_path is None:
+            self._locale_path = os.path.join(os.path.dirname(__file__), 'locales')
+        else:
+            self._locale_path = locale_path
+
     def connect(self):
         """connect to control"""
         self._llcom.connect()
@@ -76,10 +82,12 @@ class LSV2():
         return self._control_type == ControlType.LATHE_NEW
 
     @staticmethod
-    def _decode_error(content):
+    def _decode_error(content, locale_path=None):
         """decode error codes to text"""
+        if locale_path is None:
+            locale_path = os.path.join(os.path.dirname(__file__), 'locales')
         byte_1, byte_2, = struct.unpack('!BB', content)
-        error_text = get_error_text(byte_1, byte_2)
+        error_text = get_error_text(byte_1, byte_2, locale_path=locale_path)
         logging.warning(
             'T_ER or T_BD received, an error occurred during the execution of the last command: %s', error_text)
         return error_text
@@ -403,7 +411,7 @@ class LSV2():
         if result:
             pgm_state = struct.unpack('!H', result)[0]
             logging.debug('successfuly read state of active program: %s',
-                          get_program_status_text(pgm_state))
+                          get_program_status_text(pgm_state, locale_path=self._locale_path))
             return pgm_state
 
         logging.error('an error occurred while querying program state')
@@ -452,7 +460,7 @@ class LSV2():
         if result:
             exec_state = struct.unpack('!H', result)[0]
             logging.debug('read execution state %d : %s', exec_state,
-                          get_execution_status_text(exec_state, 'en'))
+                          get_execution_status_text(exec_state, locale_path=self._locale_path))
             return exec_state
 
         logging.error('an error occurred while querying execution state')

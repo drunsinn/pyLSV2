@@ -89,7 +89,7 @@ def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
 
     file_info['is_write_protected'] = bool(attributes & flag_is_protected)
 
-    file_info['Name'] = data_set[12:].decode().strip('\x00').replace('\\', '/')
+    file_info['Name'] = data_set[12:].decode('latin1').strip('\x00').replace('\\', '/')
 
     return file_info
 
@@ -105,14 +105,14 @@ def decode_directory_info(data_set):
     dir_info['Free Size'] = struct.unpack('!L', data_set[:4])[0]
     attribute_list = list()
     for i in range(4, len(data_set[4:132]), 4):
-        attr = data_set[i:i + 4].decode().strip('\x00')
+        attr = data_set[i:i + 4].decode('latin1').strip('\x00')
         if len(attr) > 0:
             attribute_list.append(attr)
     dir_info['Dir_Attributs'] = attribute_list
 
     dir_info['Attributs'] = struct.unpack('!32B', data_set[132:164])
 
-    dir_info['Path'] = data_set[164:].decode().strip('\x00').replace('\\', '/')
+    dir_info['Path'] = data_set[164:].decode('latin1').strip('\x00').replace('\\', '/')
 
     return dir_info
 
@@ -166,5 +166,5 @@ def decode_error_message(data_set):
     error_info['Class'] = struct.unpack('!H', data_set[0:2])[0]
     error_info['Group'] = struct.unpack('!H', data_set[2:4])[0]
     error_info['Number'] = struct.unpack('!l', data_set[4:8])[0]
-    error_info['Text'] = data_set[8:].decode().strip('\x00')
+    error_info['Text'] = data_set[8:].decode('latin1').strip('\x00')
     return error_info

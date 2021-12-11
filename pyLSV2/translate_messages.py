@@ -7,7 +7,7 @@ import os
 from .const import ExecState, PgmState, LSV2Err
 
 
-def get_error_text(error_type, error_code, language='en'):
+def get_error_text(error_type, error_code, language=None, locale_path=None):
     """Parse error type and error code and return the error message.
 
     :param int error_type: type of error code.
@@ -18,9 +18,13 @@ def get_error_text(error_type, error_code, language='en'):
     :rtype: str
     """
 
-    locale_path = os.path.dirname(__file__) + '/locales'
-    translate = gettext.translation(
-        'error_text', localedir=locale_path, languages=[language], fallback=True)
+    if locale_path is None:
+        locale_path = os.path.join(os.path.dirname(__file__), 'locales')
+    if language is None:
+        translate = gettext.translation(domain='error_text', localedir=locale_path, fallback=True)
+    else:
+        translate = gettext.translation(domain='error_text', localedir=locale_path, fallback=True,
+                                        languages=[language,])
     _ = translate.gettext
 
     if error_type != 1:
@@ -105,7 +109,7 @@ def get_error_text(error_type, error_code, language='en'):
             }.get(error_code, _('LSV2_ERROR_UNKNOWN_CODE'))
 
 
-def get_program_status_text(code, language='en'):
+def get_program_status_text(code, language=None, locale_path=None):
     """Translate status code of program state to text
 
     :param int code: status code of program state
@@ -113,9 +117,16 @@ def get_program_status_text(code, language='en'):
     :returns: readable text for execution state
     :rtype: str
     """
-    locale_path = os.path.dirname(__file__) + '/locales'
-    translate = gettext.translation(
-        'message_text', localedir=locale_path, languages=[language], fallback=True)
+
+    if locale_path is None:
+        locale_path = os.path.join(os.path.dirname(__file__), 'locales')
+    if language is None:
+        translate = gettext.translation(domain='message_text', localedir=locale_path, fallback=True)
+    else:
+        translate = gettext.translation(domain='message_text', localedir=locale_path, fallback=True,
+                                        languages=[language,])
+    _ = translate.gettext
+
     return {PgmState.STARTED: translate.gettext('PGM_STATE_STARTED'),
             PgmState.STOPPED: translate.gettext('PGM_STATE_STOPPED'),
             PgmState.FINISHED: translate.gettext('PGM_STATE_FINISHED'),
@@ -128,7 +139,7 @@ def get_program_status_text(code, language='en'):
             }.get(code, translate.gettext('PGM_STATE_UNKNOWN'))
 
 
-def get_execution_status_text(code, language='en'):
+def get_execution_status_text(code, language=None, locale_path=None):
     """Translate status code of execution state to text
     See https://github.com/drunsinn/pyLSV2/issues/1
 
@@ -137,9 +148,16 @@ def get_execution_status_text(code, language='en'):
     :returns: readable text for execution state
     :rtype: str
     """
-    locale_path = os.path.dirname(__file__) + '/locales'
-    translate = gettext.translation(
-        'message_text', localedir=locale_path, languages=[language], fallback=True)
+
+    if locale_path is None:
+        locale_path = os.path.join(os.path.dirname(__file__), 'locales')
+    if language is None:
+        translate = gettext.translation(domain='message_text', localedir=locale_path, fallback=True)
+    else:
+        translate = gettext.translation(domain='message_text', localedir=locale_path, fallback=True,
+                                        languages=[language,])
+    _ = translate.gettext
+
     return {ExecState.MANUAL: translate.gettext('EXEC_STATE_MANUAL'),
             ExecState.MDI: translate.gettext('EXEC_STATE_MDI'),
             ExecState.PASS_REFERENCES: translate.gettext('EXEC_STATE_PASS_REFERENCES'),
