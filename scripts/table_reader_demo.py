@@ -2,18 +2,30 @@
 # -*- coding: utf-8 -*-
 import logging
 import pathlib
-from pyLSV2 import TableReader
+from pyLSV2 import TableReader, NCTabel
 
 logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == "__main__":
+    tr = TableReader()
 
-    data_dir = pathlib.Path('../data/')
+    input_file = pathlib.Path('../data/tool.t')
+    
+    # read table
+    nc_table = tr.parse_table(input_file)
 
-    for subfolder in ('table_itnc530', 'table_pilot640', 'table_tnc640'):
+    # safe table format to json
+    if nc_table.version is not None:
+        format_file_name = f'output_format_{nc_table.version:s}.json'
+    else:
+        format_file_name = 'output_format_generic.json'
+    format_file_path = input_file.parents[0] / format_file_name
+    with open(format_file_path, 'w', encoding='utf-8') as fp:
+        fp.write(nc_table.format_to_json())
 
-        current_folder = data_dir.joinpath(subfolder)
-
-        for table_path in current_folder.glob('*.*'):
-            tr = TableReader()
-            tr.parse_table(table_path)
+    # combine two tables
+    second_file = pathlib.Path('../data/tool2.t')
+    output_table = input_file.parents[0] / 'combined.t'
+    second_table = tr.parse_table(second_file)
+    nc_table.extend_rows(second_table.rows)
+    nc_table.dump(output_table, renumber_column='T')
