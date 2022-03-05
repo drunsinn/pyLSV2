@@ -19,7 +19,7 @@
 ## License
  MIT License
 
- Copyright (c) 2020 - 2021 drunsinn
+ Copyright (c) 2020 - 2022 drunsinn
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -63,12 +63,14 @@ been tested:
 | TNC640      | 340595 08 SP1  |
 | TNC640      | 340595 10 SP2  |
 | TNC640      | 340595 11 SP1  |
+| TNC640      | 340595 11 SP4  |
 | iTNC530     | 606425 04 SP20 |
 | CNCpilot640 | 1230521 03 SP1 |
 
 ### Machines
 | Control     | Software       |
 |-------------|----------------|
+| TNC620      | 817605 04 SP1  |
 | TNC640      | 340595 08 SP1  |
 | iTNC530     | 340480 14 SP4  |
 | iTNC530     | 606420 02 SP14 |
