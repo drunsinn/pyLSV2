@@ -22,7 +22,7 @@ class LLLSV2Com():
         try:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
-            logging.error('there was An error resolving the host')
+            logging.error('there was an error resolving the host')
             raise
 
         self._port = port
