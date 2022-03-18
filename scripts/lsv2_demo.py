@@ -11,7 +11,7 @@ from pathlib import Path
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(filename="itnc.log", level=logging.DEBUG)
 
 if __name__ == "__main__":
     address = "192.168.56.102"
@@ -40,6 +40,8 @@ if __name__ == "__main__":
             **con.get_directory_info()
         )
     )
+
+    print("Axes positions: {}".format(con.get_axes_location()))
 
     print(
         "PLC Marker: {}".format(

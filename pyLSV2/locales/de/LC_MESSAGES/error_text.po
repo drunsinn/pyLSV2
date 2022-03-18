@@ -19,7 +19,7 @@ msgstr ""
 
 #: translate_error.py:101
 msgid "LSV2_ERROR_T_ER_BAD_FORMAT"
-msgstr "Formatfehler im Telegramm"
+msgstr "Formatfehler im Telegram"
 
 #: translate_error.py:102
 msgid "LSV2_ERROR_T_ER_UNEXPECTED_TELE"
@@ -107,7 +107,7 @@ msgstr "Fehler beim Dateizugriff"
 
 #: translate_error.py:123
 msgid "LSV2_ERROR_T_ER_WRONG_DNC_STATUS"
-msgstr "Telegramm im aktuellen DNC-Zustand nicht zulässig"
+msgstr "Telegram im aktuellen DNC-Zustand nicht zulässig"
 
 #: translate_error.py:124
 msgid "LSV2_ERROR_T_ER_CHANGE_PATH"
