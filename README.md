@@ -50,6 +50,7 @@ In chronological order:
 - kekec14
 - Michal Navrátil
 - PandaRoux8
+- sazima
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
@@ -104,6 +105,7 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
  con.connect()
  print(con.get_program_status_text(con.get_program_status()))
  print(con.get_execution_status_text(con.get_execution_status()))
+ print(con.get_axes_location())
  con.disconnect()
 ```
 
