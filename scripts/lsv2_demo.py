@@ -13,7 +13,7 @@ from pathlib import Path
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(filename='itnc.log', level=logging.DEBUG)
 
 if __name__ == "__main__":
     address = '192.168.56.102'
@@ -30,6 +30,8 @@ if __name__ == "__main__":
 
     print('Drive Info: {}'.format(con.get_drive_info()))
     print('Current Folder {Path} Free Space: {Free Size} Attrib: {Dir_Attributs}'.format(**con.get_directory_info()))
+
+    print('Axes positions: {}'.format(con.get_axes_location()))
 
     print('PLC Marker: {}'.format(con.read_plc_memory(address=0, mem_type=MemoryType.MARKER, count=15)))
     print('PLC Word: {}'.format(con.read_plc_memory(address=6, mem_type=MemoryType.WORD, count=10)))

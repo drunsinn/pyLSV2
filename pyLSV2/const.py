@@ -607,6 +607,7 @@ class ParRVR(IntEnum):
 class ParRRI(IntEnum):
     """enum of parameters used with command R_RI"""
 
+    AXIS_LOCATION = 22
     EXEC_STATE = 23
     SELECTED_PGM = 24
     OVERRIDE = 25
