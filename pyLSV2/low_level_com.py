@@ -61,7 +61,8 @@ class LLLSV2Com():
         :rtype: None
         """
         try:
-            self._tcpsock.close()
+            if self._tcpsock is not None:
+                self._tcpsock.close()
         except socket.timeout:
             logging.error('error while closing socket')
             raise
