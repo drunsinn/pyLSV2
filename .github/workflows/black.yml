@@ -1,0 +1,15 @@
+# This workflow enforces code style with black on each push and pull request
+# https://black.readthedocs.io/en/stable/integrations/github_actions.html
+
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+        with:
+          options: "--verbose"

@@ -19,8 +19,8 @@ Table reader
 .. autoclass:: pyLSV2.TableReader
     :members:
 
-Contants
---------
+Constants
+---------
 
 .. automodule:: pyLSV2.const
     :members:
