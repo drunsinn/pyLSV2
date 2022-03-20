@@ -12,12 +12,13 @@ def test_read_machine_parameter(address, timeout):
 
     if lsv2.is_itnc():
         # old style
-        assert lsv2.get_machine_parameter('7230.0') is not False
+        assert lsv2.get_machine_parameter("7230.0") is not False
     else:
         # new stype
-        assert lsv2.get_machine_parameter('CfgDisplayLanguage.ncLanguage') is not False
-        
+        assert lsv2.get_machine_parameter("CfgDisplayLanguage.ncLanguage") is not False
+
     lsv2.disconnect()
+
 
 def test_rw_machine_parameter(address, timeout):
     """test to see if reading and writing of machine parameters works"""
@@ -26,14 +27,17 @@ def test_rw_machine_parameter(address, timeout):
 
     if lsv2.is_itnc():
         # old style
-        parameter_name = '7230.0'
+        parameter_name = "7230.0"
     else:
         # new stype
-        parameter_name = 'CfgDisplayLanguage.ncLanguage'
+        parameter_name = "CfgDisplayLanguage.ncLanguage"
 
     lsv2.login(pyLSV2.Login.PLCDEBUG)
     current_value = lsv2.get_machine_parameter(parameter_name)
-    assert lsv2.set_machine_parameter(parameter_name, current_value, safe_to_disk=False) is not False
+    assert (
+        lsv2.set_machine_parameter(parameter_name, current_value, safe_to_disk=False)
+        is not False
+    )
     lsv2.logout(pyLSV2.Login.PLCDEBUG)
 
     lsv2.disconnect()

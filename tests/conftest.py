@@ -7,10 +7,12 @@ import pytest
 
 def pytest_addoption(parser):
     """add commandline options to tests"""
-    parser.addoption("--address", action="store",
-                     help="address of machine or programming station")
-    parser.addoption("--timeout", action="store",
-                     help="number of seconds for network timeout")
+    parser.addoption(
+        "--address", action="store", help="address of machine or programming station"
+    )
+    parser.addoption(
+        "--timeout", action="store", help="number of seconds for network timeout"
+    )
 
 
 @pytest.fixture
@@ -18,7 +20,7 @@ def address(request):
     """process commandline option 'address'"""
     par = request.config.getoption("--address")
     if par is None:
-        par = '192.168.56.101'
+        par = "192.168.56.101"
     return par
 
 
