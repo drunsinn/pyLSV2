@@ -14,32 +14,67 @@ from enum import Enum, IntEnum
 MODE_BINARY = 0x01
 
 #: Regex pattern for Klartext file names
-REGEX_FILE_NAME_H = r'[\$A-Za-z0-9_-]*\.[hH]$'
+REGEX_FILE_NAME_H = r"[\$A-Za-z0-9_-]*\.[hH]$"
 
 #: Regex pattern for DIN/ISO file names
-REGEX_FILE_NAME_I = r'[\$A-Za-z0-9_-]*\.[iI]$'
+REGEX_FILE_NAME_I = r"[\$A-Za-z0-9_-]*\.[iI]$"
 
 #: List of file types which should be transferred in binary mode
-BIN_FILES = ('.ads', '.bak', '.bck', '.bin', '.bmp', '.bmx', '.chm', '.cyc', '.cy%',
-             '.dmp', '.dll', '.eak', '.elf', '.enc', '.exe', '.gds', '.gif', '.hbi',
-             '.he', '.ioc', '.iocp', '.jpg', '.jpeg', '.map', '.mds', '.mo', '.omf',
-             '.pdf', '.png', '.pyc', '.s', '.sds', '.sk', '.str', '.xml', '.xls',
-             '.xrs', '.zip')
+BIN_FILES = (
+    ".ads",
+    ".bak",
+    ".bck",
+    ".bin",
+    ".bmp",
+    ".bmx",
+    ".chm",
+    ".cyc",
+    ".cy%",
+    ".dmp",
+    ".dll",
+    ".eak",
+    ".elf",
+    ".enc",
+    ".exe",
+    ".gds",
+    ".gif",
+    ".hbi",
+    ".he",
+    ".ioc",
+    ".iocp",
+    ".jpg",
+    ".jpeg",
+    ".map",
+    ".mds",
+    ".mo",
+    ".omf",
+    ".pdf",
+    ".png",
+    ".pyc",
+    ".s",
+    ".sds",
+    ".sk",
+    ".str",
+    ".xml",
+    ".xls",
+    ".xrs",
+    ".zip",
+)
 
 
 class DriveName(str, Enum):
     """Enum for drive names found on TNC controls"""
 
-    TNC = 'TNC:'
+    TNC = "TNC:"
     """partition TNC, contains NC programs and tables"""
 
-    PLC = 'PLC:'
+    PLC = "PLC:"
     """partition PLC, contains PLC program and configuration data"""
 
-    LOG = 'LOG:'
+    LOG = "LOG:"
     """partition LOG, contains log files. Not available on all controls"""
 
-    SYS = 'SYS:'
+    SYS = "SYS:"
     """partition SYS, ???"""
 
 
@@ -65,43 +100,43 @@ class ControlType(Enum):
 class Login(str, Enum):
     """Enum for the different login roles"""
 
-    INSPECT = 'INSPECT'
+    INSPECT = "INSPECT"
     """enables read only functions"""
 
-    DIAG = 'DIAGNOSTICS'
+    DIAG = "DIAGNOSTICS"
     """enables logbook / recover"""
 
-    PLCDEBUG = 'PLCDEBUG'
+    PLCDEBUG = "PLCDEBUG"
     """enables write access to PLC, requires password"""
 
-    FILETRANSFER = 'FILE'
+    FILETRANSFER = "FILE"
     """enables filesystem access to tnc drive"""
 
-    MONITOR = 'MONITOR'
+    MONITOR = "MONITOR"
     """enables TNC remote access and screen dump"""
 
-    DSP = 'DSP'
+    DSP = "DSP"
     """enables DSP functions"""
 
-    DNC = 'DNC'
+    DNC = "DNC"
     """enables DNC functions"""
 
-    SCOPE = 'OSZI'
+    SCOPE = "OSZI"
     """enables Remote Scope, requires password"""
 
-    STREAMAXES = 'STREAMAXES'
+    STREAMAXES = "STREAMAXES"
     """enables Streaming of axis data, requires password"""
 
-    FILEPLC = 'FILEPLC'
+    FILEPLC = "FILEPLC"
     """enables file system access to plc drive, requires password"""
 
-    FILESYS = 'FILESYS'
+    FILESYS = "FILESYS"
     """enables file system access to sys drive, requires password"""
 
-    FILELOG = 'FILELOG'
+    FILELOG = "FILELOG"
     """enables file system access to log drive, requires password"""
 
-    DATA = 'DATA'
+    DATA = "DATA"
     """??? used for R_DP ???"""
 
 
@@ -408,53 +443,53 @@ class KeyCode(IntEnum):
 class CMD(str, Enum):
     """Enum of all known LSV2 command telegrams"""
 
-    A_LG = 'A_LG'
+    A_LG = "A_LG"
     """A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password"""
 
-    A_LO = 'A_LO'
+    A_LO = "A_LO"
     """A_LO: used to drop access to certain parts of the control, followed by an optional logon name"""
 
-    C_CC = 'C_CC'
+    C_CC = "C_CC"
     """C_CC: used to set system commands"""
 
-    C_DC = 'C_DC'
+    C_DC = "C_DC"
     """C_DC: change the working directory for future file operations, followed by a null terminated string"""
 
     # C_DS: found via bruteforce test, purpose unknown!
     # C_DS = 'C_DS'
 
-    C_DD = 'C_DD'
+    C_DD = "C_DD"
     """C_DD: delete a directory, followed by a null terminated string"""
 
-    C_DM = 'C_DM'
+    C_DM = "C_DM"
     """C_DM: create a new directory, followed by a null terminated string"""
 
-    C_EK = 'C_EK'
+    C_EK = "C_EK"
     """C_EK: send key code to control. Behaves as if the associated key was pressed on the keyboard"""
 
     # C_FA: found via bruteforce test, purpose unknown!
     # C_FA = 'C_FA'
 
-    C_FC = 'C_FC'
+    C_FC = "C_FC"
     """C_FC: local file copy from current directory, filename + null + target path + null"""
 
-    C_FD = 'C_FD'
+    C_FD = "C_FD"
     """C_FD: delete a file, followed by a null terminated string"""
 
-    C_FL = 'C_FL'
+    C_FL = "C_FL"
     """C_FL: send a file to the control, followed by a null terminated with the filename string"""
 
-    C_FR = 'C_FR'
+    C_FR = "C_FR"
     """C_FR: move local file from current directory, filename + null + target path + null"""
 
     # C_GC = 'C_GC' # found via bruteforce test, purpose unknown!
 
-    C_LK = 'C_LK'
+    C_LK = "C_LK"
     """C_LK: lock and unlock keyboard input on control, followed by a switch if lock or unlock"""
 
     # C_MB = 'C_MB' # found via bruteforce test, purpose unknown!
 
-    C_MC = 'C_MC'
+    C_MC = "C_MC"
     """C_MC: set machine parameter, followed by flags, name and value"""
 
     # C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
@@ -462,30 +497,30 @@ class CMD(str, Enum):
     # C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
     # R_CI = 'R_CI' # found via bruteforce test, purpose unknown!
 
-    R_DI = 'R_DI'
+    R_DI = "R_DI"
     """R_DI: directory info - read info about the selected directory"""
 
-    R_DP = 'R_DP'
-    """R_DP: read data from data path, only availible on iTNC530 starting with 34049x 03 and 60642x 01"""
+    R_DP = "R_DP"
+    """R_DP: read data from data path, only available on iTNC530 starting with 34049x 03 and 60642x 01"""
 
-    R_DR = 'R_DR'
+    R_DR = "R_DR"
     """_DR: get info about directory content"""
 
     # R_DS = 'R_DS' # found via bruteforce test, purpose unknown!
     # R_DT = 'R_DT' # found via bruteforce test, purpose unknown!
 
-    R_FI = 'R_FI'
+    R_FI = "R_FI"
     """R_FI: file info - read info about a file, followed by a null terminated string"""
 
-    R_FL = 'R_FL'
+    R_FL = "R_FL"
     """R_FL: load a file from the control, followed by a null terminated string with the filename"""
 
     # R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
 
-    R_MB = 'R_MB'
+    R_MB = "R_MB"
     """R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count"""
 
-    R_MC = 'R_MC'
+    R_MC = "R_MC"
     """R_MC: read machine parameter, requires login INSPECT, followed by a null terminated string with the parameter number/path"""
 
     # R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
@@ -493,70 +528,70 @@ class CMD(str, Enum):
     # R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
     # R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
 
-    R_PR = 'R_PR'
+    R_PR = "R_PR"
     """R_PR: read parameter from the control"""
 
-    R_RI = 'R_RI'
+    R_RI = "R_RI"
     """R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)"""
 
     # R_ST = 'R_ST' # found via bruteforce test, purpose unknown!
 
-    R_VR = 'R_VR'
+    R_VR = "R_VR"
     """R_VR: read general info about the control itself"""
 
 
 class RSP(str, Enum):
     """Enum of all known response telegrams"""
 
-    T_OK = 'T_OK'
+    T_OK = "T_OK"
     """T_OK: signals that the last transaction was completed, no additional data is sent?"""
 
-    T_ER = 'T_ER'
+    T_ER = "T_ER"
     """T_ER: signals that An error occurred during the last transaction, followed by An error code?"""
 
-    T_FD = 'T_FD'
+    T_FD = "T_FD"
     """T_FD: signals that all file data has been sent and the transfer is finished"""
 
-    T_BD = 'T_BD'
+    T_BD = "T_BD"
     """T_BD: signals that An error occurred during the file transfer, it is followed by more data"""
 
-    M_CC = 'M_CC'
+    M_CC = "M_CC"
     """M_CC: signals that a poeration some king of operation was completed that took some time to complete, ??? response to C_CC??"""
 
-    S_DI = 'S_DI'
+    S_DI = "S_DI"
     """S_DI: signals that the command R_DI was accepted, it is followed by more data"""
 
-    S_DP = 'S_DP'
-    """S_DP: signals that the commadn R_DP was accepted, is followed by data value"""
+    S_DP = "S_DP"
+    """S_DP: signals that the command R_DP was accepted, is followed by data value"""
 
-    S_DR = 'S_DR'
+    S_DR = "S_DR"
     """S_DR: ??? signals that the command R_DR was accepted, it is followed by more data"""
 
-    S_FI = 'S_FI'
+    S_FI = "S_FI"
     """S_FI: signals that the command R_FI was accepted, it is followed by more data"""
 
-    S_FL = 'S_FL'
+    S_FL = "S_FL"
     """S_FL: used to transfer blocks of file data to the control, signals that the command R_FL was accepted, it is followed by more data"""
 
     # S_IN = 'S_IN'
     # S_IN: found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
 
-    S_MB = 'S_MB'
+    S_MB = "S_MB"
     """S_MB: signals that the command R_MB to read plc memory was accepted, is followed by the actual data"""
 
-    S_MC = 'S_MC'
+    S_MC = "S_MC"
     """S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data"""
 
-    S_PR = 'S_PR'
+    S_PR = "S_PR"
     """S_PR: signals that the command R_PR and the parameter was accepted, it is followed by more data"""
 
-    S_RI = 'S_RI'
+    S_RI = "S_RI"
     """S_RI: signals that the command R_RI was accepted, it is followed by more data"""
 
     # S_ST = 'S_ST'
-    #"""S_ST: found via bruteforce test, signals that the command R_ST was accepted, purpose unknown!"""
+    # """S_ST: found via bruteforce test, signals that the command R_ST was accepted, purpose unknown!"""
 
-    S_VR = 'S_VR'
+    S_VR = "S_VR"
     """S_VR: signals that the command R_VR was accepted, it is followed by more data"""
 
 

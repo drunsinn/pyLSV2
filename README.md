@@ -19,7 +19,7 @@
 ## License
  MIT License
 
- Copyright (c) 2020 - 2021 drunsinn
+ Copyright (c) 2020 - 2022 drunsinn
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -63,12 +63,14 @@ been tested:
 | TNC640      | 340595 08 SP1  |
 | TNC640      | 340595 10 SP2  |
 | TNC640      | 340595 11 SP1  |
+| TNC640      | 340595 11 SP4  |
 | iTNC530     | 606425 04 SP20 |
 | CNCpilot640 | 1230521 03 SP1 |
 
 ### Machines
 | Control     | Software       |
 |-------------|----------------|
+| TNC620      | 817605 04 SP1  |
 | TNC640      | 340595 08 SP1  |
 | iTNC530     | 340480 14 SP4  |
 | iTNC530     | 606420 02 SP14 |
@@ -163,8 +165,8 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
 ### SSH Tunnel
 Newer controls allow the use of ssh to encrypt the communication via LSV2. See scripts/ssh_tunnel_demo.py for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
-# Tabels
-Included in this library is also fuctionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the fromat form an existing table and export the format to a json file.
+# Tables
+Included in this library is also fuctionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
  See [table_reader_demo.py](https://github.com/drunsinn/pyLSV2/blob/31b9d867c28bb34c7b9e0cfc80270d4277b2079a/scripts/table_reader_demo.py) for a demonstration on how to read a table and convert it to a different format.
 
