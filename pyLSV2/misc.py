@@ -86,7 +86,7 @@ def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
 
     attributes = struct.unpack("!L", data_set[8:12])[0]
 
-    file_info["Attributs"] = attributes
+    file_info["Attributes"] = attributes
     file_info["is_file"] = False
     file_info["is_directory"] = False
 
@@ -118,7 +118,7 @@ def decode_directory_info(data_set):
             attribute_list.append(attr)
     dir_info["Dir_Attributs"] = attribute_list
 
-    dir_info["Attributs"] = struct.unpack("!32B", data_set[132:164])
+    dir_info["Attributes"] = struct.unpack("!32B", data_set[132:164])
 
     dir_info["Path"] = data_set[164:].decode("latin1").strip("\x00").replace("\\", "/")
 

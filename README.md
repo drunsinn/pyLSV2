@@ -165,8 +165,8 @@ Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 t
 ### SSH Tunnel
 Newer controls allow the use of ssh to encrypt the communication via LSV2. See scripts/ssh_tunnel_demo.py for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
-# Tabels
-Included in this library is also fuctionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the fromat form an existing table and export the format to a json file.
+# Tables
+Included in this library is also fuctionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
  See [table_reader_demo.py](https://github.com/drunsinn/pyLSV2/blob/31b9d867c28bb34c7b9e0cfc80270d4277b2079a/scripts/table_reader_demo.py) for a demonstration on how to read a table and convert it to a different format.
 

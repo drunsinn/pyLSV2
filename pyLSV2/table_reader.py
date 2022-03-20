@@ -110,7 +110,7 @@ class TableReader:
                     ].strip()
                 nctable.append_row(table_entry)
 
-            logging.debug("Found %d entrys", len(nctable.rows))
+            logging.debug("Found %d entries", len(nctable.rows))
         return nctable
 
     @staticmethod
@@ -201,7 +201,7 @@ class NCTabel:
 
     @property
     def is_metric(self):
-        """if true all values sould be interpreted as metric"""
+        """if true all values should be interpreted as metric"""
         return self._is_metric
 
     @is_metric.setter
@@ -260,7 +260,7 @@ class NCTabel:
         self._content.append(row)
 
     def extend_rows(self, rows):
-        """add multible data entries at onec"""
+        """add multiple data entries at onec"""
         self._content.extend(rows)
 
     @property

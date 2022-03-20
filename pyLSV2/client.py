@@ -164,7 +164,7 @@ class LSV2:
                 self._last_error_code = struct.unpack("!BB", content)
             else:
                 logging.error(
-                    "recived unexpected response %s to command %s. response code %s",
+                    "received unexpected response %s to command %s. response code %s",
                     response,
                     command,
                     content,
@@ -187,12 +187,12 @@ class LSV2:
             logging.debug("Transfer is finished with no content")
         elif response not in expected_response:
             logging.error(
-                "recived unexpected response %s block read for command %s. response code %s",
+                "received unexpected response %s block read for command %s. response code %s",
                 response,
                 command,
                 content,
             )
-            raise Exception("recived unexpected response {}".format(response))
+            raise Exception("received unexpected response {}".format(response))
         else:
             while response in expected_response:
                 response_buffer.append(content)
@@ -213,7 +213,7 @@ class LSV2:
             self._decode_error(content)
         else:
             logging.error(
-                "recived unexpected response %s to command %s. response code %s",
+                "received unexpected response %s to command %s. response code %s",
                 response,
                 command,
                 content,
@@ -482,7 +482,7 @@ class LSV2:
         if result:
             pgm_state = struct.unpack("!H", result)[0]
             logging.debug(
-                "successfuly read state of active program: %s",
+                "successfully read state of active program: %s",
                 get_program_status_text(pgm_state, locale_path=self._locale_path),
             )
             return pgm_state
@@ -513,7 +513,7 @@ class LSV2:
                 result[4:].split(b"\x00")[1].decode().strip("\x00").replace("\\", "/")
             )
             logging.debug(
-                "successfuly read active program stack and line number: %s", stack_info
+                "successfully read active program stack and line number: %s", stack_info
             )
             return stack_info
 
@@ -561,7 +561,7 @@ class LSV2:
         result = self._send_recive(CMD.R_DI, RSP.S_DI)
         if result:
             dir_info = decode_directory_info(result)
-            logging.debug("successfuly received directory information %s", dir_info)
+            logging.debug("successfully received directory information %s", dir_info)
 
             return dir_info
 
@@ -601,7 +601,7 @@ class LSV2:
         result = self._send_recive(CMD.R_FI, RSP.S_FI, payload=payload)
         if result:
             file_info = decode_file_system_info(result, self._control_type)
-            logging.debug("successfuly received file information %s", file_info)
+            logging.debug("successfully received file information %s", file_info)
             return file_info
 
         logging.warning(
@@ -629,7 +629,7 @@ class LSV2:
         for entry in result:
             dir_content.append(decode_file_system_info(entry, self._control_type))
 
-        logging.debug("successfuly received directory information %s", dir_content)
+        logging.debug("successfully received directory information %s", dir_content)
         return dir_content
 
     def get_drive_info(self):
@@ -647,7 +647,7 @@ class LSV2:
         for entry in result:
             drives_list.append(entry)
 
-        logging.debug("successfuly received drive information %s", drives_list)
+        logging.debug("successfully received drive information %s", drives_list)
         return drives_list
 
     def make_directory(self, dir_path):
@@ -669,7 +669,7 @@ class LSV2:
                 payload.extend(map(ord, path_to_check))
                 payload.append(0x00)  # terminate string
                 if self._send_recive_ack(command=CMD.C_DM, payload=payload):
-                    logging.debug("Directory created successfuly")
+                    logging.debug("Directory created successfully")
                 else:
                     raise Exception(
                         "an error occurred while creating directory {}".format(dir_path)
@@ -695,7 +695,7 @@ class LSV2:
                 dir_path,
             )
             return False
-        logging.debug("successfuly deleted directory %s", dir_path)
+        logging.debug("successfully deleted directory %s", dir_path)
         return True
 
     def delete_file(self, file_path):
@@ -715,7 +715,7 @@ class LSV2:
                 file_path,
             )
             return False
-        logging.debug("successfuly deleted file %s", file_path)
+        logging.debug("successfully deleted file %s", file_path)
         return True
 
     def copy_local_file(self, source_path, target_path):
@@ -734,7 +734,7 @@ class LSV2:
             source_file_name = source_path.split("/")[-1]
             source_directory = source_path.rstrip(source_file_name)
             if not self.change_directory(remote_directory=source_directory):
-                raise Exception("could not open the source directoy")
+                raise Exception("could not open the source directory")
         else:
             source_file_name = source_path
             source_directory = "."
@@ -758,7 +758,7 @@ class LSV2:
                 "an error occurred copying file %s to %s", source_path, target_path
             )
             return False
-        logging.debug("successfuly copied file %s", source_path)
+        logging.debug("successfully copied file %s", source_path)
         return True
 
     def move_local_file(self, source_path, target_path):
@@ -776,7 +776,7 @@ class LSV2:
             source_file_name = source_path.split("/")[-1]
             source_directory = source_path.rstrip(source_file_name)
             if not self.change_directory(remote_directory=source_directory):
-                raise Exception("could not open the source directoy")
+                raise Exception("could not open the source directory")
         else:
             source_file_name = source_path
             source_directory = "."
@@ -800,7 +800,7 @@ class LSV2:
                 "an error occurred moving file %s to %s", source_path, target_path
             )
             return False
-        logging.debug("successfuly moved file %s", source_path)
+        logging.debug("successfully moved file %s", source_path)
         return True
 
     def send_file(
@@ -958,7 +958,7 @@ class LSV2:
         payload.append(0x00)
         if binary_mode or self._is_file_type_binary(remote_path):
             payload.append(MODE_BINARY)  # force binary transfer
-            logging.info("useing binary transfer mode")
+            logging.info("using binary transfer mode")
         response, content = self._llcom.telegram(
             CMD.R_FL, payload, buffer_size=self._buffer_size
         )
@@ -1110,7 +1110,7 @@ class LSV2:
             raise Exception("maximum number of values is %d" % max_count)
 
         if count > 0xFF:
-            raise Exception("cant read more than 255 elements at a time")
+            raise Exception("can't read more than 255 elements at a time")
 
         plc_values = list()
 
@@ -1133,7 +1133,7 @@ class LSV2:
                     )
                 else:
                     logging.error(
-                        "faild to read string from address %d",
+                        "failed to read string from address %d",
                         start_address + address + i * mem_byte_count,
                     )
                     return False
@@ -1150,7 +1150,7 @@ class LSV2:
                     )
             else:
                 logging.error(
-                    "faild to read string from address %d", start_address + address
+                    "failed to read string from address %d", start_address + address
                 )
                 return False
         return plc_values
@@ -1273,7 +1273,7 @@ class LSV2:
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
             tool_info = decode_tool_information(result)
-            logging.debug("successfuly read info on current tool: %s", tool_info)
+            logging.debug("successfully read info on current tool: %s", tool_info)
             return tool_info
         logging.warning(
             "an error occurred while querying current tool information. This does not work for all control types"
@@ -1292,7 +1292,7 @@ class LSV2:
         result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
         if result:
             override_info = decode_override_information(result)
-            logging.debug("successfuly read override info: %s", override_info)
+            logging.debug("successfully read override info: %s", override_info)
             return override_info
         logging.warning(
             "an error occurred while querying current override information. This does not work for all control types"
@@ -1317,21 +1317,21 @@ class LSV2:
             payload = bytearray()
             payload.extend(struct.pack("!H", ParRRI.NEXT_ERROR))
             result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
-            logging.debug("successfuly read first error but further errors")
+            logging.debug("successfully read first error but further errors")
 
             while result:
                 messages.append(decode_error_message(result))
                 result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
 
             if self._last_error_code[1] == LSV2Err.T_ER_NO_NEXT_ERROR:
-                logging.debug("successfuly read all errors")
+                logging.debug("successfully read all errors")
             else:
                 logging.warning("an error occurred while querying error information.")
 
             return messages
 
         elif self._last_error_code[1] == LSV2Err.T_ER_NO_NEXT_ERROR:
-            logging.debug("successfuly read first error but no error active")
+            logging.debug("successfully read first error but no error active")
             return messages
 
         logging.warning(

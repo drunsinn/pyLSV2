@@ -122,7 +122,7 @@ class LLLSV2Com:
                 response = self._tcpsock.recv(buffer_size)
         except Exception:
             logging.error(
-                "somthing went wrong while waiting for new data to arrive, buffer was set to %d",
+                "something went wrong while waiting for new data to arrive, buffer was set to %d",
                 buffer_size,
             )
             raise
@@ -151,7 +151,7 @@ class LLLSV2Com:
                     )
                 except Exception:
                     logging.error(
-                        "somthing went wrong while waiting for more data to arrive"
+                        "something went wrong while waiting for more data to arrive"
                     )
                     raise
         else:
