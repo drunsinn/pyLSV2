@@ -11,7 +11,7 @@ from pathlib import Path
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-logging.basicConfig(filename="itnc.log", level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == "__main__":
     address = "192.168.56.102"
