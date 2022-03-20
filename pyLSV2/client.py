@@ -72,7 +72,8 @@ class LSV2:
             )
         else:
             logging.info(
-                'safe mode is off, login and system commands are not restricted. Use with caution!')
+                "safe mode is off, login and system commands are not restricted. Use with caution!"
+            )
             self._known_logins = [e.value for e in Login]
             self._known_sys_cmd = [e.value for e in ParCCC]
 

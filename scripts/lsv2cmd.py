@@ -21,7 +21,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "source",
-        help="souce file. Either local path or URL with format lsv2://<hostname_or_ip>:<port>/TNC:/<path_to_file>",
+        help="source file. Either local path or URL with format lsv2://<hostname_or_ip>:<port>/TNC:/<path_to_file>",
         type=str,
     )
     parser.add_argument(

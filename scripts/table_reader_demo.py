@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # safe table format to json
     if nc_table.version is not None:
-        format_file_name = 'output_format_%s.json' % str(nc_table.version)
+        format_file_name = "output_format_%s.json" % str(nc_table.version)
     else:
         format_file_name = "output_format_generic.json"
     format_file_path = input_file.parents[0] / format_file_name

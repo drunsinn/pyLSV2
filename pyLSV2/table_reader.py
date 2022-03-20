@@ -31,53 +31,67 @@ class TableReader:
             raise FileNotFoundError("Could not open file %s" % table_path)
 
         try:
-            with table_file.open(mode='r', encoding='utf-8') as tfp:
+            with table_file.open(mode="r", encoding="utf-8") as tfp:
                 header_line = tfp.readline().strip()
-                logging.debug('Checking line for header: %s', header_line)
+                logging.debug("Checking line for header: %s", header_line)
                 header = re.match(
                     r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)\')?(?P<mark> U)?$",
-                    header_line)
+                    header_line,
+                )
 
                 if header is None:
-                    raise Exception('File has wrong format: incorrect header for file %s' % table_path)
+                    raise Exception(
+                        "File has wrong format: incorrect header for file %s"
+                        % table_path
+                    )
 
-                nctable.name = header.group('name').strip()
-                nctable.suffix = header.group('suffix')
-                nctable.version = header.group('version')
+                nctable.name = header.group("name").strip()
+                nctable.suffix = header.group("suffix")
+                nctable.version = header.group("version")
 
-                if header.group('unit') is not None:
+                if header.group("unit") is not None:
                     nctable.has_unit = True
-                    if 'MM' in header.group('unit'):
+                    if "MM" in header.group("unit"):
                         nctable.is_metric = True
                         logging.debug(
                             'Header Information for file "%s" Name "%s", file is metric, Version: "%s"',
-                            table_file, nctable.name, nctable.version)
+                            table_file,
+                            nctable.name,
+                            nctable.version,
+                        )
                     else:
                         nctable.is_metric = False
                         logging.debug(
                             'Header Information for file "%s" Name "%s", file is inch, Version: "%s"',
-                            table_file, nctable.name, nctable.version)
+                            table_file,
+                            nctable.name,
+                            nctable.version,
+                        )
                 else:
                     nctable.has_unit = False
                     nctable.is_metric = False
-                    logging.debug('Header Information for file "%s" Name "%s", file has no units, Version: "%s"',
-                                table_file, nctable.name, nctable.version)
+                    logging.debug(
+                        'Header Information for file "%s" Name "%s", file has no units, Version: "%s"',
+                        table_file,
+                        nctable.name,
+                        nctable.version,
+                    )
 
                 next_line = tfp.readline()
-                if '#STRUCTBEGIN' in next_line:
+                if "#STRUCTBEGIN" in next_line:
                     in_preamble = True
                     next_line = tfp.readline()
                     while in_preamble:
-                        if next_line.startswith('#'):
+                        if next_line.startswith("#"):
                             in_preamble = False
                         else:
                             next_line = tfp.readline()
                     next_line = tfp.readline()
-                elif 'TableDescription' in next_line:
+                elif "TableDescription" in next_line:
                     in_preamble = True
                     next_line = tfp.readline()
                     while in_preamble:
-                        if next_line.startswith(')'):
+                        if next_line.startswith(")"):
                             in_preamble = False
                         else:
                             next_line = tfp.readline()
@@ -85,24 +99,30 @@ class TableReader:
 
                 column_pattern = re.compile(r"([A-Za-z-12_:\.]+)(?:\s+)")
                 for column_match in column_pattern.finditer(next_line):
-                    nctable.append_column(name=column_match.group().strip(
-                    ), start=column_match.start(), end=column_match.end())
+                    nctable.append_column(
+                        name=column_match.group().strip(),
+                        start=column_match.start(),
+                        end=column_match.end(),
+                    )
 
-                logging.debug('Found %d columns', len(nctable.get_column_names()))
+                logging.debug("Found %d columns", len(nctable.get_column_names()))
 
                 for line in tfp.readlines():
-                    if line.startswith('[END]'):
+                    if line.startswith("[END]"):
                         break
 
                     table_entry = {}
                     for column in nctable.get_column_names():
-                        table_entry[column] = line[nctable.get_column_start(
-                            column):nctable.get_column_end(column)].strip()
+                        table_entry[column] = line[
+                            nctable.get_column_start(column) : nctable.get_column_end(
+                                column
+                            )
+                        ].strip()
                     nctable.append_row(table_entry)
 
-                logging.debug('Found %d entrys', len(nctable.rows))
+                logging.debug("Found %d entries", len(nctable.rows))
         except UnicodeDecodeError:
-            logging.error('File has invalid utf-8 encoding')
+            logging.error("File has invalid utf-8 encoding")
         return nctable
 
     @staticmethod
@@ -302,17 +322,18 @@ class NCTabel:
                 units_string = " INCH"
         version_string = ""
         if self._version is not None:
-            version_string = ' Version:%s' % str(self._version)
+            version_string = " Version:%s" % str(self._version)
 
-        with open(file_path, 'w', encoding='ascii') as tfp:
-            tfp.write('BEGIN %s%s%s\n' % (file_name, units_string, version_string))
+        with open(file_path, "w", encoding="ascii") as tfp:
+            tfp.write("BEGIN %s%s%s\n" % (file_name, units_string, version_string))
 
             for column_name in self._columns:
                 if column_name not in self._column_format:
                     raise Exception(
-                        "configuration is incomplete, missing definition for column {column_name:s}")
-                fixed_width = self._column_format[column_name]['width']
-                format_string = '{0:<%d}' % fixed_width
+                        "configuration is incomplete, missing definition for column {column_name:s}"
+                    )
+                fixed_width = self._column_format[column_name]["width"]
+                format_string = "{0:<%d}" % fixed_width
                 tfp.write(format_string.format(column_name))
             tfp.write("\n")
 
@@ -338,8 +359,11 @@ class NCTabel:
                                     )
                                 )
                             else:
-                                raise Exception("entry is missing a value for column %s defined in the output format" % column_name)
-                tfp.write('\n')
+                                raise Exception(
+                                    "entry is missing a value for column %s defined in the output format"
+                                    % column_name
+                                )
+                tfp.write("\n")
                 row_counter += 1
 
             tfp.write("[END]\n")
