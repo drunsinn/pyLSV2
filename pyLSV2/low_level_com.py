@@ -106,7 +106,7 @@ class LLLSV2Com():
 
         response = None
         try:
-            self._tcpsock.send(telegram)
+            self._tcpsock.send(bytes(telegram))
             if wait_for_response:
                 response = self._tcpsock.recv(buffer_size)
         except Exception:
