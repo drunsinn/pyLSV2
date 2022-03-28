@@ -23,7 +23,7 @@ class LLLSV2Com:
         try:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
-            logging.error("there was An error resolving the host")
+            logging.error("there was an error resolving the host")
             raise
 
         self._port = port
@@ -64,7 +64,8 @@ class LLLSV2Com:
         :rtype: None
         """
         try:
-            self._tcpsock.close()
+            if self._tcpsock is not None:
+                self._tcpsock.close()
         except socket.timeout:
             logging.error("error while closing socket")
             raise
@@ -117,7 +118,7 @@ class LLLSV2Com:
 
         response = None
         try:
-            self._tcpsock.send(telegram)
+            self._tcpsock.send(bytes(telegram))
             if wait_for_response:
                 response = self._tcpsock.recv(buffer_size)
         except Exception:
