@@ -1444,3 +1444,41 @@ class LSV2:
             path,
         )
         return None
+
+    def get_axes_location(self):
+        """Read axes location from control. Not fully documented, value of first byte unknown.
+        - only tested on TNC640 programming station
+
+        :returns: dictionary of axis label and current value
+        """
+        self.login(login=Login.DNC)
+
+        payload = bytearray()
+        payload.extend(struct.pack("!H", ParRRI.AXIS_LOCATION))
+
+        result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
+        if result:
+            # unknown = result[0:1] # <- ???
+            number_of_axes = struct.unpack("!b", result[1:2])[0]
+
+            split_list = list()
+            beginning = 2
+            for i, byte in enumerate(result[beginning:]):
+                if byte == 0x00:
+                    value = result[beginning : i + 3]
+                    split_list.append(value.strip(b"\x00").decode("utf-8"))
+                    beginning = i + 3
+
+            if len(split_list) != (2 * number_of_axes):
+                raise Exception("error parsing axis values")
+
+            axes_values = dict()
+            for i in range(number_of_axes):
+                axes_values[split_list[i + number_of_axes]] = float(split_list[i])
+
+            logging.info("successfully read axes values: %s", axes_values)
+
+            return axes_values
+
+        logging.error("an error occurred while querying axes position")
+        return False
