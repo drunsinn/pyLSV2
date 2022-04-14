@@ -51,7 +51,6 @@ In chronological order:
 - Michal Navrátil
 - PandaRoux8
 - sazima
-- xjtu-blacksmith
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
