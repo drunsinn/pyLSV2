@@ -870,9 +870,13 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, remote_directory + "/" + remote_file_name))
         payload.append(0x00)
-        if binary_mode or self._is_file_type_binary(local_path):
+        if binary_mode: # or self._is_file_type_binary(local_path):
             payload.append(MODE_BINARY)
             logging.info("selecting binary transfer mode for this file type")
+        else:
+            payload.append(0x00)
+            logging.info("selecting non binary transfer mode")
+
         response, content = self._llcom.telegram(
             CMD.C_FL, payload, buffer_size=self._buffer_size
         )
@@ -956,9 +960,13 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, remote_path))
         payload.append(0x00)
-        if binary_mode or self._is_file_type_binary(remote_path):
+        if binary_mode: # or self._is_file_type_binary(remote_path):
             payload.append(MODE_BINARY)  # force binary transfer
             logging.info("using binary transfer mode")
+        else:
+            payload.append(0x00)
+            logging.info("using non binary transfer mode")
+
         response, content = self._llcom.telegram(
             CMD.R_FL, payload, buffer_size=self._buffer_size
         )
@@ -1019,20 +1027,20 @@ class LSV2:
 
         return True
 
-    def _is_file_type_binary(self, file_name):
-        """Check if file is expected to be binary by comparing with known expentions.
+    # def _is_file_type_binary(self, file_name):
+    #     """Check if file is expected to be binary by comparing with known expentions.
 
-        :param file_name: name of the file to check
-        :returns: True if file matches know binary file type
-        :rtype: bool
-        """
-        for bin_type in BIN_FILES:
-            if isinstance(file_name, Path):
-                if file_name.suffix == bin_type:
-                    return True
-            elif file_name.endswith(bin_type):
-                return True
-        return False
+    #     :param file_name: name of the file to check
+    #     :returns: True if file matches know binary file type
+    #     :rtype: bool
+    #     """
+    #     for bin_type in BIN_FILES:
+    #         if isinstance(file_name, Path):
+    #             if file_name.suffix == bin_type:
+    #                 return True
+    #         elif file_name.endswith(bin_type):
+    #             return True
+    #     return False
 
     def read_plc_memory(self, address, mem_type, count=1):
         """Read data from plc memory.
