@@ -952,7 +952,7 @@ class LSV2:
             if override_file:
                 local_file.unlink()
             else:
-                logging.warning("remote file already exists, override was not set")
+                logging.warning("local file already exists and override was not set. doing nothing")
                 return False
 
         logging.debug("loading file from %s to %s", remote_path, local_file)
