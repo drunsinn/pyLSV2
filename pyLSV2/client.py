@@ -284,11 +284,11 @@ class LSV2:
                     % selected_size
                 )
 
-        if not self.set_system_command(ParCCC.SECURE_FILE_SEND):
-            logging.warning("secure file transfer not supported? use fallback")
-            self._secure_file_send = False
-        else:
-            self._secure_file_send = True
+        # if not self.set_system_command(ParCCC.SECURE_FILE_SEND):
+        #     logging.warning("secure file transfer not supported? use fallback")
+        #     self._secure_file_send = False
+        # else:
+        #     self._secure_file_send = True
 
         self.login(login=Login.FILETRANSFER)
         logging.info(
