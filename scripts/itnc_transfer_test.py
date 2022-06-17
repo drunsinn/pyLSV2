@@ -29,6 +29,8 @@ if __name__ == "__main__":
     s_st_content = con._send_recive(command="R_ST", expected_response="S_ST", payload=None)
     print("response to R_ST was : {}".format(s_st_content))
 
+    con.change_directory("TNC:/")
+
     payload = bytearray()
     payload.extend(map(ord, "TNC:/TOOL_P.TCH"))
     payload.append(0x00)
