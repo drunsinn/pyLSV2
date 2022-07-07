@@ -84,7 +84,7 @@ if __name__ == "__main__":
     
     # load file
     payload = bytearray()
-    payload.extend(map(ord, "TNC:/TOOL_P.TCH"))
+    payload.extend(map(ord, "TNC:\\TOOL_P.TCH"))
     payload.append(0x00)
     response, content = con._llcom.telegram(CMD.R_FL, payload, buffer_size=con._buffer_size)
     
