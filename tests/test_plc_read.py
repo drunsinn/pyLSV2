@@ -72,4 +72,7 @@ def test_data_path_read(address, timeout):
         )
         assert lsv2.read_data_path("/PLC/program/symbol/global/+STG_WZM[1]") is not None
 
+        # check if path is sanitized correctly
+        assert lsv2.read_data_path("\\PLC\\memory\\K\\1") is not None
+
     lsv2.disconnect()

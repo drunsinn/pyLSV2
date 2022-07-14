@@ -88,3 +88,27 @@ def test_file_transfer_binary(address, timeout):
         assert (digests[0] == digests[1]) is True
 
     lsv2.disconnect()
+
+
+def test_path_formating(address, timeout):
+    """test if reading of file information with / instead of \\ as path seperator"""
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2.connect()
+
+    if lsv2.is_itnc():
+        mdi_path = "TNC:/$MDI.H"
+    elif lsv2.is_pilot():
+        mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
+    else:
+        mdi_path = "TNC:/nc_prog/$mdi.h"
+
+    with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
+        local_mdi_path = Path(tmp_dir_name).joinpath("mdi.h")
+        assert (
+            lsv2.recive_file(
+                local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False
+            )
+            is True
+        )
+
+    lsv2.disconnect()

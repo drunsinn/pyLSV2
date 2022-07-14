@@ -13,6 +13,8 @@ from enum import Enum, IntEnum
 #: enable binary file transfer for C_FL and R_FL
 MODE_BINARY = 0x01
 
+PATH_SEP = "\\"
+
 #: Regex pattern for Klartext file names
 REGEX_FILE_NAME_H = r"[\$A-Za-z0-9_-]*\.[hH]$"
 

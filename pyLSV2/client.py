@@ -24,6 +24,7 @@ from .const import (
     ParRRI,
     ParRDR,
     BIN_FILES,
+    PATH_SEP,
     MODE_BINARY,
 )
 
@@ -507,10 +508,16 @@ class LSV2:
             stack_info = dict()
             stack_info["Line"] = struct.unpack("!L", result[:4])[0]
             stack_info["Main_PGM"] = (
-                result[4:].split(b"\x00")[0].decode().strip("\x00").replace("\\", "/")
+                result[4:]
+                .split(b"\x00")[0]
+                .decode()
+                .strip("\x00")  # .replace("\\", "/")
             )
             stack_info["Current_PGM"] = (
-                result[4:].split(b"\x00")[1].decode().strip("\x00").replace("\\", "/")
+                result[4:]
+                .split(b"\x00")[1]
+                .decode()
+                .strip("\x00")  # .replace("\\", "/")
             )
             logging.debug(
                 "successfully read active program stack and line number: %s", stack_info
@@ -575,7 +582,7 @@ class LSV2:
         :returns: True if changing of directory succeeded
         :rtype: bool
         """
-        dir_path = remote_directory.replace("\\", "/")
+        dir_path = remote_directory.replace("/", PATH_SEP)
         payload = bytearray()
         payload.extend(map(ord, dir_path))
         payload.append(0x00)
@@ -593,7 +600,7 @@ class LSV2:
         :returns: dictionary with info about file of False if remote path does not exist
         :rtype: dict
         """
-        file_path = remote_file_path.replace("\\", "/")
+        file_path = remote_file_path.replace("/", PATH_SEP)
         payload = bytearray()
         payload.extend(map(ord, file_path))
         payload.append(0x00)
@@ -657,12 +664,10 @@ class LSV2:
         :returns: True if creating of directory completed successfully
         :rtype: bool
         """
-        path_parts = dir_path.replace("\\", "/").split(
-            "/"
-        )  # convert path to unix style
+        path_parts = dir_path.replace("/", PATH_SEP).split(PATH_SEP)  # convert path
         path_to_check = ""
         for part in path_parts:
-            path_to_check += part + "/"
+            path_to_check += part + PATH_SEP
             # no file info -> does not exist and has to be created
             if self.get_file_info(path_to_check) is False:
                 payload = bytearray()
@@ -685,7 +690,7 @@ class LSV2:
         :returns: True if deleting of directory completed successfully
         :rtype: bool
         """
-        dir_path = dir_path.replace("\\", "/")
+        dir_path = dir_path.replace("/", PATH_SEP)
         payload = bytearray()
         payload.extend(map(ord, dir_path))
         payload.append(0x00)
@@ -705,7 +710,7 @@ class LSV2:
         :returns: True if deleting of file completed successfully
         :rtype: bool
         """
-        file_path = file_path.replace("\\", "/")
+        file_path = file_path.replace("/", PATH_SEP)
         payload = bytearray()
         payload.extend(map(ord, file_path))
         payload.append(0x00)
@@ -726,12 +731,12 @@ class LSV2:
         :returns: True if copying of file completed successfully
         :rtype: bool
         """
-        source_path = source_path.replace("\\", "/")
-        target_path = target_path.replace("\\", "/")
+        source_path = source_path.replace("/", PATH_SEP)
+        target_path = target_path.replace("/", PATH_SEP)
 
-        if "/" in source_path:
+        if PATH_SEP in source_path:
             # change directory
-            source_file_name = source_path.split("/")[-1]
+            source_file_name = source_path.split(PATH_SEP)[-1]
             source_directory = source_path.rstrip(source_file_name)
             if not self.change_directory(remote_directory=source_directory):
                 raise Exception("could not open the source directory")
@@ -739,7 +744,7 @@ class LSV2:
             source_file_name = source_path
             source_directory = "."
 
-        if target_path.endswith("/"):
+        if target_path.endswith(PATH_SEP):
             target_path += source_file_name
 
         payload = bytearray()
@@ -769,11 +774,11 @@ class LSV2:
         :returns: True if moving of file completed successfully
         :rtype: bool
         """
-        source_path = source_path.replace("\\", "/")
-        target_path = target_path.replace("\\", "/")
+        source_path = source_path.replace("/", PATH_SEP)
+        target_path = target_path.replace("/", PATH_SEP)
 
-        if "/" in source_path:
-            source_file_name = source_path.split("/")[-1]
+        if PATH_SEP in source_path:
+            source_file_name = source_path.split(PATH_SEP)[-1]
             source_directory = source_path.rstrip(source_file_name)
             if not self.change_directory(remote_directory=source_directory):
                 raise Exception("could not open the source directory")
@@ -781,7 +786,7 @@ class LSV2:
             source_file_name = source_path
             source_directory = "."
 
-        if target_path.endswith("/"):
+        if target_path.endswith(PATH_SEP):
             target_path += source_file_name
 
         payload = bytearray()
@@ -822,14 +827,14 @@ class LSV2:
             logging.error("the supplied path %s did not resolve to a file", local_file)
             raise Exception("local file does not exist! {}".format(local_file))
 
-        remote_path = remote_path.replace("\\", "/")
+        remote_path = remote_path.replace("/", PATH_SEP)
 
-        if "/" in remote_path:
-            if remote_path.endswith("/"):  # no filename given
+        if PATH_SEP in remote_path:
+            if remote_path.endswith(PATH_SEP):  # no filename given
                 remote_file_name = local_file.name
                 remote_directory = remote_path
             else:
-                remote_file_name = remote_path.split("/")[-1]
+                remote_file_name = remote_path.split(PATH_SEP)[-1]
                 remote_directory = remote_path.rstrip(remote_file_name)
                 if not self.change_directory(remote_directory=remote_directory):
                     raise Exception(
@@ -840,21 +845,21 @@ class LSV2:
         else:
             remote_file_name = remote_path
             remote_directory = self.get_directory_info()["Path"]  # get pwd
-        remote_directory = remote_directory.rstrip("/")
+        remote_directory = remote_directory.rstrip(PATH_SEP)
 
         if not self.get_directory_info(remote_directory):
             logging.debug("remote path does not exist, create directory(s)")
             self.make_directory(remote_directory)
 
-        remote_info = self.get_file_info(remote_directory + "/" + remote_file_name)
+        remote_info = self.get_file_info(remote_directory + PATH_SEP + remote_file_name)
 
         if remote_info:
             logging.debug("remote path exists and points to file's")
             if override_file:
-                if not self.delete_file(remote_directory + "/" + remote_file_name):
+                if not self.delete_file(remote_directory + PATH_SEP + remote_file_name):
                     raise Exception(
                         "something went wrong while deleting file {}".format(
-                            remote_directory + "/" + remote_file_name
+                            remote_directory + PATH_SEP + remote_file_name
                         )
                     )
             else:
@@ -864,13 +869,13 @@ class LSV2:
         logging.debug(
             "ready to send file from %s to %s",
             local_file,
-            remote_directory + "/" + remote_file_name,
+            remote_directory + PATH_SEP + remote_file_name,
         )
 
         payload = bytearray()
-        payload.extend(map(ord, remote_directory + "/" + remote_file_name))
+        payload.extend(map(ord, remote_directory + PATH_SEP + remote_file_name))
         payload.append(0x00)
-        if binary_mode: # or self._is_file_type_binary(local_path):
+        if binary_mode:  # or self._is_file_type_binary(local_path):
             payload.append(MODE_BINARY)
             logging.info("selecting binary transfer mode for this file type")
         else:
@@ -938,6 +943,8 @@ class LSV2:
         :returns: True if transfer completed successfully
         :rtype: bool
         """
+
+        remote_path = remote_path.replace("/", PATH_SEP)
         remote_file_info = self.get_file_info(remote_path)
         if not remote_file_info:
             logging.error("remote file does not exist: %s", remote_path)
@@ -952,7 +959,9 @@ class LSV2:
             if override_file:
                 local_file.unlink()
             else:
-                logging.warning("local file already exists and override was not set. doing nothing")
+                logging.warning(
+                    "local file already exists and override was not set. doing nothing"
+                )
                 return False
 
         logging.debug("loading file from %s to %s", remote_path, local_file)
@@ -960,7 +969,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, remote_path))
         payload.append(0x00)
-        if binary_mode: # or self._is_file_type_binary(remote_path):
+        if binary_mode:  # or self._is_file_type_binary(remote_path):
             payload.append(MODE_BINARY)  # force binary transfer
             logging.info("using binary transfer mode")
         else:
@@ -1391,7 +1400,7 @@ class LSV2:
         else:
             file_list = list()
             for entry in self._walk_dir(descend):
-                file_name = entry.split("/")[-1]
+                file_name = entry.split(PATH_SEP)[-1]
                 if re.match(pattern, file_name):
                     file_list.append(entry)
         return file_list
@@ -1408,7 +1417,7 @@ class LSV2:
                 "Reading values from data path does not work on non iTNC controls!"
             )
 
-        path = path.replace("/", "\\").replace('"', "'")
+        path = path.replace("/", PATH_SEP).replace('"', "'")
 
         self.login(login=Login.DATA)
 
