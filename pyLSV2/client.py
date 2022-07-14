@@ -36,6 +36,7 @@ from .misc import (
     decode_override_information,
     decode_system_parameters,
     decode_tool_information,
+    is_file_binary,
 )
 from .translate_messages import (
     get_error_text,
@@ -285,11 +286,11 @@ class LSV2:
                     % selected_size
                 )
 
-        # if not self.set_system_command(ParCCC.SECURE_FILE_SEND):
-        #     logging.warning("secure file transfer not supported? use fallback")
-        #     self._secure_file_send = False
-        # else:
-        #     self._secure_file_send = True
+        if not self.set_system_command(ParCCC.SECURE_FILE_SEND):
+            logging.warning("secure file transfer not supported? use fallback")
+            self._secure_file_send = False
+        else:
+            self._secure_file_send = True
 
         self.login(login=Login.FILETRANSFER)
         logging.info(
@@ -875,7 +876,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, remote_directory + PATH_SEP + remote_file_name))
         payload.append(0x00)
-        if binary_mode:  # or self._is_file_type_binary(local_path):
+        if binary_mode or is_file_binary(local_path):
             payload.append(MODE_BINARY)
             logging.info("selecting binary transfer mode for this file type")
         else:
@@ -969,7 +970,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, remote_path))
         payload.append(0x00)
-        if binary_mode:  # or self._is_file_type_binary(remote_path):
+        if binary_mode or is_file_binary(remote_path):
             payload.append(MODE_BINARY)  # force binary transfer
             logging.info("using binary transfer mode")
         else:
@@ -1035,21 +1036,6 @@ class LSV2:
         )
 
         return True
-
-    # def _is_file_type_binary(self, file_name):
-    #     """Check if file is expected to be binary by comparing with known expentions.
-
-    #     :param file_name: name of the file to check
-    #     :returns: True if file matches know binary file type
-    #     :rtype: bool
-    #     """
-    #     for bin_type in BIN_FILES:
-    #         if isinstance(file_name, Path):
-    #             if file_name.suffix == bin_type:
-    #                 return True
-    #         elif file_name.endswith(bin_type):
-    #             return True
-    #     return False
 
     def read_plc_memory(self, address, mem_type, count=1):
         """Read data from plc memory.
