@@ -51,6 +51,7 @@ In chronological order:
 - Michal Navrátil
 - PandaRoux8
 - sazima
+- manusolve
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
@@ -66,6 +67,7 @@ been tested:
 | TNC640      | 340595 11 SP1  |
 | TNC640      | 340595 11 SP4  |
 | iTNC530     | 606425 04 SP20 |
+| iTNC530     | 340494 08 SP2  |
 | CNCpilot640 | 1230521 03 SP1 |
 
 ### Machines

@@ -129,12 +129,16 @@ class LLLSV2Com:
             raise
 
         if response is not None:
-            response_length = struct.unpack("!L", response[0:4])[
-                0
-            ]  # read 4 bytes for response length
-            response_command = response[4:8].decode(
-                "utf-8", "ignore"
-            )  # read 4 bytes for response type
+            logging.debug("recived block of data with lenght %d" % len(response))
+            # logging.debug("recived data: %s" % response)
+            if len(response) >= 8:
+                # read 4 bytes for response length
+                response_length = struct.unpack("!L", response[0:4])[0]
+                # read 4 bytes for response type
+                response_command = response[4:8].decode("utf-8", "ignore")
+            else:
+                # respons is less than 8 bytes long which is not enough space for package lengh and response message!
+                raise Exception("response to short: %s" % response)
         else:
             response_length = 0
             response_command = None

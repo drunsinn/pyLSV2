@@ -3,8 +3,9 @@
 """misc helper functions for pyLSV2"""
 import struct
 from datetime import datetime
+from pathlib import Path
 
-from .const import ControlType
+from .const import ControlType, BIN_FILES
 
 
 def decode_system_parameters(result_set):
@@ -177,3 +178,19 @@ def decode_error_message(data_set):
     error_info["Number"] = struct.unpack("!l", data_set[4:8])[0]
     error_info["Text"] = data_set[8:].decode("latin1").strip("\x00")
     return error_info
+
+
+def is_file_binary(file_name):
+    """Check if file is expected to be binary by comparing with known expentions.
+    
+    :param file_name: name of the file to check
+    :returns: True if file matches know binary file type
+    :rtype: bool
+    """
+    for bin_type in BIN_FILES:
+        if isinstance(file_name, Path):
+            if file_name.suffix == bin_type:
+                return True
+        elif file_name.endswith(bin_type):
+            return True
+    return False
