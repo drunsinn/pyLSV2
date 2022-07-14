@@ -195,8 +195,45 @@ class MemoryType(IntEnum):
 
 
 class LSV2Err(IntEnum):
-    """Enum for LSV2 protocol error numbers"""
+    """Enum for LSV2 protocol error numbers
+    range 0 - 19: protocol or transmission errors
+    range 20 - 99: telegram errors
+    range 100 - 200: block transfer errors
+    """
 
+    LSV2_OK = 0
+
+    # reciving
+    LSV2_TIMEOUT = 1
+    LSV2_NO_ENQ = 2
+    LSV2_TIMEOUT2 = 3
+    LSV2_WRONG_CHAR = 4
+    LSV2_TO_LONG = 5
+    LSV2_WRONG_BBC = 6
+    LSV2_NO_EOT = 7
+    LSV2_TIMEOUT3 = 12
+    LSV2_NO_MESSAGE = 16
+
+    # sending
+    LSV2_AP_ERROR = 8
+    LSV2_AP_COL = 9
+    LSV2_NO_QUITT = 10
+    LSV2_TX_ERROR = 11
+
+    # interface
+    LSV2_Q_MSG = 0
+    LSV2_Q_EMPTY = 1
+    LSV2_COM_CLOSED = 13
+
+    # init
+    LSV2_NO_OPEN = 14
+    LSV2_WRONG_PARAMS = 15
+
+    # misc
+    LSV2_NO_ACK = 17
+    LSV2_MSG_OK = 19
+
+    # telegram errors
     T_ER_BAD_FORMAT = 20
     T_ER_UNEXPECTED_TELE = 21
     T_ER_UNKNOWN_TELE = 22
@@ -260,6 +297,8 @@ class LSV2Err(IntEnum):
     LSV2_BAD_CONVERT_DLL = 96
     LSV2_BAD_BACKUP_LIST = 97
     LSV2_UNKNOWN_ERROR = 99
+
+    # block transfer errors
     T_BD_NO_NEW_FILE = 100
     T_BD_NO_FREE_SPACE = 101
     T_BD_FILE_NOT_ALLOWED = 102
@@ -273,6 +312,8 @@ class LSV2Err(IntEnum):
     T_BD_CANCELLED = 111
     T_BD_OSZI_OVERRUN = 112
     T_BD_FD = 200
+
+    # plain error message (TODO see global var usererrortext)
     T_USER_ERROR = 255
 
 
@@ -412,7 +453,8 @@ class KeyCode(IntEnum):
     PROG_TOOL_DEF = 0x01D1
     PROG_TOOL_CALL = 0x01D2
     PROG_CYC_DEF = 0x01D3
-    PROG_CYC_CAL = 0x01D4
+    PROG_CYC_CALL = 0x01D4
+    PROG_CYC_CAL = PROG_CYC_CALL  # TODO typo
     PROG_LBL = 0x01D5
     PROG_LBL_CALL = 0x01D6
     PROG_L = 0x01D7
@@ -442,104 +484,347 @@ class KeyCode(IntEnum):
     CALC = 0x01EF
 
 
+class OldKeyCode(IntEnum):
+    """Keycodes from old LSV2 docu"""
+
+    # ASCII keys: low byte = 0x50, high byte = ascii code
+    LOWER_A = 0x6150
+    LOWER_B = 0x6250
+    LOWER_C = 0x6350
+    LOWER_D = 0x6450
+    LOWER_E = 0x6550
+    LOWER_F = 0x6650
+    LOWER_G = 0x6750
+    LOWER_H = 0x6850
+    LOWER_I = 0x6950
+    LOWER_J = 0x6A50
+    LOWER_K = 0x6B50
+    LOWER_L = 0x6C50
+    LOWER_M = 0x6D50
+    LOWER_N = 0x6E50
+    LOWER_O = 0x6F50
+    LOWER_P = 0x7050
+    LOWER_Q = 0x7150
+    LOWER_R = 0x7250
+    LOWER_S = 0x7350
+    LOWER_T = 0x7450
+    LOWER_U = 0x7550
+    LOWER_V = 0x7650
+    LOWER_W = 0x7750
+    LOWER_X = 0x7850
+    LOWER_Y = 0x7950
+    LOWER_Z = 0x7A50
+
+    UPPER_A = 0x4150
+    UPPER_B = 0x4250
+    UPPER_C = 0x4350
+    UPPER_D = 0x4450
+    UPPER_E = 0x4550
+    UPPER_F = 0x4650
+    UPPER_G = 0x4750
+    UPPER_H = 0x4850
+    UPPER_I = 0x4950
+    UPPER_J = 0x4A50
+    UPPER_K = 0x4B50
+    UPPER_L = 0x4C50
+    UPPER_M = 0x4D50
+    UPPER_N = 0x4E50
+    UPPER_O = 0x4F50
+    UPPER_P = 0x5050
+    UPPER_Q = 0x5150
+    UPPER_R = 0x5250
+    UPPER_S = 0x5350
+    UPPER_T = 0x5450
+    UPPER_U = 0x5550
+    UPPER_V = 0x5650
+    UPPER_W = 0x5750
+    UPPER_X = 0x5850
+    UPPER_Y = 0x5950
+    UPPER_Z = 0x5A50
+
+    NUMBER_0 = 0x3050
+    NUMBER_1 = 0x3150
+    NUMBER_2 = 0x3250
+    NUMBER_3 = 0x3350
+    NUMBER_4 = 0x3450
+    NUMBER_5 = 0x3550
+    NUMBER_6 = 0x3650
+    NUMBER_7 = 0x3750
+    NUMBER_8 = 0x3850
+    NUMBER_9 = 0x3950
+
+    TOGGEL_SIGN = 0x007C
+    END = 0x0077
+    NOENT = 0x005F
+    ENT = 0x0065
+    DEL = 0x0063
+    CE = 0x0069
+
+    PROG_Q = 0x006E
+
+    NUM_BLOCK_0 = 0x006E
+    NUM_BLOCK_1 = 0x0070
+    NUM_BLOCK_2 = 0x0074
+    NUM_BLOCK_3 = 0x007D
+    NUM_BLOCK_4 = 0x0071
+    NUM_BLOCK_5 = 0x0075
+    NUM_BLOCK_6 = 0x007E
+    NUM_BLOCK_7 = 0x0072
+    NUM_BLOCK_8 = 0x0076
+    NUM_BLOCK_9 = 0x007F
+
+    MODE_MANUAL = 0x0048
+    MODE_HANDWHEEL = 0x0040
+    MODE_SINGLE_STEP = 0x004A
+    MODE_POS_HAND = 0x0049
+    MODE_PGM_SIMULATION = 0x0041
+    MODE_AUTOMATIC = 0x004B
+    MODE_PGM_EDIT = 0x004C
+
+    FN = 0x006E
+    DECIMAL_POINT = 0x0073
+    ACTPOS = 0x0064
+    MOD_DIALOG = 0x0042
+
+    ANGULAR_AXIS_1 = 0x006A
+    ANGULAR_AXIS_2 = 0x004F
+    AXIS_Z = 0x006B
+    AXIS_Y = 0x006C
+    AXIS_X = 0x006D
+    TOGGEL_POLAR = 0x0043
+
+    PROG_TOUCH_PROBE = 0x004E  # TODO
+    PROG_RR = 0x0057
+    PROG_RL = 0x0056
+    PROG_LBL_CALL = 0x005E
+    PROG_STOP = 0x0060
+    PROG_C = 0x003F
+
+    PROG_LBL = 0x005D
+    PROG_CC = 0x003E
+    PROG_PGM_CALL = 0x0045
+    PROG_TOOL_CALL = 0x0055
+    PROG_CYC_CALL = 0x005C
+    PROG_RND = 0x003D
+    PROG_CR = 0x0047
+    PROG_BLK_FORM = 0x00FF
+    PROG_TOOL_DEF = 0x0054
+    PROG_CYC_DEF = 0x005B
+    PROG_CT = 0x004D
+    PROG_L = 0x003C
+    PROG_APPR_DEP = 0x0078
+    PROG_CHF = 0x003A
+
+    PGMMGT = 0x0061
+    TOGGEL_INC = 0x0044
+
+    Cl_Pgm = 0x0062  # TODO
+    Pgm_Nr = 0x003B  # TODO
+
+    ARROW_LEFT = 0x0059
+    ARROW_DOWN = 0x0067
+    ARROW_UP = 0x0058
+    ARROW_RIGHT = 0x005A
+    GOTO = 0x0066
+
+    # soft key: low byte = 0x50, high byte = key number
+    BOTTOM_SK0 = 0x0051
+    BOTTOM_SK1 = 0x0151
+    BOTTOM_SK2 = 0x0251
+    BOTTOM_SK3 = 0x0351
+    BOTTOM_SK4 = 0x0451
+    BOTTOM_SK5 = 0x0551
+    BOTTOM_SK6 = 0x0651
+    BOTTOM_SK7 = 0x0751
+
+    SK_PREVIOUS = 0x0851
+    SK_NEXT = 0x0A51
+
+    # screen keys: low byte = 0x52
+    CHANGE_SCREEN = 0x0052
+    SPLIT_SCREEN = 0x0152
+
+
 class CMD(str, Enum):
     """Enum of all known LSV2 command telegrams"""
 
     A_LG = "A_LG"
-    """A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password"""
+    """A_LG: used to gain access to certain parts of the control, followed by a logon name and an optional password.
+    requires no login priviliege"""
 
     A_LO = "A_LO"
-    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name"""
+    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name. 
+    requires any login priviliege"""
 
     C_CC = "C_CC"
     """C_CC: used to set system commands"""
 
     C_DC = "C_DC"
-    """C_DC: change the working directory for future file operations, followed by a null terminated string"""
+    """C_DC: change the working directory for future file operations, followed by a null terminated string.
+    requires FILE login priviliege"""
 
-    # C_DS: found via bruteforce test, purpose unknown!
-    # C_DS = 'C_DS'
+    # C_DS = "C_DS" # C_DS: found via bruteforce test, purpose unknown!
+
+    C_DT = "C_DT"
+    """set date and time.
+    requires DIAGNOSTICS login priviliege"""
 
     C_DD = "C_DD"
-    """C_DD: delete a directory, followed by a null terminated string"""
+    """C_DD: delete a directory, followed by a null terminated string.
+    requires FILE login priviliege"""
 
     C_DM = "C_DM"
-    """C_DM: create a new directory, followed by a null terminated string"""
+    """C_DM: create a new directory, followed by a null terminated string.
+    requires FILE login priviliege"""
 
     C_EK = "C_EK"
-    """C_EK: send key code to control. Behaves as if the associated key was pressed on the keyboard"""
+    """C_EK: send key code to control. Behaves as if the associated key was pressed on the keyboard.
+    requires DIAGNOSTICS or MONITOR login priviliege"""
 
-    # C_FA: found via bruteforce test, purpose unknown!
-    # C_FA = 'C_FA'
+    C_FA = "C_FA"
+    """change file attribute.
+    requires FILE login priviliege"""
 
     C_FC = "C_FC"
-    """C_FC: local file copy from current directory, filename + null + target path + null"""
+    """C_FC: local file copy from current directory, filename + null + target path + null.
+    requires FILE login priviliege"""
 
     C_FD = "C_FD"
-    """C_FD: delete a file, followed by a null terminated string"""
+    """C_FD: delete a file, followed by a null terminated string.
+    requires FILE login priviliege"""
 
     C_FL = "C_FL"
-    """C_FL: send a file to the control, followed by a null terminated with the filename string"""
+    """C_FL: send a file to the control, followed by a null terminated with the filename string.
+    requires FILE login priviliege"""
 
     C_FR = "C_FR"
-    """C_FR: move local file from current directory, filename + null + target path + null"""
+    """C_FR: move local file from current directory, filename + null + target path + null.
+    requires FILE login priviliege"""
 
-    # C_GC = 'C_GC' # found via bruteforce test, purpose unknown!
+    # C_GC = "C_GC" # found via bruteforce test, purpose unknown!
 
     C_LK = "C_LK"
-    """C_LK: lock and unlock keyboard input on control, followed by a switch if lock or unlock"""
+    """C_LK: lock and unlock keyboard input on control, followed by a switch if lock or unlock.
+    requires DIAGNOSTICS or MONITOR login priviliege"""
 
-    # C_MB = 'C_MB' # found via bruteforce test, purpose unknown!
+    # C_MB = "C_MB" # found via bruteforce test, purpose unknown!
 
     C_MC = "C_MC"
-    """C_MC: set machine parameter, followed by flags, name and value"""
+    """C_MC: set machine parameter, followed by flags, name and value
+    """
 
     # C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
-    # C_ST = 'C_ST' # found via bruteforce test, purpose unknown!
-    # C_TP = 'C_TP' # found via bruteforce test, purpose unknown!
-    # R_CI = 'R_CI' # found via bruteforce test, purpose unknown!
+
+    C_ST = "C_ST"
+    """C_ST: set status. can only change status for active logins.
+    requires any login priviliege"""
+
+    # C_TP = "C_TP" # found via bruteforce test, purpose unknown!
+
+    R_CD = "R_CD"
+    """request character set.
+    requires MONITOR login priviliege"""
+
+    # R_CI = "R_CI"  # found via bruteforce test, purpose unknown!
 
     R_DI = "R_DI"
-    """R_DI: directory info - read info about the selected directory"""
+    """R_DI: directory info - read info about the selected directory.
+    requires FILE login priviliege"""
 
     R_DP = "R_DP"
     """R_DP: read data from data path, only available on iTNC530 starting with 34049x 03 and 60642x 01"""
 
     R_DR = "R_DR"
-    """_DR: get info about directory content"""
+    """R_DR: get info about directory content.
+    requires FILE login priviliege"""
 
     # R_DS = 'R_DS' # found via bruteforce test, purpose unknown!
-    # R_DT = 'R_DT' # found via bruteforce test, purpose unknown!
+
+    R_DT = "R_DT"
+    """request date/time.
+    requires DIAGNOSTICS login priviliege"""
 
     R_FI = "R_FI"
-    """R_FI: file info - read info about a file, followed by a null terminated string"""
+    """R_FI: file info - read info about a file, followed by a null terminated string.
+    requires FILE login priviliege. """
 
     R_FL = "R_FL"
-    """R_FL: load a file from the control, followed by a null terminated string with the filename"""
+    """R_FL: load a file from the control, followed by a null terminated string with the filename.
+    requires FILE login priviliege"""
 
-    # R_IN = 'R_IN' # found via bruteforce test, purpose unknown!
+    R_FO = "R_FO"
+    """request font definition.
+    requires MONITOR login priviliege"""
+
+    # R_IN = "R_IN" # found via bruteforce test, purpose unknown!
+
+    R_LB = "R_LB"
+    """request log buffer.
+    requires DIAGNOSTICS login priviliege"""
 
     R_MB = "R_MB"
-    """R_MB: read value from PLC memory, requires login PLCDEBUG, followed by four bytes of address and one byte of count"""
+    """R_MB: read value from PLC memory, followed by four bytes of address and one byte of count.
+    requires INSPECT (PLCDEBUG??) login priviliege"""
 
     R_MC = "R_MC"
-    """R_MC: read machine parameter, requires login INSPECT, followed by a null terminated string with the parameter number/path"""
+    """R_MC: read machine parameter, followed by a null terminated string with the parameter number/path.
+    requires INSPECT login priviliege"""
 
-    # R_OC = 'R_OC' # found via bruteforce test, purpose unknown!
-    # R_OD = 'R_OD' # found via bruteforce test, purpose unknown!
-    # R_OH = 'R_OH' # found via bruteforce test, purpose unknown!
-    # R_OI = 'R_OI' # found via bruteforce test, purpose unknown!
+    R_MP = "R_MP"
+    """R_MP: read machine parameter.
+    requires INSPECT login priviliege"""
+
+    # R_OC = "R_OC" # found via bruteforce test, purpose unknown!
+    # R_OD = "R_OD" # found via bruteforce test, purpose unknown!
+    # R_OH = "R_OH" # found via bruteforce test, purpose unknown!
+    # R_OI = "R_OI" # found via bruteforce test, purpose unknown!
+
+    R_PD = "R_PD"
+    """request palet definiton.
+    requires FILE or MONITOR login priviliege"""
 
     R_PR = "R_PR"
-    """R_PR: read parameter from the control"""
+    """R_PR: read parameter from the control.
+    requires INSPECT login priviliege"""
 
     R_RI = "R_RI"
     """R_RI: read info about the current state of the control ???, followed by a 16bit number to select which information (20 - 26??)"""
 
-    # R_ST = 'R_ST' # found via bruteforce test, purpose unknown!
+    R_RS = "R_RS"
+    """R_RS: request register status.
+    requires INSPECT login priviliege"""
+
+    R_SD = "R_SD"
+    """request screen dump.
+    requires FILE login priviliege"""
+
+    R_SE = "R_SE"
+    """request screen window element info.
+    requires MONITOR login priviliege"""
+
+    R_SP = "R_SP"
+    """request screen palet info.
+    requires MONITOR login priviliege"""
+
+    R_SS = "R_SS"
+    """request active screen.
+    requires INSPECT login priviliege"""
+
+    R_ST = "R_ST"
+    """R_ST: request remote status.
+    requires any login priviliege"""
+
+    R_SW = "R_SW"
+    """request screen window info.
+    requires MONITOR login priviliege"""
 
     R_VR = "R_VR"
-    """R_VR: read general info about the control itself"""
+    """R_VR: read general info about the control itself.
+    requires INSPECT login priviliege"""
+
+    R_WD = "R_WD"
+    """request window definiton.
+    requires MONITOR login priviliege"""
 
 
 class RSP(str, Enum):
@@ -575,7 +860,7 @@ class RSP(str, Enum):
     S_FL = "S_FL"
     """S_FL: used to transfer blocks of file data to the control, signals that the command R_FL was accepted, it is followed by more data"""
 
-    # S_IN = 'S_IN'
+    # S_IN = "S_IN"
     # S_IN: found via bruteforce test, signals that the command R_IN was accepted, purpose unknown!
 
     S_MB = "S_MB"
@@ -590,8 +875,8 @@ class RSP(str, Enum):
     S_RI = "S_RI"
     """S_RI: signals that the command R_RI was accepted, it is followed by more data"""
 
-    # S_ST = 'S_ST'
-    # """S_ST: found via bruteforce test, signals that the command R_ST was accepted, purpose unknown!"""
+    S_ST = "S_ST"
+    """S_ST: signals that the command R_ST was accepted, request remote status"""
 
     S_VR = "S_VR"
     """S_VR: signals that the command R_VR was accepted, it is followed by more data"""

@@ -52,6 +52,7 @@ In chronological order:
 - PandaRoux8
 - sazima
 - manusolve
+- NeeXoo
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
