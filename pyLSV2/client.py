@@ -56,7 +56,6 @@ class LSV2:
 
         self._llcom = LLLSV2Com(hostname, port, timeout)
 
-        self._buffer_size = LLLSV2Com.DEFAULT_BUFFER_SIZE
         self._active_logins = list()
 
         if safe_mode:
@@ -132,17 +131,22 @@ class LSV2:
     def _send_recive(self, command, expected_response, payload=None):
         """takes a command and payload, sends it to the control and checks
         if the response is as expected. Returns content if not an error"""
+        if payload is None:
+            bytes_to_send = bytearray()
+        else:
+            bytes_to_send = payload
+
         if expected_response is None:
             self._llcom.telegram(
-                command, payload, buffer_size=self._buffer_size, wait_for_response=False
-            )
+                command, bytes_to_send, wait_for_response=False
+            ) 
             logging.info(
                 "command %s sent successfully, did not check for response", command
             )
             return True
         else:
             response, content = self._llcom.telegram(
-                command, payload, buffer_size=self._buffer_size, wait_for_response=True
+                command, bytes_to_send, wait_for_response=True
             )
 
             if response in expected_response:
@@ -178,9 +182,15 @@ class LSV2:
     def _send_recive_block(self, command, expected_response, payload=None):
         """takes a command and payload, sends it to the control and continues reading
         until the expected response is received."""
+        if payload is None:
+            bytes_to_send = bytearray()
+        else:
+            bytes_to_send = payload
+
+
         response_buffer = list()
         response, content = self._llcom.telegram(
-            command, payload, buffer_size=self._buffer_size
+            command, bytes_to_send, 
         )
 
         if response in RSP.T_ER:
@@ -199,14 +209,19 @@ class LSV2:
             while response in expected_response:
                 response_buffer.append(content)
                 response, content = self._llcom.telegram(
-                    RSP.T_OK, buffer_size=self._buffer_size
+                    RSP.T_OK, 
                 )
         return response_buffer
 
     def _send_recive_ack(self, command, payload=None):
         """sends command and pyload to control, returns True on T_OK"""
+        if payload is None:
+            bytes_to_send = bytearray()
+        else:
+            bytes_to_send = payload
+
         response, content = self._llcom.telegram(
-            command, payload, buffer_size=self._buffer_size
+            command, bytes_to_send, 
         )
         if response in RSP.T_OK:
             return True
@@ -275,11 +290,11 @@ class LSV2:
 
         if selected_command is None:
             logging.debug("use smallest buffer size of 256")
-            self._buffer_size = selected_size
+            self._llcom.set_buffer_size(selected_size)
         else:
             logging.debug("use buffer size of %d", selected_size)
             if self.set_system_command(selected_command):
-                self._buffer_size = selected_size
+                self._llcom.set_buffer_size(selected_size)
             else:
                 raise Exception(
                     "error in communication while setting buffer size to %d"
@@ -287,17 +302,15 @@ class LSV2:
                 )
 
         if not self.set_system_command(ParCCC.SECURE_FILE_SEND):
-            logging.warning("secure file transfer not supported? use fallback")
+            logging.info("secure file transfer not supported? use fallback")
             self._secure_file_send = False
         else:
+            logging.debug("secure flie send is enabled")
             self._secure_file_send = True
 
         self.login(login=Login.FILETRANSFER)
-        logging.info(
-            "successfully configured connection parameters and basic logins. selected buffer size is %d, use secure file send: %s",
-            self._buffer_size,
-            self._secure_file_send,
-        )
+
+        logging.info("successfully configured connection parameters and basic logins")
 
     def login(self, login, password=None):
         """Request additional access rights. To elevate this level a logon has to be performed. Some levels require a password.
@@ -884,20 +897,20 @@ class LSV2:
             logging.info("selecting non binary transfer mode")
 
         response, content = self._llcom.telegram(
-            CMD.C_FL, payload, buffer_size=self._buffer_size
+            CMD.C_FL, payload, 
         )
 
         if response in RSP.T_OK:
             with local_file.open("rb") as input_buffer:
                 while True:
                     # use current buffer size but reduce by 10 to make sure it fits together with command and size
-                    buffer = input_buffer.read(self._buffer_size - 10)
+                    buffer = input_buffer.read(self._llcom.get_buffer_size() - 8 - 2)
                     if not buffer:
                         # finished reading file
                         break
 
                     response, content = self._llcom.telegram(
-                        RSP.S_FL, buffer, buffer_size=self._buffer_size
+                        RSP.S_FL, buffer, 
                     )
                     if response in RSP.T_OK:
                         pass
@@ -978,7 +991,7 @@ class LSV2:
             logging.info("using non binary transfer mode")
 
         response, content = self._llcom.telegram(
-            CMD.R_FL, payload, buffer_size=self._buffer_size
+            CMD.R_FL, payload,
         )
 
         with local_file.open("wb") as out_file:
@@ -991,7 +1004,7 @@ class LSV2:
 
                 while True:
                     response, content = self._llcom.telegram(
-                        RSP.T_OK, payload=None, buffer_size=self._buffer_size
+                        RSP.T_OK,
                     )
                     if response in RSP.S_FL:
                         if binary_mode:

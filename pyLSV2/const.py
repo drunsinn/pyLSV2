@@ -826,6 +826,9 @@ class CMD(str, Enum):
     """request window definiton.
     requires MONITOR login priviliege"""
 
+    NONE = "NONE"
+    """not a valid command but used internaly"""
+
 
 class RSP(str, Enum):
     """Enum of all known response telegrams"""
@@ -880,6 +883,13 @@ class RSP(str, Enum):
 
     S_VR = "S_VR"
     """S_VR: signals that the command R_VR was accepted, it is followed by more data"""
+
+    NONE = "NONE"
+    """not a valid response but used internaly to singnal that no response was recived or should be sent"""
+
+    UNKNOWN = "UNKN"
+    """not a valid respons but used internaly ot signal an unknown response was recived"""
+
 
 
 class ParCCC(IntEnum):
