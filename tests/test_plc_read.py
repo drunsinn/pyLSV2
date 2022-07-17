@@ -10,6 +10,8 @@ def test_plc_read(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
+    assert lsv2.login(pyLSV2.Login.PLCDEBUG) is True
+
     assert (
         lsv2.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.MARKER, count=1)
         is not False
@@ -34,6 +36,8 @@ def test_plc_read(address, timeout):
         lsv2.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.OUTPUT_WORD, count=1)
         is not False
     )
+
+    lsv2.logout(pyLSV2.Login.PLCDEBUG)
 
     lsv2.disconnect()
 

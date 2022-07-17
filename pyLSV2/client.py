@@ -58,25 +58,7 @@ class LSV2:
 
         self._active_logins = list()
 
-        if safe_mode:
-            logging.info(
-                "safe mode is active, login and system commands are restricted"
-            )
-            self._known_logins = (Login.INSPECT, Login.FILETRANSFER)
-            self._known_sys_cmd = (
-                ParCCC.SET_BUF1024,
-                ParCCC.SET_BUF512,
-                ParCCC.SET_BUF2048,
-                ParCCC.SET_BUF3072,
-                ParCCC.SET_BUF4096,
-                ParCCC.SECURE_FILE_SEND,
-            )
-        else:
-            logging.info(
-                "safe mode is off, login and system commands are not restricted. Use with caution!"
-            )
-            self._known_logins = [e.value for e in Login]
-            self._known_sys_cmd = [e.value for e in ParCCC]
+        self.switch_safe_mode(safe_mode)
 
         self._versions = None
         self._sys_par = None
@@ -111,6 +93,27 @@ class LSV2:
     def is_pilot(self):
         """return true if control is a CNCPILOT640"""
         return self._control_type == ControlType.LATHE_NEW
+
+    def switch_safe_mode(self, enable_safe_mode: bool = True):
+        """switch between safe mode and unrestricted mode"""
+        if enable_safe_mode is False:
+            logging.info(
+                "disabeling safe mode. login and system commands are not restricted. Use with caution!"
+            )
+            self._known_logins = tuple(e.value for e in Login)
+            self._known_sys_cmd = tuple(e.value for e in ParCCC)
+        else:
+            logging.info("enabeling safe mode. restricting functionality")
+            self._known_logins = (Login.INSPECT, Login.FILETRANSFER)
+            self._known_sys_cmd = (
+                ParCCC.SET_BUF1024,
+                ParCCC.SET_BUF512,
+                ParCCC.SET_BUF2048,
+                ParCCC.SET_BUF3072,
+                ParCCC.SET_BUF4096,
+                ParCCC.SECURE_FILE_SEND,
+            )
+        logging.debug("availible logins '%s', availible system commands '%s'", self._known_logins, self._known_sys_cmd)
 
     @staticmethod
     def _decode_error(content, locale_path=None):

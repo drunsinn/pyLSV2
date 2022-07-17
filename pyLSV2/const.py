@@ -711,7 +711,7 @@ class CMD(str, Enum):
 
     C_MC = "C_MC"
     """C_MC: set machine parameter, followed by flags, name and value
-    """
+    requires PLCDEBUG login privilege"""
 
     # C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
 
