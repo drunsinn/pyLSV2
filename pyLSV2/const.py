@@ -316,6 +316,9 @@ class LSV2Err(IntEnum):
     # plain error message (TODO see global var usererrortext)
     T_USER_ERROR = 255
 
+    T_ER_NON = -1
+    """not an valid error code. devault value if no error occured"""
+
 
 class KeyCode(IntEnum):
     """Keycodes"""

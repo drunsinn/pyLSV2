@@ -64,12 +64,19 @@ class LSV2:
         self._sys_par = None
         self._secure_file_send = False
         self._control_type = ControlType.UNKNOWN
-        self._last_error_code = None
+
+        self._last_lsv2_response = RSP.NONE
+        self._last_error_type = -1
+        self._last_error_code = LSV2Err.T_ER_NON
 
         if locale_path is None:
             self._locale_path = os.path.join(os.path.dirname(__file__), "locales")
         else:
             self._locale_path = locale_path
+
+    def get_last_error(self) -> tuple:
+        """return last error type and code"""
+        return (self._last_error_type, self._last_error_code)
 
     def connect(self):
         """connect to control"""
@@ -98,12 +105,12 @@ class LSV2:
         """switch between safe mode and unrestricted mode"""
         if enable_safe_mode is False:
             logging.info(
-                "disabeling safe mode. login and system commands are not restricted. Use with caution!"
+                "disabling safe mode. login and system commands are not restricted. Use with caution!"
             )
             self._known_logins = tuple(e.value for e in Login)
             self._known_sys_cmd = tuple(e.value for e in ParCCC)
         else:
-            logging.info("enabeling safe mode. restricting functionality")
+            logging.info("enabling safe mode. restricting functionality")
             self._known_logins = (Login.INSPECT, Login.FILETRANSFER)
             self._known_sys_cmd = (
                 ParCCC.SET_BUF1024,
@@ -113,23 +120,6 @@ class LSV2:
                 ParCCC.SET_BUF4096,
                 ParCCC.SECURE_FILE_SEND,
             )
-        logging.debug("availible logins '%s', availible system commands '%s'", self._known_logins, self._known_sys_cmd)
-
-    @staticmethod
-    def _decode_error(content, locale_path=None):
-        """decode error codes to text"""
-        if locale_path is None:
-            locale_path = os.path.join(os.path.dirname(__file__), "locales")
-        (
-            byte_1,
-            byte_2,
-        ) = struct.unpack("!BB", content)
-        error_text = get_error_text(byte_1, byte_2, locale_path=locale_path)
-        logging.warning(
-            "T_ER or T_BD received, an error occurred during the execution of the last command: %s",
-            error_text,
-        )
-        return error_text
 
     def _send_recive(self, command, expected_response, payload=None):
         """takes a command and payload, sends it to the control and checks
@@ -140,9 +130,7 @@ class LSV2:
             bytes_to_send = payload
 
         if expected_response is None:
-            self._llcom.telegram(
-                command, bytes_to_send, wait_for_response=False
-            ) 
+            self._llcom.telegram(command, bytes_to_send, wait_for_response=False)
             logging.info(
                 "command %s sent successfully, did not check for response", command
             )
@@ -168,9 +156,17 @@ class LSV2:
                 )
                 return True
 
-            if response in RSP.T_ER:
-                self._decode_error(content)
-                self._last_error_code = struct.unpack("!BB", content)
+            if response is RSP.T_ER:
+                self._last_error_type, self._last_error_code = struct.unpack(
+                    "!BB", content
+                )
+                message = get_error_text(self._last_error_type, self._last_error_code)
+                logging.warning(
+                    "error received, type: %d, code: %d '%s'",
+                    self._last_error_type,
+                    self._last_error_code,
+                    message,
+                )
             else:
                 logging.error(
                     "received unexpected response %s to command %s. response code %s",
@@ -190,14 +186,21 @@ class LSV2:
         else:
             bytes_to_send = payload
 
-
         response_buffer = list()
         response, content = self._llcom.telegram(
-            command, bytes_to_send, 
+            command,
+            bytes_to_send,
         )
 
         if response in RSP.T_ER:
-            self._decode_error(content)
+            self._last_error_type, self._last_error_code = struct.unpack("!BB", content)
+            message = get_error_text(self._last_error_type, self._last_error_code)
+            logging.warning(
+                "error received, type: %d, code: %d '%s'",
+                self._last_error_type,
+                self._last_error_code,
+                message,
+            )
         elif response in RSP.T_FD:
             logging.debug("Transfer is finished with no content")
         elif response not in expected_response:
@@ -212,7 +215,7 @@ class LSV2:
             while response in expected_response:
                 response_buffer.append(content)
                 response, content = self._llcom.telegram(
-                    RSP.T_OK, 
+                    RSP.T_OK,
                 )
         return response_buffer
 
@@ -224,13 +227,21 @@ class LSV2:
             bytes_to_send = payload
 
         response, content = self._llcom.telegram(
-            command, bytes_to_send, 
+            command,
+            bytes_to_send,
         )
         if response in RSP.T_OK:
             return True
 
         if response in RSP.T_ER:
-            self._decode_error(content)
+            self._last_error_type, self._last_error_code = struct.unpack("!BB", content)
+            message = get_error_text(self._last_error_type, self._last_error_code)
+            logging.warning(
+                "error received, type: %d, code: %d '%s'",
+                self._last_error_type,
+                self._last_error_code,
+                message,
+            )
         else:
             logging.error(
                 "received unexpected response %s to command %s. response code %s",
@@ -308,7 +319,7 @@ class LSV2:
             logging.info("secure file transfer not supported? use fallback")
             self._secure_file_send = False
         else:
-            logging.debug("secure flie send is enabled")
+            logging.debug("secure file send is enabled")
             self._secure_file_send = True
 
         self.login(login=Login.FILETRANSFER)
@@ -900,7 +911,8 @@ class LSV2:
             logging.info("selecting non binary transfer mode")
 
         response, content = self._llcom.telegram(
-            CMD.C_FL, payload, 
+            CMD.C_FL,
+            payload,
         )
 
         if response in RSP.T_OK:
@@ -913,13 +925,26 @@ class LSV2:
                         break
 
                     response, content = self._llcom.telegram(
-                        RSP.S_FL, buffer, 
+                        RSP.S_FL,
+                        buffer,
                     )
                     if response in RSP.T_OK:
                         pass
                     else:
                         if response in RSP.T_ER:
-                            self._decode_error(content)
+                            (
+                                self._last_error_type,
+                                self._last_error_code,
+                            ) = struct.unpack("!BB", content)
+                            message = get_error_text(
+                                self._last_error_type, self._last_error_code
+                            )
+                            logging.warning(
+                                "error received, type: %d, code: %d '%s'",
+                                self._last_error_type,
+                                self._last_error_code,
+                                message,
+                            )
                         else:
                             logging.error("could not send data with error %s", response)
                         return False
@@ -940,7 +965,16 @@ class LSV2:
 
         else:
             if response in RSP.T_ER:
-                self._decode_error(content)
+                self._last_error_type, self._last_error_code = struct.unpack(
+                    "!BB", content
+                )
+                message = get_error_text(self._last_error_type, self._last_error_code)
+                logging.warning(
+                    "error received, type: %d, code: %d '%s'",
+                    self._last_error_type,
+                    self._last_error_code,
+                    message,
+                )
             else:
                 logging.error("could not send file with error %s", response)
             return False
@@ -994,7 +1028,8 @@ class LSV2:
             logging.info("using non binary transfer mode")
 
         response, content = self._llcom.telegram(
-            CMD.R_FL, payload,
+            CMD.R_FL,
+            payload,
         )
 
         with local_file.open("wb") as out_file:
@@ -1020,10 +1055,19 @@ class LSV2:
                         break
                     else:
                         if response in RSP.T_ER or response in RSP.T_BD:
+                            (
+                                self._last_error_type,
+                                self._last_error_code,
+                            ) = struct.unpack("!BB", content)
+                            message = get_error_text(
+                                self._last_error_type, self._last_error_code
+                            )
                             logging.error(
-                                "an error occurred while loading the first block of data for file %s : %s",
+                                "an error occurred while loading the first block of data for file %s, type: %d, code: %d '%s'",
                                 remote_path,
-                                self._decode_error(content),
+                                self._last_error_type,
+                                self._last_error_code,
+                                message,
                             )
                         else:
                             logging.error(
@@ -1033,12 +1077,19 @@ class LSV2:
                         return False
             else:
                 if response in RSP.T_ER or response in RSP.T_BD:
-                    logging.error(
-                        "an error occurred while loading the first block of data for file %s : %s",
-                        remote_path,
-                        self._decode_error(content),
+                    self._last_error_type, self._last_error_code = struct.unpack(
+                        "!BB", content
                     )
-                    self._last_error_code = struct.unpack("!BB", content)
+                    message = get_error_text(
+                        self._last_error_type, self._last_error_code
+                    )
+                    logging.error(
+                        "an error occurred while loading the first block of data for file %s, type: %d, code: %d '%s'",
+                        remote_path,
+                        self._last_error_type,
+                        self._last_error_code,
+                        message,
+                    )
                 else:
                     logging.error("could not load file with error %s", response)
                     self._last_error_code = None

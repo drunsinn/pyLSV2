@@ -7,7 +7,7 @@ import os
 from .const import ExecState, PgmState, LSV2Err
 
 
-def get_error_text(error_type, error_code, language=None, locale_path=None):
+def get_error_text(error_type: int, error_code: int, language:str = "", locale_path=None) -> str:
     """Parse error type and error code and return the error message.
 
     :param int error_type: type of error code.
@@ -20,7 +20,8 @@ def get_error_text(error_type, error_code, language=None, locale_path=None):
 
     if locale_path is None:
         locale_path = os.path.join(os.path.dirname(__file__), "locales")
-    if language is None:
+
+    if len(language) < 2:
         translate = gettext.translation(
             domain="error_text", localedir=locale_path, fallback=True
         )
@@ -118,7 +119,7 @@ def get_error_text(error_type, error_code, language=None, locale_path=None):
     }.get(error_code, _("LSV2_ERROR_UNKNOWN_CODE"))
 
 
-def get_program_status_text(code, language=None, locale_path=None):
+def get_program_status_text(code: int, language:str = "", locale_path=None) -> str:
     """Translate status code of program state to text
 
     :param int code: status code of program state
@@ -129,7 +130,8 @@ def get_program_status_text(code, language=None, locale_path=None):
 
     if locale_path is None:
         locale_path = os.path.join(os.path.dirname(__file__), "locales")
-    if language is None:
+    
+    if len(language) < 2:
         translate = gettext.translation(
             domain="message_text", localedir=locale_path, fallback=True
         )
@@ -157,7 +159,7 @@ def get_program_status_text(code, language=None, locale_path=None):
     }.get(code, translate.gettext("PGM_STATE_UNKNOWN"))
 
 
-def get_execution_status_text(code, language=None, locale_path=None):
+def get_execution_status_text(code:int, language:str = "", locale_path=None):
     """Translate status code of execution state to text
     See https://github.com/drunsinn/pyLSV2/issues/1
 
@@ -169,7 +171,7 @@ def get_execution_status_text(code, language=None, locale_path=None):
 
     if locale_path is None:
         locale_path = os.path.join(os.path.dirname(__file__), "locales")
-    if language is None:
+    if len(language) < 2:
         translate = gettext.translation(
             domain="message_text", localedir=locale_path, fallback=True
         )
