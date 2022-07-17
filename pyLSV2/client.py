@@ -23,6 +23,8 @@ from .const import (
     ParRVR,
     ParRRI,
     ParRDR,
+    PgmState,
+    ExecState,
     BIN_FILES,
     PATH_SEP,
     MODE_BINARY,
@@ -69,11 +71,6 @@ class LSV2:
         self._last_error_type = -1
         self._last_error_code = LSV2Err.T_ER_NON
 
-        if locale_path is None:
-            self._locale_path = os.path.join(os.path.dirname(__file__), "locales")
-        else:
-            self._locale_path = locale_path
-
     def get_last_error(self) -> tuple:
         """return last error type and code"""
         return (self._last_error_type, self._last_error_code)
@@ -89,15 +86,15 @@ class LSV2:
         self._llcom.disconnect()
         logging.debug("Connection to host closed")
 
-    def is_itnc(self):
+    def is_itnc(self) -> bool:
         """return true if control is a iTNC"""
         return self._control_type == ControlType.MILL_OLD
 
-    def is_tnc(self):
+    def is_tnc(self) -> bool:
         """return true if control is a TNC"""
         return self._control_type == ControlType.MILL_NEW
 
-    def is_pilot(self):
+    def is_pilot(self) -> bool:
         """return true if control is a CNCPILOT640"""
         return self._control_type == ControlType.LATHE_NEW
 
@@ -495,29 +492,23 @@ class LSV2:
 
         return self._versions
 
-    def get_program_status(self):
+    def get_program_status(self) -> PgmState:
         """Get status code of currently active program
         See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
 
         :returns: status code or False if something went wrong
-        :rtype: int
+        :rtype: PgmState
         """
-        self.login(login=Login.DNC)
-
-        payload = bytearray()
-        payload.extend(struct.pack("!H", ParRRI.PGM_STATE))
-
-        result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
-        if result:
-            pgm_state = struct.unpack("!H", result)[0]
-            logging.debug(
-                "successfully read state of active program: %s",
-                get_program_status_text(pgm_state, locale_path=self._locale_path),
-            )
-            return pgm_state
-
-        logging.error("an error occurred while querying program state")
-        return False
+        if self.login(login=Login.DNC):
+            payload = struct.pack("!H", ParRRI.PGM_STATE)
+            result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
+            if isinstance(result, (bytearray,)):
+                logging.debug("successfully read state of active program: %s", struct.unpack("!H", result)[0])
+                return PgmState(struct.unpack("!H", result)[0])
+            logging.error("an error occurred while querying program state")
+        else:
+            logging.error("could not log in as user DNC")
+        return PgmState.UNDEFINED
 
     def get_program_stack(self):
         """Get path of currently active nc program(s) and current line number
@@ -555,30 +546,23 @@ class LSV2:
         logging.error("an error occurred while querying active program state")
         return False
 
-    def get_execution_status(self):
+    def get_execution_status(self) -> ExecState:
         """Get status code of program state to text
         See https://github.com/drunsinn/pyLSV2/issues/1
 
         :returns: status code or False if something went wrong
-        :rtype: int
+        :rtype: ExecState
         """
-        self.login(login=Login.DNC)
-
-        payload = bytearray()
-        payload.extend(struct.pack("!H", ParRRI.EXEC_STATE))
-
-        result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
-        if result:
-            exec_state = struct.unpack("!H", result)[0]
-            logging.debug(
-                "read execution state %d : %s",
-                exec_state,
-                get_execution_status_text(exec_state, locale_path=self._locale_path),
-            )
-            return exec_state
-
-        logging.error("an error occurred while querying execution state")
-        return False
+        if self.login(login=Login.DNC):
+            payload = struct.pack("!H", ParRRI.EXEC_STATE)
+            result = self._send_recive(CMD.R_RI, RSP.S_RI, payload)
+            if isinstance(result, (bytearray,)):
+                logging.debug("read execution state %d", struct.unpack("!H", result)[0])
+                return ExecState(struct.unpack("!H", result)[0])
+            logging.error("an error occurred while querying execution state")
+        else:
+            logging.error("could not log in as user DNC")
+        return ExecState.UNDEFINED
 
     def get_directory_info(self, remote_directory=None):
         """Query information a the current working directory on the control

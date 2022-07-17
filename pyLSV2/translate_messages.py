@@ -171,6 +171,7 @@ def get_execution_status_text(code:int, language:str = "", locale_path=None):
 
     if locale_path is None:
         locale_path = os.path.join(os.path.dirname(__file__), "locales")
+
     if len(language) < 2:
         translate = gettext.translation(
             domain="message_text", localedir=locale_path, fallback=True
