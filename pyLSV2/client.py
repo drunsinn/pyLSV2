@@ -8,7 +8,6 @@
 """
 import logging
 import re
-import os
 import struct
 from pathlib import Path
 
@@ -16,6 +15,7 @@ from . import const as lc
 from . import misc as lm
 from . import translate_messages as lt
 from .low_level_com import LLLSV2Com
+
 
 class LSV2:
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
@@ -127,7 +127,9 @@ class LSV2:
                 self._last_error_type, self._last_error_code = struct.unpack(
                     "!BB", content
                 )
-                message = lt.get_error_text(self._last_error_type, self._last_error_code)
+                message = lt.get_error_text(
+                    self._last_error_type, self._last_error_code
+                )
                 logging.warning(
                     "error received, type: %d, code: %d '%s'",
                     self._last_error_type,
@@ -293,7 +295,7 @@ class LSV2:
 
         logging.info("successfully configured connection parameters and basic logins")
 
-    def login(self, login, password=None):
+    def login(self, login: lc.Login, password: str = "") -> bool:
         """Request additional access rights. To elevate this level a logon has to be performed. Some levels require a password.
 
         :param str login: One of the known login strings
@@ -312,46 +314,46 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, login))
         payload.append(0x00)
-        if password is not None:
+        if password is not None and len(password) > 0:
             payload.extend(map(ord, password))
             payload.append(0x00)
 
-        if not self._send_recive_ack(lc.CMD.A_LG, payload):
-            logging.error("an error occurred during login for login %s", login)
-            return False
+        if self._send_recive_ack(lc.CMD.A_LG, payload):
+            logging.info("login executed successfully for login %s", login)
+            self._active_logins.append(login)
+            return True
 
-        self._active_logins.append(login)
+        logging.error("error logging in as %s", login)
+        return False
 
-        logging.info("login executed successfully for login %s", login)
-        return True
-
-    def logout(self, login=None):
+    def logout(self, login=None) -> bool:
         """Drop one or all access right. If no login is supplied all active access rights are dropped.
 
         :param str login: optional. One of the known login strings
         :returns: True if execution was successful
         :rtype: bool
         """
-        if login in self._known_logins or login is None:
-            logging.debug("logout for login %s", login)
-            if login in self._active_logins or login is None:
-                payload = bytearray()
-                if login is not None:
+        payload = bytearray()
+
+        if login is not None:
+            if isinstance(login, (lc.Login,)):
+                if login in self._active_logins:
                     payload.extend(map(ord, login))
                     payload.append(0x00)
-
-                if self._send_recive_ack(lc.CMD.A_LO, payload):
-                    logging.info("logout executed successfully for login %s", login)
-                    if login is not None:
-                        self._active_logins.remove(login)
-                    else:
-                        self._active_logins = list()
+                else:
+                    # login is not active
                     return True
             else:
-                logging.info("login %s was not active, logout not necessary", login)
-                return True
-        else:
-            logging.warning("unknown or unsupported user")
+                # unknown login
+                return False
+
+        if self._send_recive_ack(lc.CMD.A_LO, payload):
+            logging.info("logout executed successfully for login %s", login)
+            if login is None:
+                self._active_logins = list()
+            else:
+                self._active_logins.remove(login)
+            return True
         return False
 
     def set_system_command(self, command, parameter=None):
@@ -374,7 +376,7 @@ class LSV2:
         logging.debug("unknown or unsupported system command")
         return False
 
-    def get_system_parameter(self, force:bool=False):
+    def get_system_parameter(self, force: bool = False):
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
         possible to manually re-read the information form the control
 
@@ -417,13 +419,17 @@ class LSV2:
                 raise Exception("Could not read version information from control")
 
             result = self._send_recive(
-                lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.NC_VERSION)
+                lc.CMD.R_VR,
+                lc.RSP.S_VR,
+                payload=struct.pack("!B", lc.ParRVR.NC_VERSION),
             )
             if result:
                 info_data["NC_Version"] = result.strip(b"\x00").decode("utf-8")
 
             result = self._send_recive(
-                lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.PLC_VERSION)
+                lc.CMD.R_VR,
+                lc.RSP.S_VR,
+                payload=struct.pack("!B", lc.ParRVR.PLC_VERSION),
             )
             if result:
                 info_data["PLC_Version"] = result.strip(b"\x00").decode("utf-8")
@@ -444,13 +450,17 @@ class LSV2:
                 info_data["Release_Type"] = "not supported"
             else:
                 result = self._send_recive(
-                    lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.RELEASE_TYPE)
+                    lc.CMD.R_VR,
+                    lc.RSP.S_VR,
+                    payload=struct.pack("!B", lc.ParRVR.RELEASE_TYPE),
                 )
                 if result:
                     info_data["Release_Type"] = result.strip(b"\x00").decode("utf-8")
 
             result = self._send_recive(
-                lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.SPLC_VERSION)
+                lc.CMD.R_VR,
+                lc.RSP.S_VR,
+                payload=struct.pack("!B", lc.ParRVR.SPLC_VERSION),
             )
             if result:
                 info_data["SPLC_Version"] = result.strip(b"\x00").decode("utf-8")
@@ -473,7 +483,10 @@ class LSV2:
             payload = struct.pack("!H", lc.ParRRI.PGM_STATE)
             result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
             if isinstance(result, (bytearray,)):
-                logging.debug("successfully read state of active program: %s", struct.unpack("!H", result)[0])
+                logging.debug(
+                    "successfully read state of active program: %s",
+                    struct.unpack("!H", result)[0],
+                )
                 return lc.PgmState(struct.unpack("!H", result)[0])
             logging.error("an error occurred while querying program state")
         else:
@@ -646,7 +659,9 @@ class LSV2:
         :returns: True if creating of directory completed successfully
         :rtype: bool
         """
-        path_parts = dir_path.replace("/", lc.PATH_SEP).split(lc.PATH_SEP)  # convert path
+        path_parts = dir_path.replace("/", lc.PATH_SEP).split(
+            lc.PATH_SEP
+        )  # convert path
         path_to_check = ""
         for part in path_parts:
             path_to_check += part + lc.PATH_SEP
@@ -833,12 +848,16 @@ class LSV2:
             logging.debug("remote path does not exist, create directory(s)")
             self.make_directory(remote_directory)
 
-        remote_info = self.get_file_info(remote_directory + lc.PATH_SEP + remote_file_name)
+        remote_info = self.get_file_info(
+            remote_directory + lc.PATH_SEP + remote_file_name
+        )
 
         if remote_info:
             logging.debug("remote path exists and points to file's")
             if override_file:
-                if not self.delete_file(remote_directory + lc.PATH_SEP + remote_file_name):
+                if not self.delete_file(
+                    remote_directory + lc.PATH_SEP + remote_file_name
+                ):
                     raise Exception(
                         "something went wrong while deleting file {}".format(
                             remote_directory + lc.PATH_SEP + remote_file_name
@@ -922,7 +941,9 @@ class LSV2:
                 self._last_error_type, self._last_error_code = struct.unpack(
                     "!BB", content
                 )
-                message = lt.get_error_text(self._last_error_type, self._last_error_code)
+                message = lt.get_error_text(
+                    self._last_error_type, self._last_error_code
+                )
                 logging.warning(
                     "error received, type: %d, code: %d '%s'",
                     self._last_error_type,
