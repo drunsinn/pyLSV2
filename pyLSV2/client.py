@@ -98,12 +98,17 @@ class LSV2:
             )
 
     def _send_recive(
-        self, command: lc.CMD, payload: bytearray = bytearray(), expected_response: lc.RSP = lc.RSP.NONE
+        self, command: lc.CMD, payload:None, expected_response: lc.RSP = lc.RSP.NONE
     ) -> Union[bool, bytearray]:
         """takes a command and payload, sends it to the control and checks
         if the response is as expected. Returns content if not an error"""
 
-        bytes_to_send = payload
+        if payload is None:
+            bytes_to_send = bytearray()
+        elif isinstance(payload, (bytearray,)):
+            bytes_to_send = payload
+        else:
+            bytes_to_send = bytearray(payload)
 
         if command is lc.CMD.C_CC:
             if bytes_to_send is None or len(bytes_to_send) != 2:
@@ -159,7 +164,7 @@ class LSV2:
     def _send_recive_block(
         self,
         command: lc.CMD,
-        payload: bytearray = bytearray(),
+        payload: bytearray,
         expected_response: lc.RSP = lc.RSP.NONE,
     ) -> Union[bool, list]:
         """takes a command and payload, sends it to the control and continues reading
