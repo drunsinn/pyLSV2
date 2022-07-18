@@ -6,6 +6,7 @@ from pyLSV2 import __version__, __doc__
 
 setup(
     name="pyLSV2",
+    python_requires='>=3.5',
     packages=find_packages(
         include=[
             "pyLSV2",
