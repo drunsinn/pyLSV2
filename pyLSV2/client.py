@@ -56,6 +56,16 @@ class LSV2:
         self._llcom.disconnect()
         logging.debug("Connection to host closed")
 
+    def __enter__(self):
+        """enter context"""
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        """exit context"""
+        self.disconnect()
+        # print(exc_type, exc_value, exc_tb, sep="\n")
+
     def is_itnc(self) -> bool:
         """return true if control is a iTNC"""
         return self._control_type == lc.ControlType.MILL_OLD

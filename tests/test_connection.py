@@ -21,3 +21,9 @@ def test_read_versions(address, timeout):
     lsv2.connect()
     assert lsv2.get_versions() is not False
     lsv2.disconnect()
+
+
+def test_context_manager(address, timeout):
+    """test if login and basic query works"""
+    with pyLSV2.LSV2(address, port=19000, timeout=timeout) as lsv2:
+        assert lsv2.get_versions() is not False
