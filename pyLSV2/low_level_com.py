@@ -82,8 +82,8 @@ class LLLSV2Com:
         logging.debug("Connection to %s closed", self._host_ip)
 
     def set_buffer_size(self, buffer_size: int) -> bool:
-        """set the size of the send and recive buffer. the size has to be established
-        during connection setup. buffer size has to be at least 8 so command and lenght
+        """set the size of the send and receive buffer. the size has to be established
+        during connection setup. buffer size has to be at least 8 so command and length
         fit into the telegram"""
         if buffer_size < 8:
             self._buffer_size = self.DEFAULT_BUFFER_SIZE
@@ -96,7 +96,7 @@ class LLLSV2Com:
         return True
 
     def get_buffer_size(self) -> int:
-        """return current send/recive buffer size"""
+        """return current send/receive buffer size"""
         return self._buffer_size
 
     def telegram(
@@ -152,7 +152,7 @@ class LLLSV2Com:
             raise
 
         if len(response) > 0:
-            logging.debug("recived block of data with lenght %d", len(response))
+            logging.debug("received block of data with length %d", len(response))
             if len(response) >= 8:
                 # read 4 bytes for response length
                 response_length = struct.unpack("!L", response[0:4])[0]
@@ -160,7 +160,7 @@ class LLLSV2Com:
                 # read 4 bytes for response type
                 response_command = RSP(response[4:8].decode("utf-8", "ignore"))
             else:
-                # respons is less than 8 bytes long which is not enough space for package lengh and response message!
+                # respons is less than 8 bytes long which is not enough space for package length and response message!
                 raise Exception("response to short, less than 8 bytes: %s" % response)
         else:
             response_length = 0
