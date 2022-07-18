@@ -98,7 +98,7 @@ class LSV2:
             )
 
     def _send_recive(
-        self, command: lc.CMD, payload:None, expected_response: lc.RSP = lc.RSP.NONE
+        self, command: lc.CMD, payload=None, expected_response: lc.RSP = lc.RSP.NONE
     ) -> Union[bool, bytearray]:
         """takes a command and payload, sends it to the control and checks
         if the response is as expected. Returns content if not an error"""
@@ -414,8 +414,8 @@ class LSV2:
             result = self._send_recive(
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
-            if result:
-                info_data["Control"] = result.strip(b"\x00").decode("utf-8")
+            if isinstance(result, (bytearray, )):
+                info_data["Control"] = lm.ba_to_ustr(result)
             else:
                 raise Exception("Could not read version information from control")
 
@@ -424,32 +424,32 @@ class LSV2:
                 struct.pack("!B", lc.ParRVR.NC_VERSION),
                 lc.RSP.S_VR,
             )
-            if result:
-                info_data["NC_Version"] = result.strip(b"\x00").decode("utf-8")
+            if isinstance(result, (bytearray, )):
+                info_data["NC_Version"] = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
                 struct.pack("!B", lc.ParRVR.PLC_VERSION),
                 lc.RSP.S_VR,
             )
-            if result:
-                info_data["PLC_Version"] = result.strip(b"\x00").decode("utf-8")
+            if isinstance(result, (bytearray, )):
+                info_data["PLC_Version"] = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
                 struct.pack("!B", lc.ParRVR.OPTIONS),
                 lc.RSP.S_VR,
             )
-            if result:
-                info_data["Options"] = result.strip(b"\x00").decode("utf-8")
+            if isinstance(result, (bytearray, )):
+                info_data["Options"] = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
                 struct.pack("!B", lc.ParRVR.ID),
                 lc.RSP.S_VR,
             )
-            if result:
-                info_data["ID"] = result.strip(b"\x00").decode("utf-8")
+            if isinstance(result, (bytearray, )):
+                info_data["ID"] = lm.ba_to_ustr(result)
 
             if self.is_itnc():
                 info_data["Release_Type"] = "not supported"
@@ -459,16 +459,16 @@ class LSV2:
                     struct.pack("!B", lc.ParRVR.RELEASE_TYPE),
                     lc.RSP.S_VR,
                 )
-                if result:
-                    info_data["Release_Type"] = result.strip(b"\x00").decode("utf-8")
+                if isinstance(result, (bytearray, )):
+                    info_data["Release_Type"] = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
                 struct.pack("!B", lc.ParRVR.SPLC_VERSION),
                 lc.RSP.S_VR,
             )
-            if result:
-                info_data["SPLC_Version"] = result.strip(b"\x00").decode("utf-8")
+            if isinstance(result, (bytearray, )):
+                info_data["SPLC_Version"] = lm.ba_to_ustr(result)
             else:
                 info_data["SPLC_Version"] = "not supported"
 
@@ -511,7 +511,7 @@ class LSV2:
         payload.extend(struct.pack("!H", lc.ParRRI.SELECTED_PGM))
 
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
-        if result:
+        if isinstance(result, (bytearray, )):
             stack_info = dict()
             stack_info["Line"] = struct.unpack("!L", result[:4])[0]
             stack_info["Main_PGM"] = (
@@ -630,13 +630,13 @@ class LSV2:
         payload.append(lc.ParRDR.SINGLE)
 
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
-        logging.debug(
-            "received %d entries for directory content information", len(result)
-        )
-        for entry in result:
-            dir_content.append(lm.decode_file_system_info(entry, self._control_type))
-
-        logging.debug("successfully received directory information %s", dir_content)
+        if isinstance(result, (list, )):
+            for entry in result:
+                dir_content.append(lm.decode_file_system_info(entry, self._control_type))
+            logging.debug("successfully received %d packages for directory content %s", len(result), dir_content)
+        else:
+            logging.error("an error occurred while directory content info")
+        
         return dir_content
 
     def get_drive_info(self):
@@ -650,11 +650,13 @@ class LSV2:
         payload.append(lc.ParRDR.DRIVES)
 
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
-        logging.debug("received %d packet of for drive information", len(result))
-        for entry in result:
-            drives_list.append(entry)
+        if isinstance(result, (list, )):
+            for entry in result:
+                drives_list.append(entry)
+            logging.debug("successfully received %d packages for drive information %s", len(result), drives_list)
+        else:
+            logging.error("an error occurred while reading drive info")
 
-        logging.debug("successfully received drive information %s", drives_list)
         return drives_list
 
     def make_directory(self, dir_path):
@@ -897,7 +899,7 @@ class LSV2:
             with local_file.open("rb") as input_buffer:
                 while True:
                     # use current buffer size but reduce by 10 to make sure it fits together with command and size
-                    buffer = input_buffer.read(self._llcom.get_buffer_size() - 8 - 2)
+                    buffer = bytearray(input_buffer.read(self._llcom.get_buffer_size() - 8 - 2))
                     if not buffer:
                         # finished reading file
                         break
@@ -1170,7 +1172,7 @@ class LSV2:
                 )
                 payload.extend(struct.pack("!B", mem_byte_count))
                 result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
-                if result:
+                if isinstance(result, (bytearray,)) and len(result) > 0:
                     logging.debug("read string %d", address + i * mem_byte_count)
                     plc_values.append(
                         struct.unpack(unpack_string, result)[0]
@@ -1188,7 +1190,7 @@ class LSV2:
             payload.extend(struct.pack("!L", start_address + address))
             payload.extend(struct.pack("!B", count * mem_byte_count))
             result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
-            if result:
+            if isinstance(result, (bytearray,)) and len(result) > 0:
                 logging.debug("read %d value(s) from address %d", count, address)
                 for i in range(0, len(result), mem_byte_count):
                     plc_values.append(
@@ -1237,8 +1239,8 @@ class LSV2:
         payload.extend(map(ord, name))
         payload.append(0x00)
         result = self._send_recive(lc.CMD.R_MC, payload, lc.RSP.S_MC)
-        if result:
-            value = result.rstrip(b"\x00").decode("utf8")
+        if isinstance(result, (bytearray, )):
+            value = lm.ba_to_ustr(result)
             logging.debug("machine parameter %s has value %s", name, value)
             return value
 
@@ -1369,14 +1371,14 @@ class LSV2:
                 messages.append(lm.decode_error_message(result))
                 result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
 
-            if self._last_error_code[1] == lc.LSV2Err.T_ER_NO_NEXT_ERROR:
+            if self._last_error_code == lc.LSV2Err.T_ER_NO_NEXT_ERROR:
                 logging.debug("successfully read all errors")
             else:
                 logging.warning("an error occurred while querying error information.")
 
             return messages
 
-        elif self._last_error_code[1] == lc.LSV2Err.T_ER_NO_NEXT_ERROR:
+        elif self._last_error_code == lc.LSV2Err.T_ER_NO_NEXT_ERROR:
             logging.debug("successfully read first error but no error active")
             return messages
 
@@ -1460,7 +1462,7 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_DP, payload, lc.RSP.S_DP)
 
-        if result:
+        if isinstance(result, (bytearray, )):
             value_type = struct.unpack("!L", result[0:4])[0]
             if value_type == 2:
                 data_value = struct.unpack("!h", result[4:6])[0]
@@ -1503,7 +1505,7 @@ class LSV2:
         payload.extend(struct.pack("!H", lc.ParRRI.AXIS_LOCATION))
 
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
-        if result:
+        if isinstance(result, (bytearray, )):
             # unknown = result[0:1] # <- ???
             number_of_axes = struct.unpack("!b", result[1:2])[0]
 

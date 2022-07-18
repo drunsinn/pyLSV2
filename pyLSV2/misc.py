@@ -5,7 +5,7 @@ import struct
 from datetime import datetime
 from pathlib import Path
 
-from .const import ControlType, BIN_FILES
+from .const import PATH_SEP, ControlType, BIN_FILES
 
 
 def decode_system_parameters(result_set):
@@ -98,7 +98,7 @@ def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
 
     file_info["is_write_protected"] = bool(attributes & flag_is_protected)
 
-    file_info["Name"] = data_set[12:].decode("latin1").strip("\x00").replace("\\", "/")
+    file_info["Name"] = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
 
     return file_info
 
@@ -114,14 +114,14 @@ def decode_directory_info(data_set):
     dir_info["Free Size"] = struct.unpack("!L", data_set[:4])[0]
     attribute_list = list()
     for i in range(4, len(data_set[4:132]), 4):
-        attr = data_set[i : i + 4].decode("latin1").strip("\x00")
+        attr = ba_to_ustr(data_set[i : i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     dir_info["Dir_Attributs"] = attribute_list
 
     dir_info["Attributes"] = struct.unpack("!32B", data_set[132:164])
 
-    dir_info["Path"] = data_set[164:].decode("latin1").strip("\x00").replace("\\", "/")
+    dir_info["Path"] = ba_to_ustr(data_set[164:]).replace("/", PATH_SEP)
 
     return dir_info
 
@@ -176,7 +176,7 @@ def decode_error_message(data_set):
     error_info["Class"] = struct.unpack("!H", data_set[0:2])[0]
     error_info["Group"] = struct.unpack("!H", data_set[2:4])[0]
     error_info["Number"] = struct.unpack("!l", data_set[4:8])[0]
-    error_info["Text"] = data_set[8:].decode("latin1").strip("\x00")
+    error_info["Text"] = ba_to_ustr(data_set[8:])
     return error_info
 
 
@@ -194,3 +194,7 @@ def is_file_binary(file_name):
         elif file_name.endswith(bin_type):
             return True
     return False
+
+def ba_to_ustr(bytes_to_convert: bytearray) -> str:
+    """convert a bytearry of characters to unicode string"""
+    return bytes_to_convert.decode("latin1").strip("\x00").strip()
