@@ -98,136 +98,128 @@ class LSV2:
                 lc.ParCCC.SECURE_FILE_SEND,
             )
 
-    def _send_recive(self, command, expected_response, payload=None):
+    def _send_recive(
+        self, command: lc.CMD, payload=None, expected_response: lc.RSP = lc.RSP.NONE
+    ):
         """takes a command and payload, sends it to the control and checks
         if the response is as expected. Returns content if not an error"""
+
         if payload is None:
             bytes_to_send = bytearray()
         else:
             bytes_to_send = payload
 
-        if expected_response is None:
-            self._llcom.telegram(command, bytes_to_send, wait_for_response=False)
-            logging.info(
-                "command %s sent successfully, did not check for response", command
-            )
-            return True
-        else:
-            response, content = self._llcom.telegram(
-                command, bytes_to_send, wait_for_response=True
-            )
-
-            if response in expected_response:
-                if content is not None and len(content) > 0:
-                    logging.debug(
-                        "command %s executed successfully, received %s with %d bytes payload",
-                        command,
-                        response,
-                        len(content),
-                    )
-                    return content
-                logging.debug(
-                    "command %s executed successfully, received %s without any payload",
-                    command,
-                    response,
-                )
-                return True
-
-            if response is lc.RSP.T_ER:
-                self._last_error_type, self._last_error_code = struct.unpack(
-                    "!BB", content
-                )
-                message = lt.get_error_text(
-                    self._last_error_type, self._last_error_code
-                )
+        if command is lc.CMD.C_CC:
+            if bytes_to_send is None or len(bytes_to_send) != 2:
                 logging.warning(
-                    "error received, type: %d, code: %d '%s'",
-                    self._last_error_type,
-                    self._last_error_code,
-                    message,
+                    "system command requires a payload of at exactly 2 bytes"
                 )
-            else:
-                logging.error(
-                    "received unexpected response %s to command %s. response code %s",
-                    response,
-                    command,
-                    content,
-                )
-                self._last_error_code = None
+                return False
 
+            c_cc_command = struct.unpack("!H", bytes_to_send)[0]
+            if c_cc_command not in self._known_sys_cmd:
+                logging.debug("unknown or unsupported system command %s", bytes_to_send)
+                return False
+
+        self._last_lsv2_response, lsv_content = self._llcom.telegram(
+            command, bytes_to_send
+        )
+
+        if self._last_lsv2_response is lc.RSP.UNKNOWN:
+            # TODO: handle unknown response
+            logging.warning("unknown response recived")
+            return False
+
+        if self._last_lsv2_response is lc.RSP.T_ER:
+            # TODO: handle transmission error
+            (self._last_error_type, self._last_error_code) = struct.unpack(
+                "!BB", lsv_content
+            )
+            message = lt.get_error_text(self._last_error_type, self._last_error_code)
+
+            logging.warning(
+                "error recived, type: %d, code: %d '%s'",
+                self._last_error_type,
+                self._last_error_code,
+                message,
+            )
+            return False
+
+        if self._last_lsv2_response is expected_response:
+            # expected response recived
+            logging.debug("expected response recived: %s", self._last_lsv2_response)
+            if len(lsv_content) > 0:
+                return lsv_content
+            return True
+
+        if expected_response is lc.RSP.NONE:
+            logging.warning("no response expected")
+            # TODO: no response expected
+            return False
+
+        # TODO: handle unexpected response
         return False
 
-    def _send_recive_block(self, command, expected_response, payload=None):
+    def _send_recive_block(
+        self,
+        command: lc.CMD,
+        payload: bytearray,
+        expected_response: lc.RSP = lc.RSP.NONE,
+    ):
         """takes a command and payload, sends it to the control and continues reading
         until the expected response is received."""
-        if payload is None:
-            bytes_to_send = bytearray()
-        else:
-            bytes_to_send = payload
+        bytes_to_send = payload
+
+        self._last_lsv2_response, lsv_content = self._llcom.telegram(
+            command, bytes_to_send
+        )
+
+        if self._last_lsv2_response is lc.RSP.UNKNOWN:
+            # handle unknown response
+            logging.warning("unknown response recived")
+            return False
+
+        if self._last_lsv2_response is lc.RSP.T_ER:
+            # TODO: handle transmission error
+            (self._last_error_type, self._last_error_code) = struct.unpack(
+                "!BB", lsv_content
+            )
+            message = lt.get_error_text(self._last_error_type, self._last_error_code)
+            logging.error(
+                "error recived, type: %d, code: %d '%s'",
+                self._last_error_type,
+                self._last_error_code,
+                message,
+            )
+            return False
+
+        if self._last_lsv2_response in lc.RSP.T_FD:
+            if len(lsv_content) > 0:
+                logging.error(
+                    "transfer should have finished without content but data recived: %s",
+                    lsv_content,
+                )
+            else:
+                logging.error("transfer finished without content")
+            return False
 
         response_buffer = list()
-        response, content = self._llcom.telegram(
-            command,
-            bytes_to_send,
-        )
-
-        if response in lc.RSP.T_ER:
-            self._last_error_type, self._last_error_code = struct.unpack("!BB", content)
-            message = lt.get_error_text(self._last_error_type, self._last_error_code)
-            logging.warning(
-                "error received, type: %d, code: %d '%s'",
-                self._last_error_type,
-                self._last_error_code,
-                message,
-            )
-        elif response in lc.RSP.T_FD:
-            logging.debug("Transfer is finished with no content")
-        elif response not in expected_response:
-            logging.error(
-                "received unexpected response %s block read for command %s. response code %s",
-                response,
-                command,
-                content,
-            )
-            raise Exception("received unexpected response {}".format(response))
-        else:
-            while response in expected_response:
-                response_buffer.append(content)
-                response, content = self._llcom.telegram(
-                    lc.RSP.T_OK,
+        if self._last_lsv2_response is expected_response:
+            # self._last_lsv2_response is expected_response:
+            # expected response recived
+            logging.debug("expected response recived: %s", self._last_lsv2_response)
+            while self._last_lsv2_response is expected_response:
+                response_buffer.append(lsv_content)
+                self._last_lsv2_response, lsv_content = self._llcom.telegram(
+                    command=lc.RSP.T_OK
                 )
-        return response_buffer
+            return response_buffer
 
-    def _send_recive_ack(self, command, payload=None):
-        """sends command and pyload to control, returns True on T_OK"""
-        if payload is None:
-            bytes_to_send = bytearray()
-        else:
-            bytes_to_send = payload
-
-        response, content = self._llcom.telegram(
-            command,
-            bytes_to_send,
+        logging.error(
+            "received unexpected response %s, with data %s",
+            self._last_lsv2_response,
+            lsv_content,
         )
-        if response in lc.RSP.T_OK:
-            return True
-
-        if response in lc.RSP.T_ER:
-            self._last_error_type, self._last_error_code = struct.unpack("!BB", content)
-            message = lt.get_error_text(self._last_error_type, self._last_error_code)
-            logging.warning(
-                "error received, type: %d, code: %d '%s'",
-                self._last_error_type,
-                self._last_error_code,
-                message,
-            )
-        else:
-            logging.error(
-                "received unexpected response %s to command %s. response code %s",
-                response,
-                command,
-                content,
-            )
         return False
 
     def _configure_connection(self):
@@ -328,7 +320,7 @@ class LSV2:
             payload.extend(map(ord, password))
             payload.append(0x00)
 
-        if self._send_recive_ack(lc.CMD.A_LG, payload):
+        if self._send_recive(lc.CMD.A_LG, payload, lc.RSP.T_OK):
             logging.info("login executed successfully for login %s", login)
             self._active_logins.append(login)
             return True
@@ -357,7 +349,7 @@ class LSV2:
                 # unknown login
                 return False
 
-        if self._send_recive_ack(lc.CMD.A_LO, payload):
+        if self._send_recive(lc.CMD.A_LO, payload, lc.RSP.T_OK):
             logging.info("logout executed successfully for login %s", login)
             if login is None:
                 self._active_logins = list()
@@ -381,7 +373,7 @@ class LSV2:
             if parameter is not None:
                 payload.extend(map(ord, parameter))
                 payload.append(0x00)
-            if self._send_recive_ack(lc.CMD.C_CC, payload):
+            if self._send_recive(lc.CMD.C_CC, payload, lc.RSP.T_OK):
                 return True
         logging.debug("unknown or unsupported system command")
         return False
@@ -398,7 +390,7 @@ class LSV2:
             logging.debug("version info already in memory, return previous values")
             return self._sys_par
 
-        result = self._send_recive(command=lc.CMD.R_PR, expected_response=lc.RSP.S_PR)
+        result = self._send_recive(lc.CMD.R_PR, None, lc.RSP.S_PR)
         if result:
             sys_par = lm.decode_system_parameters(result)
             logging.debug("got system parameters: %s", sys_par)
@@ -421,7 +413,7 @@ class LSV2:
             info_data = dict()
 
             result = self._send_recive(
-                lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.CONTROL)
+                lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
             if result:
                 info_data["Control"] = result.strip(b"\x00").decode("utf-8")
@@ -430,28 +422,32 @@ class LSV2:
 
             result = self._send_recive(
                 lc.CMD.R_VR,
+                struct.pack("!B", lc.ParRVR.NC_VERSION),
                 lc.RSP.S_VR,
-                payload=struct.pack("!B", lc.ParRVR.NC_VERSION),
             )
             if result:
                 info_data["NC_Version"] = result.strip(b"\x00").decode("utf-8")
 
             result = self._send_recive(
                 lc.CMD.R_VR,
+                struct.pack("!B", lc.ParRVR.PLC_VERSION),
                 lc.RSP.S_VR,
-                payload=struct.pack("!B", lc.ParRVR.PLC_VERSION),
             )
             if result:
                 info_data["PLC_Version"] = result.strip(b"\x00").decode("utf-8")
 
             result = self._send_recive(
-                lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.OPTIONS)
+                lc.CMD.R_VR,
+                struct.pack("!B", lc.ParRVR.OPTIONS),
+                lc.RSP.S_VR,
             )
             if result:
                 info_data["Options"] = result.strip(b"\x00").decode("utf-8")
 
             result = self._send_recive(
-                lc.CMD.R_VR, lc.RSP.S_VR, payload=struct.pack("!B", lc.ParRVR.ID)
+                lc.CMD.R_VR,
+                struct.pack("!B", lc.ParRVR.ID),
+                lc.RSP.S_VR,
             )
             if result:
                 info_data["ID"] = result.strip(b"\x00").decode("utf-8")
@@ -461,16 +457,16 @@ class LSV2:
             else:
                 result = self._send_recive(
                     lc.CMD.R_VR,
+                    struct.pack("!B", lc.ParRVR.RELEASE_TYPE),
                     lc.RSP.S_VR,
-                    payload=struct.pack("!B", lc.ParRVR.RELEASE_TYPE),
                 )
                 if result:
                     info_data["Release_Type"] = result.strip(b"\x00").decode("utf-8")
 
             result = self._send_recive(
                 lc.CMD.R_VR,
+                struct.pack("!B", lc.ParRVR.SPLC_VERSION),
                 lc.RSP.S_VR,
-                payload=struct.pack("!B", lc.ParRVR.SPLC_VERSION),
             )
             if result:
                 info_data["SPLC_Version"] = result.strip(b"\x00").decode("utf-8")
@@ -491,7 +487,7 @@ class LSV2:
         """
         if self.login(login=lc.Login.DNC):
             payload = struct.pack("!H", lc.ParRRI.PGM_STATE)
-            result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+            result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
             if isinstance(result, (bytearray,)):
                 logging.debug(
                     "successfully read state of active program: %s",
@@ -515,7 +511,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(struct.pack("!H", lc.ParRRI.SELECTED_PGM))
 
-        result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload=payload)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if result:
             stack_info = dict()
             stack_info["Line"] = struct.unpack("!L", result[:4])[0]
@@ -548,7 +544,7 @@ class LSV2:
         """
         if self.login(login=lc.Login.DNC):
             payload = struct.pack("!H", lc.ParRRI.EXEC_STATE)
-            result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+            result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
             if isinstance(result, (bytearray,)):
                 logging.debug("read execution state %d", struct.unpack("!H", result)[0])
                 return lc.ExecState(struct.unpack("!H", result)[0])
@@ -570,7 +566,7 @@ class LSV2:
                 remote_directory,
             )
 
-        result = self._send_recive(lc.CMD.R_DI, lc.RSP.S_DI)
+        result = self._send_recive(lc.CMD.R_DI, None, lc.RSP.S_DI)
         if result:
             dir_info = lm.decode_directory_info(result)
             logging.debug("successfully received directory information %s", dir_info)
@@ -591,7 +587,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, dir_path))
         payload.append(0x00)
-        if self._send_recive_ack(lc.CMD.C_DC, payload=payload):
+        if self._send_recive(lc.CMD.C_DC, payload, lc.RSP.T_OK):
             logging.debug("changed working directory to %s", dir_path)
             return True
 
@@ -610,7 +606,7 @@ class LSV2:
         payload.extend(map(ord, file_path))
         payload.append(0x00)
 
-        result = self._send_recive(lc.CMD.R_FI, lc.RSP.S_FI, payload=payload)
+        result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
         if result:
             file_info = lm.decode_file_system_info(result, self._control_type)
             logging.debug("successfully received file information %s", file_info)
@@ -634,7 +630,7 @@ class LSV2:
         payload = bytearray()
         payload.append(lc.ParRDR.SINGLE)
 
-        result = self._send_recive_block(lc.CMD.R_DR, lc.RSP.S_DR, payload)
+        result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
         logging.debug(
             "received %d entries for directory content information", len(result)
         )
@@ -654,7 +650,7 @@ class LSV2:
         payload = bytearray()
         payload.append(lc.ParRDR.DRIVES)
 
-        result = self._send_recive_block(lc.CMD.R_DR, lc.RSP.S_DR, payload)
+        result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
         logging.debug("received %d packet of for drive information", len(result))
         for entry in result:
             drives_list.append(entry)
@@ -680,7 +676,7 @@ class LSV2:
                 payload = bytearray()
                 payload.extend(map(ord, path_to_check))
                 payload.append(0x00)  # terminate string
-                if self._send_recive_ack(command=lc.CMD.C_DM, payload=payload):
+                if self._send_recive(lc.CMD.C_DM, payload, lc.RSP.T_OK):
                     logging.debug("Directory created successfully")
                 else:
                     raise Exception(
@@ -701,7 +697,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, dir_path))
         payload.append(0x00)
-        if not self._send_recive_ack(command=lc.CMD.C_DD, payload=payload):
+        if not self._send_recive(lc.CMD.C_DD, payload, lc.RSP.T_OK):
             logging.warning(
                 "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
                 dir_path,
@@ -721,7 +717,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, file_path))
         payload.append(0x00)
-        if not self._send_recive_ack(command=lc.CMD.C_FD, payload=payload):
+        if not self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
             logging.warning(
                 "an error occurred while deleting file %s, this might also indicate that it it does not exist",
                 file_path,
@@ -765,7 +761,7 @@ class LSV2:
             source_directory,
             target_path,
         )
-        if not self._send_recive_ack(command=lc.CMD.C_FC, payload=payload):
+        if not self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
             logging.warning(
                 "an error occurred copying file %s to %s", source_path, target_path
             )
@@ -807,7 +803,7 @@ class LSV2:
             source_directory,
             target_path,
         )
-        if not self._send_recive_ack(command=lc.CMD.C_FR, payload=payload):
+        if not self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
             logging.warning(
                 "an error occurred moving file %s to %s", source_path, target_path
             )
@@ -934,15 +930,11 @@ class LSV2:
 
             # signal that no more data is being sent
             if self._secure_file_send:
-                if not self._send_recive(
-                    command=lc.RSP.T_FD, expected_response=lc.RSP.T_OK, payload=None
-                ):
+                if not self._send_recive(lc.CMD.T_FD, None, lc.RSP.T_OK):
                     logging.error("could not send end of file with error")
                     return False
             else:
-                if not self._send_recive(
-                    command=lc.RSP.T_FD, expected_response=None, payload=None
-                ):
+                if not self._send_recive(lc.CMD.T_FD, None, lc.RSP.NONE):
                     logging.error("could not send end of file with error")
                     return False
 
@@ -1178,7 +1170,7 @@ class LSV2:
                     struct.pack("!L", start_address + address + i * mem_byte_count)
                 )
                 payload.extend(struct.pack("!B", mem_byte_count))
-                result = self._send_recive(lc.CMD.R_MB, lc.RSP.S_MB, payload=payload)
+                result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
                 if result:
                     logging.debug("read string %d", address + i * mem_byte_count)
                     plc_values.append(
@@ -1196,7 +1188,7 @@ class LSV2:
             payload = bytearray()
             payload.extend(struct.pack("!L", start_address + address))
             payload.extend(struct.pack("!B", count * mem_byte_count))
-            result = self._send_recive(lc.CMD.R_MB, lc.RSP.S_MB, payload=payload)
+            result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
             if result:
                 logging.debug("read %d value(s) from address %d", count, address)
                 for i in range(0, len(result), mem_byte_count):
@@ -1224,7 +1216,7 @@ class LSV2:
         else:
             payload.extend(struct.pack("!B", 0x01))
 
-        result = self._send_recive(lc.CMD.C_LK, lc.RSP.T_OK, payload=payload)
+        result = self._send_recive(lc.CMD.C_LK, payload, lc.RSP.T_OK)
         if result:
             if unlocked:
                 logging.debug("command to unlock keyboard was successful")
@@ -1245,7 +1237,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(map(ord, name))
         payload.append(0x00)
-        result = self._send_recive(lc.CMD.R_MC, lc.RSP.S_MC, payload=payload)
+        result = self._send_recive(lc.CMD.R_MC, payload, lc.RSP.S_MC)
         if result:
             value = result.rstrip(b"\x00").decode("utf8")
             logging.debug("machine parameter %s has value %s", name, value)
@@ -1275,7 +1267,7 @@ class LSV2:
         payload.extend(map(ord, value))
         payload.append(0x00)
 
-        result = self._send_recive(lc.CMD.C_MC, lc.RSP.T_OK, payload=payload)
+        result = self._send_recive(lc.CMD.C_MC, payload, lc.RSP.T_OK)
         if result:
             logging.debug(
                 "setting of machine parameter %s to value %s was successful",
@@ -1308,7 +1300,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(struct.pack("!H", key_code))
 
-        result = self._send_recive(lc.CMD.C_EK, lc.RSP.T_OK, payload=payload)
+        result = self._send_recive(lc.CMD.C_EK, payload, lc.RSP.T_OK)
         if result:
             logging.debug("sending the key code %d was successful", key_code)
             return True
@@ -1325,7 +1317,7 @@ class LSV2:
         self.login(login=lc.Login.DNC)
         payload = bytearray()
         payload.extend(struct.pack("!H", lc.ParRRI.CURRENT_TOOL))
-        result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if result:
             tool_info = lm.decode_tool_information(result)
             logging.debug("successfully read info on current tool: %s", tool_info)
@@ -1344,7 +1336,7 @@ class LSV2:
         self.login(login=lc.Login.DNC)
         payload = bytearray()
         payload.extend(struct.pack("!H", lc.ParRRI.OVERRIDE))
-        result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if result:
             override_info = lm.decode_override_information(result)
             logging.debug("successfully read override info: %s", override_info)
@@ -1366,17 +1358,17 @@ class LSV2:
 
         payload = bytearray()
         payload.extend(struct.pack("!H", lc.ParRRI.FIRST_ERROR))
-        result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if result:
             messages.append(lm.decode_error_message(result))
             payload = bytearray()
             payload.extend(struct.pack("!H", lc.ParRRI.NEXT_ERROR))
-            result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+            result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
             logging.debug("successfully read first error but further errors")
 
             while result:
                 messages.append(lm.decode_error_message(result))
-                result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+                result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
 
             if self._last_error_code[1] == lc.LSV2Err.T_ER_NO_NEXT_ERROR:
                 logging.debug("successfully read all errors")
@@ -1467,7 +1459,7 @@ class LSV2:
         payload.extend(map(ord, path))
         payload.append(0x00)  # escape string
 
-        result = self._send_recive(lc.CMD.R_DP, lc.RSP.S_DP, payload)
+        result = self._send_recive(lc.CMD.R_DP, payload, lc.RSP.S_DP)
 
         if result:
             value_type = struct.unpack("!L", result[0:4])[0]
@@ -1511,7 +1503,7 @@ class LSV2:
         payload = bytearray()
         payload.extend(struct.pack("!H", lc.ParRRI.AXIS_LOCATION))
 
-        result = self._send_recive(lc.CMD.R_RI, lc.RSP.S_RI, payload)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if result:
             # unknown = result[0:1] # <- ???
             number_of_axes = struct.unpack("!b", result[1:2])[0]

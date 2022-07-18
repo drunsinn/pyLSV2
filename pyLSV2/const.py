@@ -829,6 +829,10 @@ class CMD(str, Enum):
     """request window definiton.
     requires MONITOR login priviliege"""
 
+    T_FD = "T_FD"
+    """file transfer done
+    requires FILE login priviliege"""
+
     NONE = "NONE"
     """not a valid command but used internaly"""
 
@@ -892,7 +896,6 @@ class RSP(str, Enum):
 
     UNKNOWN = "UNKN"
     """not a valid respons but used internaly ot signal an unknown response was recived"""
-
 
 
 class ParCCC(IntEnum):

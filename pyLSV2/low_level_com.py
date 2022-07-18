@@ -4,6 +4,7 @@
 import logging
 import socket
 import struct
+from typing import Tuple
 from .const import RSP
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -81,8 +82,9 @@ class LLLSV2Com:
         logging.debug("Connection to %s closed", self._host_ip)
 
     def set_buffer_size(self, buffer_size: int) -> bool:
-        """set the size of the send and recive buffer. the size has to be established during connection setup.
-        buffer size has to be at least 8 so command and lenght fit into the telegram"""
+        """set the size of the send and recive buffer. the size has to be established
+        during connection setup. buffer size has to be at least 8 so command and lenght
+        fit into the telegram"""
         if buffer_size < 8:
             self._buffer_size = self.DEFAULT_BUFFER_SIZE
             logging.warning(
@@ -97,7 +99,9 @@ class LLLSV2Com:
         """return current send/recive buffer size"""
         return self._buffer_size
 
-    def telegram(self, command, payload: bytearray = bytearray(), wait_for_response: bool = True):
+    def telegram(
+        self, command, payload: bytearray = bytearray(), wait_for_response: bool = True
+    ) -> Tuple[RSP, bytearray]:
         """Send LSV2 telegram and receive response if necessary.
 
         :param str command: command string.
@@ -179,6 +183,6 @@ class LLLSV2Com:
                     )
                     raise
         else:
-            response_content = None
+            response_content = bytearray()
 
         return response_command, response_content
