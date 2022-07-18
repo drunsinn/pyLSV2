@@ -9,6 +9,7 @@
 import logging
 import re
 import struct
+from typing import Union
 from pathlib import Path
 
 from . import const as lc
@@ -20,9 +21,7 @@ from .low_level_com import LLLSV2Com
 class LSV2:
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
 
-    def __init__(
-        self, hostname, port=0, timeout=15.0, safe_mode=True, locale_path=None
-    ):
+    def __init__(self, hostname:str, port:int=0, timeout:float=15.0, safe_mode:bool=True):
         """init object variables and create socket"""
         logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -100,7 +99,7 @@ class LSV2:
 
     def _send_recive(
         self, command: lc.CMD, payload=None, expected_response: lc.RSP = lc.RSP.NONE
-    ):
+    ) -> Union[bool, bytearray]:
         """takes a command and payload, sends it to the control and checks
         if the response is as expected. Returns content if not an error"""
 
@@ -165,7 +164,7 @@ class LSV2:
         command: lc.CMD,
         payload: bytearray,
         expected_response: lc.RSP = lc.RSP.NONE,
-    ):
+    ) -> Union[bool, list]:
         """takes a command and payload, sends it to the control and continues reading
         until the expected response is received."""
         bytes_to_send = payload
@@ -278,7 +277,7 @@ class LSV2:
             self._llcom.set_buffer_size(selected_size)
         else:
             logging.debug("use buffer size of %d", selected_size)
-            if self.set_system_command(selected_command):
+            if self._send_recive(lc.CMD.C_CC, struct.pack("!H", selected_command), lc.RSP.T_OK):
                 self._llcom.set_buffer_size(selected_size)
             else:
                 raise Exception(
@@ -286,7 +285,7 @@ class LSV2:
                     % selected_size
                 )
 
-        if not self.set_system_command(lc.ParCCC.SECURE_FILE_SEND):
+        if not self._send_recive(lc.CMD.C_CC, struct.pack("!H", lc.ParCCC.SECURE_FILE_SEND), lc.RSP.T_OK):
             logging.info("secure file transfer not supported? use fallback")
             self._secure_file_send = False
         else:
@@ -358,8 +357,10 @@ class LSV2:
             return True
         return False
 
-    def set_system_command(self, command, parameter=None):
-        """Execute a system command on the control if command is one a known value. If safe mode is active, some of the
+    def set_system_command(self, command:lc.ParCCC, parameter: str = ""):
+        """
+        this function is deprecated!
+        Execute a system command on the control if command is one a known value. If safe mode is active, some of the
         commands are disabled. If necessary additinal parameters can be supplied.
 
         :param int command: system command
@@ -367,16 +368,12 @@ class LSV2:
         :returns: True if execution was successful
         :rtype: bool
         """
-        if command in self._known_sys_cmd:
-            payload = bytearray()
-            payload.extend(struct.pack("!H", command))
-            if parameter is not None:
-                payload.extend(map(ord, parameter))
-                payload.append(0x00)
-            if self._send_recive(lc.CMD.C_CC, payload, lc.RSP.T_OK):
-                return True
-        logging.debug("unknown or unsupported system command")
-        return False
+        bytes_to_send = bytearray()
+        bytes_to_send.extend(struct.pack("!H", command))
+        if len(parameter) > 0:
+            bytes_to_send.extend(map(ord, parameter))
+            bytes_to_send.append(0x00)
+        return self._send_recive(lc.CMD.C_CC, bytes_to_send, lc.RSP.T_OK)
 
     def get_system_parameter(self, force: bool = False):
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
