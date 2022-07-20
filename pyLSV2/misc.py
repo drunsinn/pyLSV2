@@ -4,14 +4,15 @@
 import struct
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 
 from .const import PATH_SEP, ControlType, BIN_FILES
 
 
-def decode_system_parameters(result_set):
+def decode_system_parameters(result_set: bytearray):
     """decode the result system parameter query
 
-    :param tuple result_set: bytes returned by the system parameter query command R_PR
+    :param bytearray result_set: bytes returned by the system parameter query command R_PR
     :returns: dictionary with system parameter values
     :rtype: dict
     """
@@ -62,10 +63,12 @@ def decode_system_parameters(result_set):
     return sys_par
 
 
-def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
+def decode_file_system_info(
+    data_set: bytearray, control_type: ControlType = ControlType.UNKNOWN
+):
     """decode result from file system entry
 
-    :param tuple result_set: bytes returned by the system parameter query command R_FI or CR_DR
+    :param bytearray result_set: bytes returned by the system parameter query command R_FI or CR_DR
     :returns: dictionary with file system entry parameters
     :rtype: dict
     """
@@ -103,10 +106,10 @@ def decode_file_system_info(data_set, control_type=ControlType.UNKNOWN):
     return file_info
 
 
-def decode_directory_info(data_set):
+def decode_directory_info(data_set: bytearray):
     """decode result from directory entry
 
-    :param tuple result_set: bytes returned by the system parameter query command R_DI
+    :param bytearray result_set: bytes returned by the system parameter query command R_DI
     :returns: dictionary with file system entry parameters
     :rtype: dict
     """
@@ -126,10 +129,10 @@ def decode_directory_info(data_set):
     return dir_info
 
 
-def decode_tool_information(data_set):
+def decode_tool_information(data_set: bytearray):
     """decode result from tool info
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for tool info
+    :param bytearray result_set: bytes returned by the system parameter query command R_RI for tool info
     :returns: dictionary with tool info values
     :rtype: dict
     """
@@ -148,10 +151,10 @@ def decode_tool_information(data_set):
     return tool_info
 
 
-def decode_override_information(data_set):
+def decode_override_information(data_set: bytearray):
     """decode result from override info
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+    :param bytearray result_set: bytes returned by the system parameter query command R_RI for
                              override info
     :returns: dictionary with override info values
     :rtype: dict
@@ -164,10 +167,10 @@ def decode_override_information(data_set):
     return override_info
 
 
-def decode_error_message(data_set):
+def decode_error_message(data_set: bytearray):
     """decode result from reading error messages
 
-    :param tuple result_set: bytes returned by the system parameter query command R_RI for
+    :param bytearray result_set: bytes returned by the system parameter query command R_RI for
                              first and next error
     :returns: dictionary with error message values
     :rtype: dict
@@ -179,10 +182,16 @@ def decode_error_message(data_set):
     error_info["Text"] = ba_to_ustr(data_set[8:])
     return error_info
 
+def decode_stack_info(data_set: bytearray):
+    stack_info = dict()
+    stack_info["Line"] = struct.unpack("!L", data_set[:4])[0]
+    stack_info["Main_PGM"] = ba_to_ustr(data_set[4:].split(b"\x00")[0])
+    stack_info["Current_PGM"] = ba_to_ustr(data_set[4:].split(b"\x00")[1])
+    return stack_info
 
-def is_file_binary(file_name):
+def is_file_binary(file_name: Union[str, Path]) -> bool:
     """Check if file is expected to be binary by comparing with known expentions.
-    
+
     :param file_name: name of the file to check
     :returns: True if file matches know binary file type
     :rtype: bool
@@ -194,6 +203,7 @@ def is_file_binary(file_name):
         elif file_name.endswith(bin_type):
             return True
     return False
+
 
 def ba_to_ustr(bytes_to_convert: bytearray) -> str:
     """convert a bytearry of characters to unicode string"""
