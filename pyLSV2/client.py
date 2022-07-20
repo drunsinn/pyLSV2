@@ -38,7 +38,7 @@ class LSV2:
         self.switch_safe_mode(safe_mode)
 
         self._versions = lm.VersionInfo()
-        self._sys_par = dict()
+        self._sys_par = lm.SystemParameters()
         self._secure_file_send = False
         self._control_type = lc.ControlType.UNKNOWN
 
@@ -240,37 +240,36 @@ class LSV2:
         self.get_versions()
 
         self.get_system_parameter()
-        max_block_length = self._sys_par["Max_Block_Length"]
 
         logging.info(
             "setting connection settings for %s and block length %s",
             self._versions.control_type,
-            max_block_length,
+            self._sys_par.max_block_length,
         )
 
         selected_size = -1
         selected_command = None
-        if max_block_length >= 4096:
+        if self._sys_par.max_block_length >= 4096:
             selected_size = 4096
             selected_command = lc.ParCCC.SET_BUF4096
-        elif 3072 <= max_block_length < 4096:
+        elif 3072 <= self._sys_par.max_block_length < 4096:
             selected_size = 3072
             selected_command = lc.ParCCC.SET_BUF3072
-        elif 2048 <= max_block_length < 3072:
+        elif 2048 <= self._sys_par.max_block_length < 3072:
             selected_size = 2048
             selected_command = lc.ParCCC.SET_BUF2048
-        elif 1024 <= max_block_length < 2048:
+        elif 1024 <= self._sys_par.max_block_length < 2048:
             selected_size = 1024
             selected_command = lc.ParCCC.SET_BUF1024
-        elif 512 <= max_block_length < 1024:
+        elif 512 <= self._sys_par.max_block_length < 1024:
             selected_size = 512
             selected_command = lc.ParCCC.SET_BUF512
-        elif 256 <= max_block_length < 512:
+        elif 256 <= self._sys_par.max_block_length < 512:
             selected_size = 256
         else:
             logging.error(
                 "could not decide on a buffer size for maximum message length of %d",
-                max_block_length,
+                self._sys_par.max_block_length,
             )
             raise Exception("unknown buffer size")
 
@@ -381,7 +380,7 @@ class LSV2:
             bytes_to_send.append(0x00)
         return self._send_recive(lc.CMD.C_CC, bytes_to_send, lc.RSP.T_OK)
 
-    def get_system_parameter(self, force: bool = False) -> dict:
+    def get_system_parameter(self, force: bool = False) -> lm.SystemParameters:
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
         possible to manually re-read the information form the control
 
@@ -389,17 +388,16 @@ class LSV2:
         :returns: dictionary with system parameters like number of plc variables, supported lsv2 version etc.
         :rtype: dict
         """
-        if len(self._sys_par) > 0 and force is False:
+        if self._sys_par.lsv2_version != -1 and force is False:
             logging.debug("version info already in memory, return previous values")
-            return self._sys_par
-
-        result = self._send_recive(lc.CMD.R_PR, None, lc.RSP.S_PR)
-        if isinstance(result, (bytearray,)):
-            self._sys_par = lm.decode_system_parameters(result)
-            logging.debug("got system parameters: %s", self._sys_par)
-            return self._sys_par
-        logging.error("an error occurred while querying system parameters")
-        return dict()
+        else:
+            result = self._send_recive(lc.CMD.R_PR, None, lc.RSP.S_PR)
+            if isinstance(result, (bytearray,)):
+                self._sys_par = lm.decode_system_parameters(result)
+                logging.debug("got system parameters: %s", self._sys_par)
+            else:
+                logging.error("an error occurred while querying system parameters")
+        return self._sys_par
 
     def get_versions(self, force=False) -> lm.VersionInfo:
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
@@ -1126,7 +1124,7 @@ class LSV2:
         :raises Exception: raises an Exception
         """
 
-        if len(self._sys_par) == 0:
+        if self._sys_par.lsv2_version != -1:
             self.get_system_parameter()
 
         if not self.login(login=lc.Login.PLCDEBUG):
@@ -1138,58 +1136,58 @@ class LSV2:
             return list()
 
         if mem_type is lc.MemoryType.MARKER:
-            start_address = self._sys_par["Marker_Start"]
-            max_count = self._sys_par["Markers"]
+            start_address = self._sys_par.markers_start_address
+            max_count = self._sys_par.number_of_markers
             mem_byte_count = 1
             unpack_string = "!?"
         elif mem_type is lc.MemoryType.INPUT:
-            start_address = self._sys_par["Input_Start"]
-            max_count = self._sys_par["Inputs"]
+            start_address = self._sys_par.inputs_start_address
+            max_count = self._sys_par.number_of_inputs
             mem_byte_count = 1
             unpack_string = "!?"
         elif mem_type is lc.MemoryType.OUTPUT:
-            start_address = self._sys_par["Output_Start"]
-            max_count = self._sys_par["Outputs"]
+            start_address = self._sys_par.outputs_start_address
+            max_count = self._sys_par.number_of_outputs
             mem_byte_count = 1
             unpack_string = "!?"
         elif mem_type is lc.MemoryType.COUNTER:
-            start_address = self._sys_par["Counter_Start"]
-            max_count = self._sys_par["Counters"]
+            start_address = self._sys_par.counters_start_address
+            max_count = self._sys_par.number_of_counters
             mem_byte_count = 1
             unpack_string = "!?"
         elif mem_type is lc.MemoryType.TIMER:
-            start_address = self._sys_par["Timer_Start"]
-            max_count = self._sys_par["Timers"]
+            start_address = self._sys_par.timers_start_address
+            max_count = self._sys_par.number_of_timers
             mem_byte_count = 1
             unpack_string = "!?"
         elif mem_type is lc.MemoryType.BYTE:
-            start_address = self._sys_par["Word_Start"]
-            max_count = self._sys_par["Words"] * 2
+            start_address = self._sys_par.words_start_address
+            max_count = self._sys_par.number_of_words * 2
             mem_byte_count = 1
             unpack_string = "!B"
         elif mem_type is lc.MemoryType.WORD:
-            start_address = self._sys_par["Word_Start"]
-            max_count = self._sys_par["Words"]
+            start_address = self._sys_par.words_start_address
+            max_count = self._sys_par.number_of_words
             mem_byte_count = 2
             unpack_string = "<H"
         elif mem_type is lc.MemoryType.DWORD:
-            start_address = self._sys_par["Word_Start"]
-            max_count = self._sys_par["Words"] / 4
+            start_address = self._sys_par.words_start_address
+            max_count = self._sys_par.number_of_words / 4
             mem_byte_count = 4
             unpack_string = "<L"
         elif mem_type is lc.MemoryType.STRING:
-            start_address = self._sys_par["String_Start"]
-            max_count = self._sys_par["Strings"]
-            mem_byte_count = self._sys_par["String_Length"]
+            start_address = self._sys_par.strings_start_address
+            max_count = self._sys_par.number_of_strings
+            mem_byte_count = self._sys_par.max_string_lenght
             unpack_string = "{}s".format(mem_byte_count)
         elif mem_type is lc.MemoryType.INPUT_WORD:
-            start_address = self._sys_par["Input_Word_Start"]
-            max_count = self._sys_par["Input"]
+            start_address = self._sys_par.input_words_start_address
+            max_count = self._sys_par.number_of_input_words
             mem_byte_count = 2
             unpack_string = "<H"
         else:  # mem_type is lc.MemoryType.OUTPUT_WORD:
-            start_address = self._sys_par["Output_Word_Start"]
-            max_count = self._sys_par["Output_Words"]
+            start_address = self._sys_par.output_words_start_address
+            max_count = self._sys_par.number_of_output_words
             mem_byte_count = 2
             unpack_string = "<H"
 

@@ -33,7 +33,7 @@ class SystemParameters:
     inputs_start_address: int = -1
     number_of_inputs: int = -1
 
-    outputs_start_addres: int = -1
+    outputs_start_address: int = -1
     number_of_outputs: int = -1
 
     counters_start_address: int = -1
@@ -77,7 +77,7 @@ class SystemParameters:
 
 
 
-def decode_system_parameters(result_set: bytearray):
+def decode_system_parameters(result_set: bytearray) -> SystemParameters:
     """decode the result system parameter query
 
     :param bytearray result_set: bytes returned by the system parameter query command R_PR
@@ -96,38 +96,52 @@ def decode_system_parameters(result_set: bytearray):
                 message_length, result_set
             )
         )
-    sys_par = dict()
-    sys_par["Marker_Start"] = info_list[0]
-    sys_par["Markers"] = info_list[1]
-    sys_par["Input_Start"] = info_list[2]
-    sys_par["Inputs"] = info_list[3]
-    sys_par["Output_Start"] = info_list[4]
-    sys_par["Outputs"] = info_list[5]
-    sys_par["Counter_Start"] = info_list[6]
-    sys_par["Counters"] = info_list[7]
-    sys_par["Timer_Start"] = info_list[8]
-    sys_par["Timers"] = info_list[9]
-    sys_par["Word_Start"] = info_list[10]
-    sys_par["Words"] = info_list[11]
-    sys_par["String_Start"] = info_list[12]
-    sys_par["Strings"] = info_list[13]
-    sys_par["String_Length"] = info_list[14]
-    sys_par["Input_Word_Start"] = info_list[22]
-    sys_par["Input Words"] = info_list[23]
-    sys_par["Output_Word_Start"] = info_list[24]
-    sys_par["Output_Words"] = info_list[25]
-    sys_par["LSV2_Version"] = info_list[30]
-    sys_par["LSV2_Version_Flags"] = info_list[31]
-    sys_par["Max_Block_Length"] = info_list[32]
-    sys_par["HDH_Bin_Version"] = info_list[33]
-    sys_par["HDH_Bin_Revision"] = info_list[34]
-    sys_par["ISO_Bin_Version"] = info_list[35]
-    sys_par["ISO_Bin_Revision"] = info_list[36]
-    sys_par["HardwareVersion"] = info_list[37]
-    sys_par["LSV2_Version_Flags_Ex"] = info_list[38]
-    sys_par["Max_Trace_Line"] = info_list[39]
-    sys_par["Scope_Channels"] = info_list[40]
-    sys_par["PW_Encryption_Key"] = info_list[41]
+    sys_par = SystemParameters()
+    sys_par.markers_start_address = info_list[0]
+    sys_par.number_of_markers = info_list[1]
+
+    sys_par.inputs_start_address = info_list[2]
+    sys_par.number_of_inputs = info_list[3]
+
+    sys_par.outputs_start_address = info_list[4]
+    sys_par.number_of_outputs = info_list[5]
+
+    sys_par.counters_start_address = info_list[6]
+    sys_par.number_of_counters = info_list[7]
+
+    sys_par.timers_start_address = info_list[8]
+    sys_par.number_of_timers = info_list[9]
+
+    sys_par.words_start_address = info_list[10]
+    sys_par.number_of_words = info_list[11]
+
+    sys_par.strings_start_address = info_list[12]
+    sys_par.number_of_strings = info_list[13]
+    sys_par.max_string_lenght = info_list[14]
+
+    sys_par.input_words_start_address = info_list[22]
+    sys_par.number_of_input_words = info_list[23]
+
+    sys_par.output_words_start_address = info_list[24]
+    sys_par.number_of_output_words = info_list[25]
+
+    sys_par.lsv2_version = info_list[30]
+    sys_par.lsv2_version_flags = info_list[31]
+    sys_par.lsv2_version_flags_ex = info_list[38]
+
+    sys_par.max_block_length = info_list[32]
+
+    sys_par.bin_version = info_list[33]
+    sys_par.bin_revision = info_list[34]
+
+    sys_par.iso_version = info_list[35]
+    sys_par.iso_revision = info_list[36]
+
+    sys_par.hardware_version = info_list[37]
+
+    sys_par.max_trace_line = info_list[39]
+    sys_par.number_of_scope_channels = info_list[40]
+    sys_par.password_encryption_key = info_list[41]
     return sys_par
 
 
