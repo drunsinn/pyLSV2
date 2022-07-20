@@ -6,7 +6,75 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
+from dataclasses import dataclass
+
 from .const import PATH_SEP, ControlType, BIN_FILES
+
+
+@dataclass
+class VersionInfo:
+    """data class for version information"""
+    control_version: str = ""
+    control_type: ControlType = ControlType.UNKNOWN
+    nc_version: str = ""
+    plc_version: str = ""
+    splc_version: str = ""
+    option_bits: str = ""
+    id_number: str = ""
+    release_type: str = ""
+
+
+@dataclass
+class SystemParameters:
+    """"""
+    markers_start_address: int = -1
+    number_of_markers: int = -1
+
+    inputs_start_address: int = -1
+    number_of_inputs: int = -1
+
+    outputs_start_addres: int = -1
+    number_of_outputs: int = -1
+
+    counters_start_address: int = -1
+    number_of_counters: int = -1
+
+    timers_start_address: int = -1
+    number_of_timers: int = -1
+
+    words_start_address: int = -1
+    number_of_words: int = -1
+
+    strings_start_address: int = -1
+    number_of_strings: int = -1
+    max_string_lenght: int = -1
+
+    input_words_start_address: int = -1
+    number_of_input_words: int = -1
+
+    output_words_start_address: int = -1
+    number_of_output_words: int = -1
+
+    lsv2_version: int = -1
+    lsv2_version_flags: int = -1
+    lsv2_version_flags_ex: int = -1
+
+    max_block_length: int = -1
+
+    bin_version: int = -1
+    bin_revision: int = -1
+
+    iso_version: int = -1
+    iso_revision: int = -1
+
+    hardware_version: int = -1
+
+    max_trace_line: int = -1
+    number_of_scope_channels: int = -1
+    password_encryption_key: int = -1
+
+
+
 
 
 def decode_system_parameters(result_set: bytearray):

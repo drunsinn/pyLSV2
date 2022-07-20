@@ -37,7 +37,7 @@ class LSV2:
 
         self.switch_safe_mode(safe_mode)
 
-        self._versions = dict()
+        self._versions = lm.VersionInfo()
         self._sys_par = dict()
         self._secure_file_send = False
         self._control_type = lc.ControlType.UNKNOWN
@@ -238,26 +238,15 @@ class LSV2:
         self.login(login=lc.Login.INSPECT)
 
         self.get_versions()
-        control_type = self._versions["Control"]
 
         self.get_system_parameter()
         max_block_length = self._sys_par["Max_Block_Length"]
 
         logging.info(
             "setting connection settings for %s and block length %s",
-            control_type,
+            self._versions.control_type,
             max_block_length,
         )
-
-        if control_type in ("TNC640", "TNC620", "TNC320", "TNC128"):
-            self._control_type = lc.ControlType.MILL_NEW
-        elif control_type in ("iTNC530", "iTNC530 Programm"):
-            self._control_type = lc.ControlType.MILL_OLD
-        elif control_type in ("CNCPILOT640",):
-            self._control_type = lc.ControlType.LATHE_NEW
-        else:
-            logging.warning("Unknown control type, treat machine as new style mill")
-            self._control_type = lc.ControlType.MILL_NEW
 
         selected_size = -1
         selected_command = None
@@ -412,7 +401,7 @@ class LSV2:
         logging.error("an error occurred while querying system parameters")
         return dict()
 
-    def get_versions(self, force=False) -> dict:
+    def get_versions(self, force=False) -> lm.VersionInfo:
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
         possible to manually re-read the information form the control
 
@@ -420,18 +409,28 @@ class LSV2:
         :returns: dictionary with version text for control type, nc software, plc software, software options etc.
         :rtype: dict
         """
-        if len(self._versions) > 0 and force is False:
+        if len(self._versions.control_version) > 0 and force is False:
             logging.debug("version info already in memory, return previous values")
         else:
-            info_data = dict()
+            info_data = lm.VersionInfo()
 
             result = self._send_recive(
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data["Control"] = lm.ba_to_ustr(result)
+                info_data.control_version = lm.ba_to_ustr(result)
             else:
                 raise Exception("Could not read version information from control")
+
+            if info_data.control_version in ("TNC640", "TNC620", "TNC320", "TNC128"):
+                info_data.control_type = lc.ControlType.MILL_NEW
+            elif info_data.control_version in ("iTNC530", "iTNC530 Programm"):
+                info_data.control_type = lc.ControlType.MILL_OLD
+            elif info_data.control_version in ("CNCPILOT640",):
+                info_data.control_type = lc.ControlType.LATHE_NEW
+            else:
+                logging.warning("Unknown control type, treat machine as new style mill")
+                info_data.control_type = lc.ControlType.MILL_NEW
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -439,7 +438,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data["NC_Version"] = lm.ba_to_ustr(result)
+                info_data.nc_version = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -447,7 +446,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data["PLC_Version"] = lm.ba_to_ustr(result)
+                info_data.plc_version = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -455,7 +454,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data["Options"] = lm.ba_to_ustr(result)
+                info_data.option_bits = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -463,10 +462,10 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data["ID"] = lm.ba_to_ustr(result)
+                info_data.id_number= lm.ba_to_ustr(result)
 
             if self.is_itnc():
-                info_data["Release_Type"] = "not supported"
+                info_data.release_type = "not supported"
             else:
                 result = self._send_recive(
                     lc.CMD.R_VR,
@@ -474,7 +473,7 @@ class LSV2:
                     lc.RSP.S_VR,
                 )
                 if isinstance(result, (bytearray,)) and len(result) > 0:
-                    info_data["Release_Type"] = lm.ba_to_ustr(result)
+                    info_data.release_type = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -482,9 +481,9 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data["SPLC_Version"] = lm.ba_to_ustr(result)
+                info_data.splc_version = lm.ba_to_ustr(result)
             else:
-                info_data["SPLC_Version"] = "not supported"
+                info_data.splc_version = "not supported"
 
             logging.debug("got version info: %s", info_data)
             self._versions = info_data
