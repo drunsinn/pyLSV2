@@ -71,7 +71,7 @@ def test_read_error_messages(address, timeout):
 
 
 def test_read_axes_location(address, timeout):
-    """test if reading error messages on iTNC works"""
+    """test if reading axis location works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
     assert lsv2.get_axes_location() is not False

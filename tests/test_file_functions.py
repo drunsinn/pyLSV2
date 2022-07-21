@@ -34,7 +34,7 @@ def test_directory_functions(address, timeout):
     """test if functions to change, create and delete directories work"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
 
-    test_dir = "TNC:/nc_prog/pyLSV2_test/"
+    test_dir = "TNC:\\nc_prog\\pyLSV2_test\\"
 
     lsv2.connect()
     assert lsv2.change_directory("TNC:\\nc_prog") is True
@@ -107,7 +107,7 @@ def test_remote_file_functions(address, timeout):
     assert lsv2.get_file_info(test_file_3) is not False
 
     assert lsv2.delete_file(test_file_3) is True
-    assert lsv2.get_file_info(test_file_3) is False
+    assert len(lsv2.get_file_info(test_file_3)) == 0
 
     assert lsv2.delete_file(test_file_1) is True
 

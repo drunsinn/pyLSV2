@@ -420,7 +420,7 @@ class LSV2:
         :returns: dictionary with version text for control type, nc software, plc software, software options etc.
         :rtype: dict
         """
-        if self._versions is not None and force is False:
+        if len(self._versions) > 0 and force is False:
             logging.debug("version info already in memory, return previous values")
         else:
             info_data = dict()
@@ -688,11 +688,12 @@ class LSV2:
         for part in path_parts:
             path_to_check += part + lc.PATH_SEP
             # no file info -> does not exist and has to be created
-            if self.get_file_info(path_to_check) is False:
+            if len(self.get_file_info(path_to_check)) == 0:
                 payload = bytearray()
                 payload.extend(map(ord, path_to_check))
                 payload.append(0x00)  # terminate string
-                if self._send_recive(lc.CMD.C_DM, payload, lc.RSP.T_OK):
+                result = self._send_recive(lc.CMD.C_DM, payload, lc.RSP.T_OK)
+                if isinstance(result, (bool,)) and result is True:
                     logging.debug("Directory created successfully")
                 else:
                     logging.error(
@@ -711,17 +712,17 @@ class LSV2:
         :rtype: bool
         """
         dir_path = dir_path.replace("/", lc.PATH_SEP)
-        payload = bytearray()
-        payload.extend(map(ord, dir_path))
+        payload = bytearray(map(ord, dir_path))
         payload.append(0x00)
-        if not self._send_recive(lc.CMD.C_DD, payload, lc.RSP.T_OK):
-            logging.warning(
-                "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
-                dir_path,
-            )
-            return False
-        logging.debug("successfully deleted directory %s", dir_path)
-        return True
+        result = self._send_recive(lc.CMD.C_DD, payload, lc.RSP.T_OK)
+        if isinstance(result, (bool)) and result is True:
+            logging.debug("successfully deleted directory %s", dir_path)
+            return True
+        logging.warning(
+            "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
+            dir_path,
+        )
+        return False
 
     def delete_file(self, file_path: str) -> bool:
         """Delete file on control

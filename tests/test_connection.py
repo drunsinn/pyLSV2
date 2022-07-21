@@ -27,3 +27,19 @@ def test_context_manager(address, timeout):
     """test if login and basic query works"""
     with pyLSV2.LSV2(address, port=19000, timeout=timeout) as lsv2:
         assert lsv2.get_versions() is not False
+
+def test_switching_safe_mode(address, timeout):
+    """check if enabeling and diabeling safe mode works"""
+    with pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True) as lsv2:
+        assert lsv2.login(login=pyLSV2.Login.DNC) is False
+        lsv2.switch_safe_mode(enable_safe_mode=False)
+        assert lsv2.login(login=pyLSV2.Login.DNC) is True
+        lsv2.logout(login=pyLSV2.Login.DNC)
+        lsv2.switch_safe_mode(enable_safe_mode=True)
+        assert lsv2.login(login=pyLSV2.Login.DNC) is False
+
+def test_login_with_password(address, timeout):
+    """check if logging in with a password works"""
+    with pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False) as lsv2:
+        assert lsv2.login(login=pyLSV2.Login.FILEPLC) is False
+        assert lsv2.login(login=pyLSV2.Login.FILEPLC, password="807667") is True
