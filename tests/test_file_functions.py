@@ -113,7 +113,7 @@ def test_remote_file_functions(address, timeout):
 
 
 def test_path_formating(address, timeout):
-    """test if reading of file information with / instead of \\ as path seperator"""
+    """test if reading of file information with / instead of \\ as path separator"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
