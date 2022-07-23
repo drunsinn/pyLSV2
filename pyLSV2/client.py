@@ -1168,6 +1168,9 @@ class LSV2:
         :returns: True or False if command was executed successfully
         :rtype: bool
         """
+        if not self.login(Login.MONITOR):
+            logging.error("clould not log in as user MONITOR")
+            return False
 
         payload = bytearray()
         if unlocked:
@@ -1256,6 +1259,10 @@ class LSV2:
         :returns: True or False if command was executed successfully
         :rtype: bool
         """
+        if not self.login(Login.MONITOR):
+            logging.error("clould not log in as user MONITOR")
+            return False
+
         payload = bytearray()
         payload.extend(struct.pack("!H", key_code))
 
