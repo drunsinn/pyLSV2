@@ -1246,6 +1246,9 @@ class LSV2:
         :returns: True or False if command was executed successfully
         :rtype: bool
         """
+        if not self.login(Login.MONITOR):
+            logging.error("clould not log in as user MONITOR")
+            return False
 
         payload = bytearray()
         if unlocked:
@@ -1334,6 +1337,10 @@ class LSV2:
         :returns: True or False if command was executed successfully
         :rtype: bool
         """
+        if not self.login(Login.MONITOR):
+            logging.error("clould not log in as user MONITOR")
+            return False
+
         payload = bytearray()
         payload.extend(struct.pack("!H", key_code))
 
@@ -1440,7 +1447,9 @@ class LSV2:
                 or entry["Name"].endswith(":")
             ):
                 continue
-            current_fs_element = str(current_path + entry["Name"]).replace("/", PATH_SEP)
+            current_fs_element = str(current_path + entry["Name"]).replace(
+                "/", PATH_SEP
+            )
             if entry["is_directory"] is True and descend is True:
                 if self.change_directory(current_fs_element):
                     content.extend(self._walk_dir())
@@ -1568,4 +1577,35 @@ class LSV2:
             return axes_values
 
         logging.error("an error occurred while querying axes position")
-        return dict()
+        return False
+
+    def grab_screen_dump(self, image_path: Path):
+        """create screen_dump of current control screen and save it as bitmap"""
+        if not self.login(Login.FILETRANSFER):
+            logging.error("clould not log in as user FILE")
+            return False
+
+        temp_file_path = (
+            DriveName.TNC
+            + PATH_SEP
+            + "screendump_"
+            + datetime.now().strftime("%Y%m%d_%H%M%S")
+            + ".bmp"
+        )
+
+        if not self.set_system_command(ParCCC.SCREENDUMP, temp_file_path):
+            logging.error("screen dump was not created")
+            return False
+
+        if not self.recive_file(
+            remote_path=temp_file_path, local_path=image_path, binary_mode=True
+        ):
+            logging.error("could not download screen dump from control")
+            return False
+
+        if not self.delete_file(temp_file_path):
+            logging.error("clould not delete temporary file on control")
+            return False
+
+        logging.debug("successfully recived screen dump")
+        return True
