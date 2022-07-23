@@ -9,6 +9,7 @@
 import logging
 import re
 import struct
+from datetime import datetime
 from typing import Union
 from pathlib import Path
 
@@ -93,7 +94,7 @@ class LSV2:
             self._known_sys_cmd = tuple(e.value for e in lc.ParCCC)
         else:
             logging.info("enabling safe mode. restricting functionality")
-            self._known_logins = (lc.Login.INSPECT, lc.Login.FILETRANSFER)
+            self._known_logins = (lc.Login.INSPECT, lc.Login.FILETRANSFER, lc.Login.MONITOR)
             self._known_sys_cmd = (
                 lc.ParCCC.SET_BUF1024,
                 lc.ParCCC.SET_BUF512,
@@ -101,6 +102,7 @@ class LSV2:
                 lc.ParCCC.SET_BUF3072,
                 lc.ParCCC.SET_BUF4096,
                 lc.ParCCC.SECURE_FILE_SEND,
+                lc.ParCCC.SCREENDUMP,
             )
 
     def _send_recive(
@@ -1541,7 +1543,7 @@ class LSV2:
         )
         return None
 
-    def get_axes_location(self) -> dict:
+    def get_axes_location(self) -> Union[dict, None]:
         """Read axes location from control. Not fully documented, value of first byte unknown.
         - only tested on TNC640 programming station
 
@@ -1577,23 +1579,27 @@ class LSV2:
             return axes_values
 
         logging.error("an error occurred while querying axes position")
-        return False
+        return None
 
-    def grab_screen_dump(self, image_path: Path):
+    def grab_screen_dump(self, image_path: Path) -> bool:
         """create screen_dump of current control screen and save it as bitmap"""
-        if not self.login(Login.FILETRANSFER):
+        if not self.login(lc.Login.FILETRANSFER):
             logging.error("clould not log in as user FILE")
             return False
 
         temp_file_path = (
-            DriveName.TNC
-            + PATH_SEP
+            lc.DriveName.TNC
+            + lc.PATH_SEP
             + "screendump_"
             + datetime.now().strftime("%Y%m%d_%H%M%S")
             + ".bmp"
         )
 
-        if not self.set_system_command(ParCCC.SCREENDUMP, temp_file_path):
+        payload = bytearray(map(ord, temp_file_path))
+        payload.append(0x00)
+        result = self._send_recive(lc.CMD.C_CC, payload, lc.RSP.T_OK)
+
+        if not (isinstance(result, (bool,)) and result is True):
             logging.error("screen dump was not created")
             return False
 
