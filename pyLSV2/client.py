@@ -63,7 +63,7 @@ class LSV2:
             logging.info(
                 "safe mode is active, login and system commands are restricted"
             )
-            self._known_logins = (Login.INSPECT, Login.FILETRANSFER)
+            self._known_logins = (Login.INSPECT, Login.FILETRANSFER, Login.MONITOR)
             self._known_sys_cmd = (
                 ParCCC.SET_BUF1024,
                 ParCCC.SET_BUF512,
