@@ -1440,11 +1440,12 @@ class LSV2:
                 or entry["Name"].endswith(":")
             ):
                 continue
+            current_fs_element = str(current_path + entry["Name"]).replace("/", PATH_SEP)
             if entry["is_directory"] is True and descend is True:
-                if self.change_directory(current_path + entry["Name"]):
+                if self.change_directory(current_fs_element):
                     content.extend(self._walk_dir())
             else:
-                content.append(current_path + entry["Name"])
+                content.append(current_fs_element)
         self.change_directory(current_path)
         return content
 

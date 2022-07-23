@@ -3,6 +3,7 @@
 """This script contains examples on how to use different functions of pyLSV2
    Not all functions are shown here, especially the file functions aren't shown here
 """
+import argparse
 import logging
 import sys
 import tempfile
@@ -11,16 +12,30 @@ from pathlib import Path
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
-    address = "192.168.56.102"
-    if len(sys.argv) > 1:
-        address = sys.argv[1]
+    parser = argparse.ArgumentParser()
 
-    print("Connecting to {}".format(address))
+    parser.add_argument('address', nargs='?', default='192.168.56.101', type=str)
 
-    con = pyLSV2.LSV2(address, port=19000, timeout=5, safe_mode=False)
+    parser.add_argument(
+        '-d', '--debug',
+        help="Print lots of debugging statements",
+        action="store_const", dest="loglevel", const=logging.DEBUG,
+        default=logging.WARNING,
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        help="Be verbose",
+        action="store_const", dest="loglevel", const=logging.INFO,
+    )
+    args = parser.parse_args()
+    logging.basicConfig(level=args.loglevel)
+
+    print("Connecting to {}".format(args.address))
+
+    con = pyLSV2.LSV2(args.address, port=19000, timeout=5, safe_mode=False)
     con.connect()
 
     print(

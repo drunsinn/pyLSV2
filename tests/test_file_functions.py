@@ -23,10 +23,6 @@ def test_read_info(address, timeout):
     assert lsv2.get_directory_content() is not False
     assert lsv2.get_drive_info() is not False
 
-    result1 = lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=False)
-    result2 = lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=True)
-    assert (len(result2) > len(result1)) is True
-
     lsv2.disconnect()
 
 
@@ -117,7 +113,7 @@ def test_remote_file_functions(address, timeout):
 
 
 def test_path_formating(address, timeout):
-    """test if reading of file information with / instead of \\ as path seperator"""
+    """test if reading of file information with / instead of \\ as path separator"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
@@ -129,5 +125,28 @@ def test_path_formating(address, timeout):
         mdi_path = "TNC:/nc_prog/$mdi.h"
 
     assert lsv2.get_file_info(mdi_path) is not False
+
+    lsv2.disconnect()
+
+def test_file_search(address, timeout):
+    """test if searching for files works. assumes that at least one file is present in root directory"""
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2.connect()
+
+    result1 = len(lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=False))
+    result2 = len(lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=True))
+    assert result1 > 0
+    assert result2 > 0
+    assert (result2 > result1) is True
+
+
+    if lsv2.is_itnc():
+        assert len(lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H)) > 0
+    elif lsv2.is_pilot():
+        file_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + "nc_prog" + pyLSV2.PATH_SEP + "ncps"
+        assert len(lsv2.get_file_list(file_path, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H)) > 0
+    else:
+        file_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + "nc_prog"
+        assert len(lsv2.get_file_list(file_path, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H)) > 0
 
     lsv2.disconnect()
