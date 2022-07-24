@@ -53,6 +53,7 @@ In chronological order:
 - sazima
 - manusolve
 - NeeXoo
+- Baptou88
 
 ## Compatibility
 Since there are a lot of different software versions and machine configurations out there 
@@ -184,5 +185,7 @@ Included in this library is also fuctionality to work with Tables used by differ
 
 # Resources
 https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
+
+https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
 
 https://de.industryarena.com/heidenhain/forum

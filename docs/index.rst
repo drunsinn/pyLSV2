@@ -17,6 +17,8 @@ Welcome to pyLSV2's documentation!
    README.md
    package
    protocol
+   lsv2-toolbox
+   faq
 
 Indices and tables
 ==================
