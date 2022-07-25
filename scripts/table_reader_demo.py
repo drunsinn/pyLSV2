@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import pathlib
-from pyLSV2 import TableReader, NCTabel
+from pyLSV2 import TableReader, NCTable
 
 logging.basicConfig(level=logging.DEBUG)
 

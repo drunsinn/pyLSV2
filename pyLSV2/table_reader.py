@@ -8,7 +8,7 @@ import pathlib
 import re
 
 
-class NCTabel:
+class NCTable:
     """generic object for table files commonly used by TTNC, iTNC, CNCPILOT,
     MANUALplus and 6000i CNC
     """
@@ -145,9 +145,9 @@ class NCTabel:
         return json.dumps(json_data, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def from_json(file_path: pathlib.Path) -> 'NCTabel':
+    def from_json(file_path: pathlib.Path) -> 'NCTable':
         """return a new NCTable object based on a json configuration file"""
-        nct = NCTabel()
+        nct = NCTable()
         with open(file_path, "r", encoding="utf-8") as jfp:
             json_data = json.load(jfp)
             nct.version = json_data["version"]
@@ -234,15 +234,15 @@ class TableReader:
         """init object variables logging"""
         logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-    def parse_table(self, table_path: pathlib.Path) -> NCTabel:
+    def parse_table(self, table_path: pathlib.Path) -> NCTable:
         """Parse a file of one of the common table formats
 
         :param str or Path table_path: Path to the table file
 
         :returns: list od dictionaries. key is the column name, value the content of the table cell
-        :rtype: NCTabel
+        :rtype: NCTable
         """
-        nctable = NCTabel()
+        nctable = NCTable()
 
         table_file = pathlib.Path(table_path)
         if not table_file.is_file():
