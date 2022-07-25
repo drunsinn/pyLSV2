@@ -97,7 +97,7 @@ class TableReader:
                             next_line = tfp.readline()
                     next_line = tfp.readline()
 
-                column_pattern = re.compile(r"([A-Za-z-12_:\.]+)(?:\s+)")
+                column_pattern = re.compile(r"([A-Za-z-\d_:\.]+)(?:\s+)")
                 for column_match in column_pattern.finditer(next_line):
                     nctable.append_column(
                         name=column_match.group().strip(),
