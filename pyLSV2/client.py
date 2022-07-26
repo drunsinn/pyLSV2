@@ -15,6 +15,7 @@ from pathlib import Path
 
 from . import const as lc
 from . import misc as lm
+from . import dat_cls as ld
 from . import translate_messages as lt
 from .low_level_com import LLLSV2Com
 
@@ -38,8 +39,8 @@ class LSV2:
 
         self.switch_safe_mode(safe_mode)
 
-        self._versions = lm.VersionInfo()
-        self._sys_par = lm.SystemParameters()
+        self._versions = ld.VersionInfo()
+        self._sys_par = ld.SystemParameters()
         self._secure_file_send = False
         self._control_type = lc.ControlType.UNKNOWN
 
@@ -94,7 +95,8 @@ class LSV2:
             self._known_sys_cmd = tuple(e.value for e in lc.ParCCC)
         else:
             logging.info("enabling safe mode. restricting functionality")
-            self._known_logins = (lc.Login.INSPECT, lc.Login.FILETRANSFER, lc.Login.MONITOR)
+            self._known_logins = (
+                lc.Login.INSPECT, lc.Login.FILETRANSFER, lc.Login.MONITOR)
             self._known_sys_cmd = (
                 lc.ParCCC.SET_BUF1024,
                 lc.ParCCC.SET_BUF512,
@@ -127,7 +129,8 @@ class LSV2:
 
             c_cc_command = struct.unpack("!H", bytes_to_send)[0]
             if c_cc_command not in self._known_sys_cmd:
-                logging.debug("unknown or unsupported system command %s", bytes_to_send)
+                logging.debug(
+                    "unknown or unsupported system command %s", bytes_to_send)
                 return False
 
         self._last_lsv2_response, lsv_content = self._llcom.telegram(
@@ -144,7 +147,8 @@ class LSV2:
             (self._last_error_type, self._last_error_code) = struct.unpack(
                 "!BB", lsv_content
             )
-            message = lt.get_error_text(self._last_error_type, self._last_error_code)
+            message = lt.get_error_text(
+                self._last_error_type, self._last_error_code)
 
             logging.warning(
                 "error received, type: %d, code: %d '%s'",
@@ -156,7 +160,8 @@ class LSV2:
 
         if self._last_lsv2_response is expected_response:
             # expected response received
-            logging.debug("expected response received: %s", self._last_lsv2_response)
+            logging.debug("expected response received: %s",
+                          self._last_lsv2_response)
             if len(lsv_content) > 0:
                 return lsv_content
             return True
@@ -193,7 +198,8 @@ class LSV2:
             (self._last_error_type, self._last_error_code) = struct.unpack(
                 "!BB", lsv_content
             )
-            message = lt.get_error_text(self._last_error_type, self._last_error_code)
+            message = lt.get_error_text(
+                self._last_error_type, self._last_error_code)
             logging.error(
                 "error received, type: %d, code: %d '%s'",
                 self._last_error_type,
@@ -216,7 +222,8 @@ class LSV2:
         if self._last_lsv2_response is expected_response:
             # self._last_lsv2_response is expected_response:
             # expected response received
-            logging.debug("expected response received: %s", self._last_lsv2_response)
+            logging.debug("expected response received: %s",
+                          self._last_lsv2_response)
             while self._last_lsv2_response is expected_response:
                 response_buffer.append(lsv_content)
                 self._last_lsv2_response, lsv_content = self._llcom.telegram(
@@ -291,7 +298,8 @@ class LSV2:
                 )
 
         if not self._send_recive(
-            lc.CMD.C_CC, struct.pack("!H", lc.ParCCC.SECURE_FILE_SEND), lc.RSP.T_OK
+            lc.CMD.C_CC, struct.pack(
+                "!H", lc.ParCCC.SECURE_FILE_SEND), lc.RSP.T_OK
         ):
             logging.info("secure file transfer not supported? use fallback")
             self._secure_file_send = False
@@ -301,7 +309,8 @@ class LSV2:
 
         self.login(login=lc.Login.FILETRANSFER)
 
-        logging.info("successfully configured connection parameters and basic logins")
+        logging.info(
+            "successfully configured connection parameters and basic logins")
 
     def login(self, login: lc.Login, password: str = "") -> bool:
         """Request additional access rights. To elevate this level a logon has to be performed. Some levels require a password.
@@ -382,7 +391,7 @@ class LSV2:
             bytes_to_send.append(0x00)
         return self._send_recive(lc.CMD.C_CC, bytes_to_send, lc.RSP.T_OK)
 
-    def get_system_parameter(self, force: bool = False) -> lm.SystemParameters:
+    def get_system_parameter(self, force: bool = False) -> ld.SystemParameters:
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
         possible to manually re-read the information form the control
 
@@ -391,17 +400,19 @@ class LSV2:
         :rtype: dict
         """
         if self._sys_par.lsv2_version != -1 and force is False:
-            logging.debug("version info already in memory, return previous values")
+            logging.debug(
+                "version info already in memory, return previous values")
         else:
             result = self._send_recive(lc.CMD.R_PR, None, lc.RSP.S_PR)
             if isinstance(result, (bytearray,)):
                 self._sys_par = lm.decode_system_parameters(result)
                 logging.debug("got system parameters: %s", self._sys_par)
             else:
-                logging.error("an error occurred while querying system parameters")
+                logging.error(
+                    "an error occurred while querying system parameters")
         return self._sys_par
 
-    def get_versions(self, force=False) -> lm.VersionInfo:
+    def get_versions(self, force=False) -> ld.VersionInfo:
         """Get all version information, result is bufferd since it is also used internally. With parameter force it is
         possible to manually re-read the information form the control
 
@@ -410,9 +421,10 @@ class LSV2:
         :rtype: dict
         """
         if len(self._versions.control_version) > 0 and force is False:
-            logging.debug("version info already in memory, return previous values")
+            logging.debug(
+                "version info already in memory, return previous values")
         else:
-            info_data = lm.VersionInfo()
+            info_data = ld.VersionInfo()
 
             result = self._send_recive(
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
@@ -420,7 +432,8 @@ class LSV2:
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 info_data.control_version = lm.ba_to_ustr(result)
             else:
-                raise Exception("Could not read version information from control")
+                raise Exception(
+                    "Could not read version information from control")
 
             if info_data.control_version in ("TNC640", "TNC620", "TNC320", "TNC128"):
                 info_data.control_type = lc.ControlType.MILL_NEW
@@ -429,7 +442,8 @@ class LSV2:
             elif info_data.control_version in ("CNCPILOT640",):
                 info_data.control_type = lc.ControlType.LATHE_NEW
             else:
-                logging.warning("Unknown control type, treat machine as new style mill")
+                logging.warning(
+                    "Unknown control type, treat machine as new style mill")
                 info_data.control_type = lc.ControlType.MILL_NEW
 
             result = self._send_recive(
@@ -462,7 +476,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.id_number= lm.ba_to_ustr(result)
+                info_data.id_number = lm.ba_to_ustr(result)
 
             if self.is_itnc():
                 info_data.release_type = "not supported"
@@ -511,24 +525,26 @@ class LSV2:
             logging.error("could not log in as user DNC")
         return lc.PgmState.UNDEFINED
 
-    def get_program_stack(self) -> dict:
+    def get_program_stack(self) -> Union[ld.StackState, None]:
         """Get path of currently active nc program(s) and current line number
         See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
 
-        :returns: dictionary with line number, main program and current program or False if something went wrong
-        :rtype: dict
+        :returns: line number, main program and current program
+        :rtype: 
         """
         if self.login(login=lc.Login.DNC):
             payload = struct.pack("!H", lc.ParRRI.SELECTED_PGM)
             result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 stack_info = lm.decode_stack_info(result)
-                logging.debug("successfully read active program stack: %s", stack_info)
+                logging.debug(
+                    "successfully read active program stack: %s", stack_info)
                 return stack_info
-            logging.error("an error occurred while querying active program state")
+            logging.error(
+                "an error occurred while querying active program state")
         else:
             logging.error("could not log in as user DNC")
-        return dict()
+        return None
 
     def get_execution_status(self) -> lc.ExecState:
         """Get status code of program state to text
@@ -541,7 +557,8 @@ class LSV2:
             payload = struct.pack("!H", lc.ParRRI.EXEC_STATE)
             result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
             if isinstance(result, (bytearray,)):
-                logging.debug("read execution state %d", struct.unpack("!H", result)[0])
+                logging.debug("read execution state %d",
+                              struct.unpack("!H", result)[0])
                 return lc.ExecState(struct.unpack("!H", result)[0])
             logging.error("an error occurred while querying execution state")
         else:
@@ -610,8 +627,10 @@ class LSV2:
             payload.append(0x00)
             result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                file_info = lm.decode_file_system_info(result, self._control_type)
-                logging.debug("successfully received file information %s", file_info)
+                file_info = lm.decode_file_system_info(
+                    result, self._control_type)
+                logging.debug(
+                    "successfully received file information %s", file_info)
                 return file_info
             logging.warning(
                 "an error occurred while querying file info this might also indicate that it does not exist %s",
@@ -851,7 +870,8 @@ class LSV2:
             local_file = local_path
 
         if not local_file.is_file():
-            logging.error("the supplied path %s did not resolve to a file", local_file)
+            logging.error(
+                "the supplied path %s did not resolve to a file", local_file)
             raise Exception("local file does not exist! {}".format(local_file))
 
         remote_path = remote_path.replace("/", lc.PATH_SEP)
@@ -894,7 +914,8 @@ class LSV2:
                         )
                     )
             else:
-                logging.warning("remote file already exists, override was not set")
+                logging.warning(
+                    "remote file already exists, override was not set")
                 return False
 
         logging.debug(
@@ -904,7 +925,8 @@ class LSV2:
         )
 
         payload = bytearray()
-        payload.extend(map(ord, remote_directory + lc.PATH_SEP + remote_file_name))
+        payload.extend(map(ord, remote_directory +
+                       lc.PATH_SEP + remote_file_name))
         payload.append(0x00)
         if binary_mode or lm.is_file_binary(local_path):
             payload.append(lc.MODE_BINARY)
@@ -923,7 +945,8 @@ class LSV2:
                 while True:
                     # use current buffer size but reduce by 10 to make sure it fits together with command and size
                     buffer = bytearray(
-                        input_buffer.read(self._llcom.get_buffer_size() - 8 - 2)
+                        input_buffer.read(
+                            self._llcom.get_buffer_size() - 8 - 2)
                     )
                     if not buffer:
                         # finished reading file
@@ -951,7 +974,8 @@ class LSV2:
                                 message,
                             )
                         else:
-                            logging.error("could not send data with error %s", response)
+                            logging.error(
+                                "could not send data with error %s", response)
                         return False
 
             # signal that no more data is being sent
@@ -1048,7 +1072,8 @@ class LSV2:
                     out_file.write(content)
                 else:
                     out_file.write(content.replace(b"\x00", b"\r\n"))
-                logging.debug("received first block of file file %s", remote_path)
+                logging.debug(
+                    "received first block of file file %s", remote_path)
 
                 while True:
                     response, content = self._llcom.telegram(
@@ -1059,7 +1084,8 @@ class LSV2:
                             out_file.write(content)
                         else:
                             out_file.write(content.replace(b"\x00", b"\r\n"))
-                        logging.debug("received %d more bytes for file", len(content))
+                        logging.debug(
+                            "received %d more bytes for file", len(content))
                     elif response in lc.RSP.T_FD:
                         logging.info("finished loading file")
                         break
@@ -1101,7 +1127,8 @@ class LSV2:
                         message,
                     )
                 else:
-                    logging.error("could not load file with error %s", response)
+                    logging.error(
+                        "could not load file with error %s", response)
                     self._last_error_code = None
                 return False
 
@@ -1205,12 +1232,14 @@ class LSV2:
             for i in range(count):
                 payload = bytearray()
                 payload.extend(
-                    struct.pack("!L", start_address + address + i * mem_byte_count)
+                    struct.pack("!L", start_address +
+                                address + i * mem_byte_count)
                 )
                 payload.extend(struct.pack("!B", mem_byte_count))
                 result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
                 if isinstance(result, (bytearray,)) and len(result) > 0:
-                    logging.debug("read string %d", address + i * mem_byte_count)
+                    logging.debug("read string %d", address +
+                                  i * mem_byte_count)
                     plc_values.append(
                         struct.unpack(unpack_string, result)[0]
                         .rstrip(b"\x00")
@@ -1228,10 +1257,12 @@ class LSV2:
             payload.extend(struct.pack("!B", count * mem_byte_count))
             result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                logging.debug("read %d value(s) from address %d", count, address)
+                logging.debug("read %d value(s) from address %d",
+                              count, address)
                 for i in range(0, len(result), mem_byte_count):
                     plc_values.append(
-                        struct.unpack(unpack_string, result[i : i + mem_byte_count])[0]
+                        struct.unpack(
+                            unpack_string, result[i: i + mem_byte_count])[0]
                     )
             else:
                 logging.error(
@@ -1248,7 +1279,7 @@ class LSV2:
         :returns: True or False if command was executed successfully
         :rtype: bool
         """
-        if not self.login(Login.MONITOR):
+        if not self.login(lc.Login.MONITOR):
             logging.error("clould not log in as user MONITOR")
             return False
 
@@ -1266,7 +1297,8 @@ class LSV2:
                 logging.debug("command to lock keyboard was successful")
             return True
         else:
-            logging.warning("an error occurred changing the state of the keyboard lock")
+            logging.warning(
+                "an error occurred changing the state of the keyboard lock")
         return False
 
     def get_machine_parameter(self, name: str) -> str:
@@ -1285,7 +1317,8 @@ class LSV2:
             logging.debug("machine parameter %s has value %s", name, value)
             return value
 
-        logging.warning("an error occurred while reading machine parameter %s", name)
+        logging.warning(
+            "an error occurred while reading machine parameter %s", name)
         return ""
 
     def set_machine_parameter(self, name: str, value: str, safe_to_disk=False) -> bool:
@@ -1339,7 +1372,7 @@ class LSV2:
         :returns: True or False if command was executed successfully
         :rtype: bool
         """
-        if not self.login(Login.MONITOR):
+        if not self.login(lc.Login.MONITOR):
             logging.error("clould not log in as user MONITOR")
             return False
 
@@ -1351,7 +1384,8 @@ class LSV2:
             logging.debug("sending the key code %d was successful", key_code)
             return True
 
-        logging.warning("an error occurred while sending the key code %d", key_code)
+        logging.warning(
+            "an error occurred while sending the key code %d", key_code)
         return False
 
     def get_spindle_tool_status(self) -> dict:
@@ -1366,14 +1400,15 @@ class LSV2:
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
             tool_info = lm.decode_tool_information(result)
-            logging.debug("successfully read info on current tool: %s", tool_info)
+            logging.debug(
+                "successfully read info on current tool: %s", tool_info)
             return tool_info
         logging.warning(
             "an error occurred while querying current tool information. This does not work for all control types"
         )
         return dict()
 
-    def get_override_info(self) -> dict:
+    def get_override_info(self) -> Union[ld.OverrideState, None]:
         """Get information about the override info
 
         :returns: override information or False if something went wrong
@@ -1384,13 +1419,13 @@ class LSV2:
         payload.extend(struct.pack("!H", lc.ParRRI.OVERRIDE))
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            override_info = lm.decode_override_information(result)
+            override_info = lm.decode_override_state(result)
             logging.debug("successfully read override info: %s", override_info)
             return override_info
         logging.warning(
             "an error occurred while querying current override information. This does not work for all control types"
         )
-        return dict()
+        return None
 
     def get_error_messages(self) -> list:
         """Get information about the first or next error displayed on the control
@@ -1419,7 +1454,8 @@ class LSV2:
             if self._last_error_code == lc.LSV2Err.T_ER_NO_NEXT_ERROR:
                 logging.debug("successfully read all errors")
             else:
-                logging.warning("an error occurred while querying error information.")
+                logging.warning(
+                    "an error occurred while querying error information.")
 
             return messages
 
@@ -1450,7 +1486,7 @@ class LSV2:
             ):
                 continue
             current_fs_element = str(current_path + entry["Name"]).replace(
-                "/", PATH_SEP
+                "/", lc.PATH_SEP
             )
             if entry["is_directory"] is True and descend is True:
                 if self.change_directory(current_fs_element):
@@ -1563,7 +1599,7 @@ class LSV2:
             beginning = 2
             for i, byte in enumerate(result[beginning:]):
                 if byte == 0x00:
-                    value = result[beginning : i + 3]
+                    value = result[beginning: i + 3]
                     split_list.append(value.strip(b"\x00").decode("utf-8"))
                     beginning = i + 3
 
@@ -1572,7 +1608,8 @@ class LSV2:
 
             axes_values = dict()
             for i in range(number_of_axes):
-                axes_values[split_list[i + number_of_axes]] = float(split_list[i])
+                axes_values[split_list[i + number_of_axes]
+                            ] = float(split_list[i])
 
             logging.info("successfully read axes values: %s", axes_values)
 

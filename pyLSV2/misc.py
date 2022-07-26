@@ -6,75 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-from dataclasses import dataclass
-
 from .const import PATH_SEP, ControlType, BIN_FILES
-
-
-@dataclass
-class VersionInfo:
-    """data class for version information"""
-    control_version: str = ""
-    control_type: ControlType = ControlType.UNKNOWN
-    nc_version: str = ""
-    plc_version: str = ""
-    splc_version: str = ""
-    option_bits: str = ""
-    id_number: str = ""
-    release_type: str = ""
-
-
-@dataclass
-class SystemParameters:
-    """"""
-    markers_start_address: int = -1
-    number_of_markers: int = -1
-
-    inputs_start_address: int = -1
-    number_of_inputs: int = -1
-
-    outputs_start_address: int = -1
-    number_of_outputs: int = -1
-
-    counters_start_address: int = -1
-    number_of_counters: int = -1
-
-    timers_start_address: int = -1
-    number_of_timers: int = -1
-
-    words_start_address: int = -1
-    number_of_words: int = -1
-
-    strings_start_address: int = -1
-    number_of_strings: int = -1
-    max_string_lenght: int = -1
-
-    input_words_start_address: int = -1
-    number_of_input_words: int = -1
-
-    output_words_start_address: int = -1
-    number_of_output_words: int = -1
-
-    lsv2_version: int = -1
-    lsv2_version_flags: int = -1
-    lsv2_version_flags_ex: int = -1
-
-    max_block_length: int = -1
-
-    bin_version: int = -1
-    bin_revision: int = -1
-
-    iso_version: int = -1
-    iso_revision: int = -1
-
-    hardware_version: int = -1
-
-    max_trace_line: int = -1
-    number_of_scope_channels: int = -1
-    password_encryption_key: int = -1
-
-
-
+from .dat_cls import SystemParameters, OverrideState, LSV2ErrorMessage, StackState
 
 
 def decode_system_parameters(result_set: bytearray) -> SystemParameters:
@@ -199,7 +132,7 @@ def decode_directory_info(data_set: bytearray):
     dir_info["Free Size"] = struct.unpack("!L", data_set[:4])[0]
     attribute_list = list()
     for i in range(4, len(data_set[4:132]), 4):
-        attr = ba_to_ustr(data_set[i : i + 4])
+        attr = ba_to_ustr(data_set[i: i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     dir_info["Dir_Attributs"] = attribute_list
@@ -233,7 +166,7 @@ def decode_tool_information(data_set: bytearray):
     return tool_info
 
 
-def decode_override_information(data_set: bytearray):
+def decode_override_state(data_set: bytearray) -> OverrideState:
     """decode result from override info
 
     :param bytearray result_set: bytes returned by the system parameter query command R_RI for
@@ -241,35 +174,37 @@ def decode_override_information(data_set: bytearray):
     :returns: dictionary with override info values
     :rtype: dict
     """
-    override_info = dict()
-    override_info["Feed_override"] = struct.unpack("!L", data_set[0:4])[0] / 100
-    override_info["Speed_override"] = struct.unpack("!L", data_set[4:8])[0] / 100
-    override_info["Rapid_override"] = struct.unpack("!L", data_set[8:12])[0] / 100
+    oi = OverrideState()
+    oi.feed = struct.unpack("!L", data_set[0:4])[0] / 100
+    oi.spindel = struct.unpack("!L", data_set[4:8])[0] / 100
+    oi.rapid = struct.unpack("!L", data_set[8:12])[0] / 100
+    return oi
 
-    return override_info
 
-
-def decode_error_message(data_set: bytearray):
+def decode_error_message(data_set: bytearray) -> LSV2ErrorMessage:
     """decode result from reading error messages
 
     :param bytearray result_set: bytes returned by the system parameter query command R_RI for
                              first and next error
-    :returns: dictionary with error message values
-    :rtype: dict
+    :returns: error message values
+    :rtype: 
     """
-    error_info = dict()
-    error_info["Class"] = struct.unpack("!H", data_set[0:2])[0]
-    error_info["Group"] = struct.unpack("!H", data_set[2:4])[0]
-    error_info["Number"] = struct.unpack("!l", data_set[4:8])[0]
-    error_info["Text"] = ba_to_ustr(data_set[8:])
-    return error_info
+    ei = LSV2ErrorMessage()
+    ei.e_class = struct.unpack("!H", data_set[0:2])[0]
+    ei.e_group = struct.unpack("!H", data_set[2:4])[0]
+    ei.e_number = struct.unpack("!l", data_set[4:8])[0]
+    ei.e_text = ba_to_ustr(data_set[8:])
+    ei.dnc = True
+    return ei
 
-def decode_stack_info(data_set: bytearray):
-    stack_info = dict()
-    stack_info["Line"] = struct.unpack("!L", data_set[:4])[0]
-    stack_info["Main_PGM"] = ba_to_ustr(data_set[4:].split(b"\x00")[0])
-    stack_info["Current_PGM"] = ba_to_ustr(data_set[4:].split(b"\x00")[1])
-    return stack_info
+
+def decode_stack_info(data_set: bytearray) -> StackState:
+    ss = StackState()
+    ss.current_line = struct.unpack("!L", data_set[:4])[0]
+    ss.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
+    ss.current_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[1])
+    return ss
+
 
 def is_file_binary(file_name: Union[str, Path]) -> bool:
     """Check if file is expected to be binary by comparing with known expentions.
