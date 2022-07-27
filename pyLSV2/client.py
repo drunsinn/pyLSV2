@@ -10,12 +10,12 @@ import logging
 import re
 import struct
 from datetime import datetime
-from typing import Union
 from pathlib import Path
+from typing import Union
 
 from . import const as lc
-from . import misc as lm
 from . import dat_cls as ld
+from . import misc as lm
 from . import translate_messages as lt
 from .low_level_com import LLLSV2Com
 
@@ -565,7 +565,7 @@ class LSV2:
             logging.error("could not log in as user DNC")
         return lc.ExecState.UNDEFINED
 
-    def get_directory_info(self, remote_directory: str = "") -> dict:
+    def get_directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
         """Query information a the current working directory on the control
 
         :param str remote_directory: optional. If set, working directory will be changed
@@ -581,7 +581,7 @@ class LSV2:
                     "could not change current directory to read directory info for %s",
                     remote_directory,
                 )
-                return dict()
+                return ld.DirectoryEntry()
             result = self._send_recive(lc.CMD.R_DI, None, lc.RSP.S_DI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 dir_info = lm.decode_directory_info(result)
@@ -592,7 +592,7 @@ class LSV2:
             logging.error("an error occurred while querying directory info")
         else:
             logging.error("could not log in as user FILE")
-        return dict()
+        return ld.DirectoryEntry()
 
     def change_directory(self, remote_directory: str) -> bool:
         """Change the current working directoyon the control
@@ -1388,7 +1388,7 @@ class LSV2:
             "an error occurred while sending the key code %d", key_code)
         return False
 
-    def get_spindle_tool_status(self) -> dict:
+    def get_spindle_tool_status(self) -> Union[ld.ToolInformation, None]:
         """Get information about the tool currently in the spindle
 
         :returns: tool information or False if something went wrong
@@ -1399,14 +1399,14 @@ class LSV2:
         payload.extend(struct.pack("!H", lc.ParRRI.CURRENT_TOOL))
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            tool_info = lm.decode_tool_information(result)
+            tool_info = lm.decode_tool_info(result)
             logging.debug(
                 "successfully read info on current tool: %s", tool_info)
             return tool_info
         logging.warning(
             "an error occurred while querying current tool information. This does not work for all control types"
         )
-        return dict()
+        return None
 
     def get_override_info(self) -> Union[ld.OverrideState, None]:
         """Get information about the override info

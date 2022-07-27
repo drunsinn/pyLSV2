@@ -6,11 +6,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-from .const import PATH_SEP, ControlType, BIN_FILES
-from .dat_cls import SystemParameters, OverrideState, LSV2ErrorMessage, StackState
+from . import dat_cls as ld
+from .const import BIN_FILES, PATH_SEP, ControlType
 
 
-def decode_system_parameters(result_set: bytearray) -> SystemParameters:
+def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     """decode the result system parameter query
 
     :param bytearray result_set: bytes returned by the system parameter query command R_PR
@@ -29,7 +29,7 @@ def decode_system_parameters(result_set: bytearray) -> SystemParameters:
                 message_length, result_set
             )
         )
-    sys_par = SystemParameters()
+    sys_par = ld.SystemParameters()
     sys_par.markers_start_address = info_list[0]
     sys_par.number_of_markers = info_list[1]
 
@@ -80,93 +80,106 @@ def decode_system_parameters(result_set: bytearray) -> SystemParameters:
 
 def decode_file_system_info(
     data_set: bytearray, control_type: ControlType = ControlType.UNKNOWN
-):
+) -> ld.FileEntry:
     """decode result from file system entry
 
     :param bytearray result_set: bytes returned by the system parameter query command R_FI or CR_DR
     :returns: dictionary with file system entry parameters
     :rtype: dict
     """
-    flag_is_protected = 0x08
-    if control_type in (
-        ControlType.UNKNOWN,
-        ControlType.MILL_NEW,
-        ControlType.LATHE_NEW,
-    ):
-        flag_is_dir = 0x20
-    else:
-        flag_is_dir = 0x40
 
-    file_info = dict()
-    file_info["Size"] = struct.unpack("!L", data_set[:4])[0]
-    file_info["Timestamp"] = datetime.fromtimestamp(
-        struct.unpack("!L", data_set[4:8])[0]
-    )
+    """
+    according to documentation an LSV version 1 this should be:
+    ATTR_DISPLAY 0x01
+    ATTR_CHANGABLE 0x02
+    ATTR_HIGHLITED 0x04
+    ATTR_HIDE 0x08
+    ATTR_DIR 0x10
+    ATTR_PROTECT 0x20
+    
+    another document has:
+    ATTR_DISPLAY 0x01
+    ATTR_CHANGEABLE 0x02
+    ATTR_HIGHLIGHTED 0x08 (this might be an error in the documentation!)
+    ATTR_HIDE 0x08
+    ATTR_DIR 0x10
+    ATTR_SUBDIR 0x20
+    ATTR_PROTECT 0x40
+    ATTR_SELECTED 0x80
+    """
 
-    attributes = struct.unpack("!L", data_set[8:12])[0]
+    #flag_display = 0x01
+    flag_changable = 0x02
+    #flag_highlighted = 0x04
+    flag_hidden = 0x08
+    flag_dir = 0x10
+    flag_subdir = 0x20
+    flag_protected = 0x40
+    #flag_selected = 0x80
 
-    file_info["Attributes"] = attributes
-    file_info["is_file"] = False
-    file_info["is_directory"] = False
+    # if control_type in (ControlType.MILL_OLD,ControlType.LATHE_OLD):
+    #   flag_highlight = 0x04
 
-    if bool(attributes & flag_is_dir):
-        file_info["is_directory"] = True
-    else:
-        file_info["is_file"] = True
+    fi = ld.FileEntry
+    fi.size = struct.unpack("!L", data_set[:4])[0]
+    fi.timestamp = datetime.fromtimestamp(
+        struct.unpack("!L", data_set[4:8])[0])
 
-    file_info["is_write_protected"] = bool(attributes & flag_is_protected)
+    fi.attributes = struct.unpack("!L", data_set[8:12])[0]
 
-    file_info["Name"] = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
+    fi.is_changable = bool(fi.attributes & flag_changable)
+    fi.is_drive = bool(fi.attributes & flag_dir)
+    fi.is_directory = bool(fi.attributes & flag_subdir)
+    fi.is_protected = bool(fi.attributes & flag_protected)
+    fi.is_hidden = bool(fi.attributes & flag_hidden)
 
-    return file_info
+    fi.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
+    return fi
 
 
-def decode_directory_info(data_set: bytearray):
+def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
     """decode result from directory entry
 
     :param bytearray result_set: bytes returned by the system parameter query command R_DI
     :returns: dictionary with file system entry parameters
     :rtype: dict
     """
-    dir_info = dict()
-    dir_info["Free Size"] = struct.unpack("!L", data_set[:4])[0]
+    di = ld.DirectoryEntry()
+    di.free_size = struct.unpack("!L", data_set[:4])[0]
+
     attribute_list = list()
     for i in range(4, len(data_set[4:132]), 4):
         attr = ba_to_ustr(data_set[i: i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
-    dir_info["Dir_Attributs"] = attribute_list
+    di.dir_attributes = attribute_list
 
-    dir_info["Attributes"] = struct.unpack("!32B", data_set[132:164])
+    di.attributes = struct.unpack("!32B", data_set[132:164])
+    di.path = ba_to_ustr(data_set[164:]).replace("/", PATH_SEP)
 
-    dir_info["Path"] = ba_to_ustr(data_set[164:]).replace("/", PATH_SEP)
-
-    return dir_info
+    return di
 
 
-def decode_tool_information(data_set: bytearray):
+def decode_tool_info(data_set: bytearray) -> ld.ToolInformation:
     """decode result from tool info
 
     :param bytearray result_set: bytes returned by the system parameter query command R_RI for tool info
     :returns: dictionary with tool info values
     :rtype: dict
     """
-    tool_info = dict()
-    tool_info["Number"] = struct.unpack("!L", data_set[0:4])[0]
-    tool_info["Index"] = struct.unpack("!H", data_set[4:6])[0]
-    tool_info["Axis"] = {0: "X", 1: "Y", 2: "Z"}.get(
+    ti = ld.ToolInformation()
+    ti.number = struct.unpack("!L", data_set[0:4])[0]
+    ti.index = struct.unpack("!H", data_set[4:6])[0]
+    ti.axis = {0: "X", 1: "Y", 2: "Z"}.get(
         struct.unpack("!H", data_set[6:8])[0], "unknown"
     )
     if len(data_set) > 8:
-        tool_info["Length"] = struct.unpack("<d", data_set[8:16])[0]
-        tool_info["Radius"] = struct.unpack("<d", data_set[16:24])[0]
-    else:
-        tool_info["Length"] = None
-        tool_info["Radius"] = None
-    return tool_info
+        ti.length = struct.unpack("<d", data_set[8:16])[0]
+        ti.radius = struct.unpack("<d", data_set[16:24])[0]
+    return ti
 
 
-def decode_override_state(data_set: bytearray) -> OverrideState:
+def decode_override_state(data_set: bytearray) -> ld.OverrideState:
     """decode result from override info
 
     :param bytearray result_set: bytes returned by the system parameter query command R_RI for
@@ -174,14 +187,14 @@ def decode_override_state(data_set: bytearray) -> OverrideState:
     :returns: dictionary with override info values
     :rtype: dict
     """
-    oi = OverrideState()
+    oi = ld.OverrideState()
     oi.feed = struct.unpack("!L", data_set[0:4])[0] / 100
     oi.spindel = struct.unpack("!L", data_set[4:8])[0] / 100
     oi.rapid = struct.unpack("!L", data_set[8:12])[0] / 100
     return oi
 
 
-def decode_error_message(data_set: bytearray) -> LSV2ErrorMessage:
+def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
     """decode result from reading error messages
 
     :param bytearray result_set: bytes returned by the system parameter query command R_RI for
@@ -189,7 +202,7 @@ def decode_error_message(data_set: bytearray) -> LSV2ErrorMessage:
     :returns: error message values
     :rtype: 
     """
-    ei = LSV2ErrorMessage()
+    ei = ld.LSV2ErrorMessage()
     ei.e_class = struct.unpack("!H", data_set[0:2])[0]
     ei.e_group = struct.unpack("!H", data_set[2:4])[0]
     ei.e_number = struct.unpack("!l", data_set[4:8])[0]
@@ -198,8 +211,8 @@ def decode_error_message(data_set: bytearray) -> LSV2ErrorMessage:
     return ei
 
 
-def decode_stack_info(data_set: bytearray) -> StackState:
-    ss = StackState()
+def decode_stack_info(data_set: bytearray) -> ld.StackState:
+    ss = ld.StackState()
     ss.current_line = struct.unpack("!L", data_set[:4])[0]
     ss.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
     ss.current_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[1])

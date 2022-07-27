@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 """data classes for pyLSV2"""
 
-import struct
+from datetime import datetime
+
 from .const import ControlType
 
 
 class VersionInfo():
     def __init__(self):
-        """data class for version information, uses properties instead o f dataclass for compatibility"""
+        """data class for version information, uses properties instead of dataclass for compatibility"""
         self.control_version = ""
         self.control_type = ControlType.UNKNOWN
         self.nc_version = ""
@@ -87,47 +88,47 @@ class SystemParameters:
 
     def __init__(self):
         """data class for system parameters, uses properties instead o f dataclass for compatibility"""
-        inputs_start_address = -1
-        number_of_inputs = -1
-        outputs_start_address = -1
-        number_of_outputs = -1
+        self.inputs_start_address = -1
+        self.number_of_inputs = -1
+        self.outputs_start_address = -1
+        self.number_of_outputs = -1
 
-        counters_start_address = -1
-        number_of_counters = -1
+        self.counters_start_address = -1
+        self.number_of_counters = -1
 
-        timers_start_address = -1
-        number_of_timers = -1
+        self.timers_start_address = -1
+        self.number_of_timers = -1
 
-        words_start_address = -1
-        number_of_words = -1
+        self.words_start_address = -1
+        self.umber_of_words = -1
 
-        strings_start_address = -1
-        number_of_strings = -1
-        max_string_lenght = -1
+        self.strings_start_address = -1
+        self.number_of_strings = -1
+        self.max_string_lenght = -1
 
-        input_words_start_address = -1
-        number_of_input_words = -1
+        self.input_words_start_address = -1
+        self.number_of_input_words = -1
 
-        output_words_start_address = -1
-        number_of_output_words = -1
+        self.output_words_start_address = -1
+        self.number_of_output_words = -1
 
-        lsv2_version = -1
-        lsv2_version_flags = -1
-        lsv2_version_flags_ex = -1
+        self.lsv2_version = -1
+        self.lsv2_version_flags = -1
+        self.sv2_version_flags_ex = -1
 
-        max_block_length = -1
+        self.max_block_length = -1
 
-        bin_version = -1
-        bin_revision = -1
-        iso_version = -1
-        iso_revision = -1
+        self.bin_version = -1
+        self.bin_revision = -1
+        self.iso_version = -1
+        self.iso_revision = -1
 
-        hardware_version = -1
+        self.hardware_version = -1
 
-        max_trace_line = -1
-        number_of_scope_channels = -1
+        self.max_trace_line = -1
+        self.number_of_scope_channels = -1
 
-        password_encryption_key = -1
+        self.password_encryption_key = -1
 
     @property
     def markers_start_address(self) -> int:
@@ -378,6 +379,64 @@ class SystemParameters:
         self._password_encryption_key = value
 
 
+class ToolInformation:
+    def __init__(self):
+        self.number = -1
+        self.index = -1
+        self.axis = None
+        self.length = -1
+        self.radius = -1
+        self.name = None
+
+    @property
+    def number(self) -> int:
+        return self._number
+
+    @number.setter
+    def number(self, value: int):
+        self._number = value
+
+    @property
+    def index(self) -> int:
+        return self._index
+
+    @index.setter
+    def index(self, value: int):
+        self._index = value
+
+    @property
+    def axis(self) -> str:
+        return self._axis
+
+    @axis.setter
+    def axis(self, value: str):
+        self._axis = value
+
+    @property
+    def length(self) -> float:
+        return self._length
+
+    @length.setter
+    def length(self, value: float):
+        self._length = value
+
+    @property
+    def radius(self) -> float:
+        return self._radius
+
+    @radius.setter
+    def radius(self, value: float):
+        self._radius = value
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
+
 class OverrideState:
     def __init__(self):
         self.feed = -1.0
@@ -488,3 +547,134 @@ class StackState:
     @current_pgm.setter
     def current_pgm(self, value: str):
         self._current_pgm = value
+
+
+class FileEntry:
+    def __init__(self):
+        self.size = -1
+        self.timestamp = datetime.fromtimestamp(0)
+        self.attributes = bytearray()
+
+        self.is_changable = False
+        self.is_drive = False
+        self.is_directory = False
+        self.is_protected = False
+        self.is_hidden = False
+
+        self.name = ""
+
+    @property
+    def size(self) -> int:
+        return self._size
+
+    @size.setter
+    def size(self, value: int):
+        self._size = value
+
+    @property
+    def timestamp(self) -> datetime:
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, value: datetime):
+        self._timestamp = value
+
+    @property
+    def attributes(self) -> bytearray:
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: bytearray):
+        self._attributes = value
+
+    @property
+    def is_protected(self) -> bool:
+        return self._is_protected
+
+    @is_protected.setter
+    def is_protected(self, value: bool):
+        self._is_protected = value
+
+    @property
+    def is_drive(self) -> bool:
+        return self._is_drive
+
+    @is_drive.setter
+    def is_drive(self, value: bool):
+        self._is_drive = value
+
+    @property
+    def is_directory(self) -> bool:
+        return self._is_directory
+
+    @is_directory.setter
+    def is_directory(self, value: bool):
+        self._is_directory = value
+
+    @property
+    def is_protected(self) -> bool:
+        return (not self.is_directory and not self.is_drive)
+
+    @property
+    def is_protected(self) -> bool:
+        return self._is_protected
+
+    @is_protected.setter
+    def is_protected(self, value: bool):
+        self._is_protected = value
+
+    @property
+    def is_hidden(self) -> bool:
+        return self._is_hidden
+
+    @is_hidden.setter
+    def is_hidden(self, value: bool):
+        self._is_hidden = value
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
+
+class DirectoryEntry:
+    def __init__(self):
+        self.free_size = -1
+        self.dir_attributes = list()
+        self.attributes = bytearray()
+        self.path = ""
+
+    @property
+    def free_size(self) -> int:
+        return self._free_size
+
+    @free_size.setter
+    def free_size(self, value: int):
+        self._free_size = value
+
+    @property
+    def dir_attributes(self) -> list:
+        return self._dir_attributes
+
+    @dir_attributes.setter
+    def dir_attributes(self, value: list):
+        self._dir_attributes = value
+
+    @property
+    def attributes(self) -> bytearray:
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: bytearray):
+        self._attributes = value
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @path.setter
+    def path(self, value: str):
+        self._path = value
