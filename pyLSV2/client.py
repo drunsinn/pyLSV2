@@ -891,7 +891,7 @@ class LSV2:
                     )
         else:
             remote_file_name = remote_path
-            remote_directory = self.get_directory_info()["Path"]  # get pwd
+            remote_directory = self.get_directory_info().path  # get pwd
         remote_directory = remote_directory.rstrip(lc.PATH_SEP)
 
         if not self.get_directory_info(remote_directory):
