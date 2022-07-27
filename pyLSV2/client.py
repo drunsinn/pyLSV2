@@ -1476,19 +1476,19 @@ class LSV2:
         :returns: list of files found in directory
         :rtype: list
         """
-        current_path = self.get_directory_info()["Path"]
+        current_path = self.get_directory_info().path
         content = list()
         for entry in self.get_directory_content():
             if (
-                entry["Name"] == "."
-                or entry["Name"] == ".."
-                or entry["Name"].endswith(":")
+                entry.name == "."
+                or entry.name == ".."
+                or entry.name.endswith(":")
             ):
                 continue
-            current_fs_element = str(current_path + entry["Name"]).replace(
+            current_fs_element = str(current_path + entry.name).replace(
                 "/", lc.PATH_SEP
             )
-            if entry["is_directory"] is True and descend is True:
+            if entry.is_directory is True and descend is True:
                 if self.change_directory(current_fs_element):
                     content.extend(self._walk_dir())
             else:
