@@ -656,7 +656,7 @@ class CMD(str, Enum):
     requires no login priviliege"""
 
     A_LO = "A_LO"
-    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name. 
+    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name.
     requires any login priviliege"""
 
     C_CC = "C_CC"

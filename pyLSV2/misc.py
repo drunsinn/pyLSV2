@@ -17,7 +17,7 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     :param result_set: bytes returned by the system parameter query command R_PR
     """
     message_length = len(result_set)
-    info_list = list()
+    info_list = []
     if message_length == 120:
         info_list = struct.unpack("!14L8B8L2BH4B2L2HL", result_set)
     elif message_length == 124:
@@ -120,7 +120,8 @@ def decode_file_system_info(
 
     fi = ld.FileEntry
     fi.size = struct.unpack("!L", data_set[:4])[0]
-    fi.timestamp = datetime.fromtimestamp(struct.unpack("!L", data_set[4:8])[0])
+    fi.timestamp = datetime.fromtimestamp(
+        struct.unpack("!L", data_set[4:8])[0])
 
     fi.attributes = struct.unpack("!L", data_set[8:12])[0]
 
@@ -143,9 +144,9 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
     di = ld.DirectoryEntry()
     di.free_size = struct.unpack("!L", data_set[:4])[0]
 
-    attribute_list = list()
+    attribute_list = []
     for i in range(4, len(data_set[4:132]), 4):
-        attr = ba_to_ustr(data_set[i : i + 4])
+        attr = ba_to_ustr(data_set[i: i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     di.dir_attributes = attribute_list

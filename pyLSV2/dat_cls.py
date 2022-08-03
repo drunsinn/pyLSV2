@@ -626,10 +626,6 @@ class FileEntry:
 
     @property
     def is_protected(self) -> bool:
-        return not self.is_directory and not self.is_drive
-
-    @property
-    def is_protected(self) -> bool:
         return self._is_protected
 
     @is_protected.setter
@@ -656,7 +652,7 @@ class FileEntry:
 class DirectoryEntry:
     def __init__(self):
         self.free_size = -1
-        self.dir_attributes = list()
+        self.dir_attributes = []
         self.attributes = bytearray()
         self.path = ""
 
