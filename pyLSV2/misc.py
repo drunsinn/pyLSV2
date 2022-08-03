@@ -11,11 +11,10 @@ from .const import BIN_FILES, PATH_SEP, ControlType
 
 
 def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
-    """decode the result system parameter query
+    """
+    Decode the result system parameter query
 
-    :param bytearray result_set: bytes returned by the system parameter query command R_PR
-    :returns: dictionary with system parameter values
-    :rtype: dict
+    :param result_set: bytes returned by the system parameter query command R_PR
     """
     message_length = len(result_set)
     info_list = list()
@@ -81,11 +80,10 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
 def decode_file_system_info(
     data_set: bytearray, control_type: ControlType = ControlType.UNKNOWN
 ) -> ld.FileEntry:
-    """decode result from file system entry
+    """
+    Decode result from file system entry
 
-    :param bytearray result_set: bytes returned by the system parameter query command R_FI or CR_DR
-    :returns: dictionary with file system entry parameters
-    :rtype: dict
+    :param result_set: bytes returned by the system parameter query command R_FI or CR_DR
     """
 
     """
@@ -108,22 +106,21 @@ def decode_file_system_info(
     ATTR_SELECTED 0x80
     """
 
-    #flag_display = 0x01
+    # flag_display = 0x01
     flag_changable = 0x02
-    #flag_highlighted = 0x04
+    # flag_highlighted = 0x04
     flag_hidden = 0x08
     flag_dir = 0x10
     flag_subdir = 0x20
     flag_protected = 0x40
-    #flag_selected = 0x80
+    # flag_selected = 0x80
 
     # if control_type in (ControlType.MILL_OLD,ControlType.LATHE_OLD):
     #   flag_highlight = 0x04
 
     fi = ld.FileEntry
     fi.size = struct.unpack("!L", data_set[:4])[0]
-    fi.timestamp = datetime.fromtimestamp(
-        struct.unpack("!L", data_set[4:8])[0])
+    fi.timestamp = datetime.fromtimestamp(struct.unpack("!L", data_set[4:8])[0])
 
     fi.attributes = struct.unpack("!L", data_set[8:12])[0]
 
@@ -138,18 +135,17 @@ def decode_file_system_info(
 
 
 def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
-    """decode result from directory entry
+    """
+    Decode result from directory entry
 
-    :param bytearray result_set: bytes returned by the system parameter query command R_DI
-    :returns: dictionary with file system entry parameters
-    :rtype: dict
+    :param result_set: bytes returned by the system parameter query command R_DI
     """
     di = ld.DirectoryEntry()
     di.free_size = struct.unpack("!L", data_set[:4])[0]
 
     attribute_list = list()
     for i in range(4, len(data_set[4:132]), 4):
-        attr = ba_to_ustr(data_set[i: i + 4])
+        attr = ba_to_ustr(data_set[i : i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     di.dir_attributes = attribute_list
@@ -161,11 +157,10 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
 
 
 def decode_tool_info(data_set: bytearray) -> ld.ToolInformation:
-    """decode result from tool info
+    """
+    Decode result from tool info
 
-    :param bytearray result_set: bytes returned by the system parameter query command R_RI for tool info
-    :returns: dictionary with tool info values
-    :rtype: dict
+    :param result_set: bytes returned by the system parameter query command R_RI for tool info
     """
     ti = ld.ToolInformation()
     ti.number = struct.unpack("!L", data_set[0:4])[0]
@@ -180,12 +175,10 @@ def decode_tool_info(data_set: bytearray) -> ld.ToolInformation:
 
 
 def decode_override_state(data_set: bytearray) -> ld.OverrideState:
-    """decode result from override info
+    """
+    Decode result from override info
 
-    :param bytearray result_set: bytes returned by the system parameter query command R_RI for
-                             override info
-    :returns: dictionary with override info values
-    :rtype: dict
+    :param result_set: bytes returned by the system parameter query command R_RI for override info
     """
     oi = ld.OverrideState()
     oi.feed = struct.unpack("!L", data_set[0:4])[0] / 100
@@ -195,12 +188,10 @@ def decode_override_state(data_set: bytearray) -> ld.OverrideState:
 
 
 def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
-    """decode result from reading error messages
+    """
+    Decode result from reading error messages
 
-    :param bytearray result_set: bytes returned by the system parameter query command R_RI for
-                             first and next error
-    :returns: error message values
-    :rtype: 
+    :param result_set: bytes returned by the system parameter query command R_RI for first and next error
     """
     ei = ld.LSV2ErrorMessage()
     ei.e_class = struct.unpack("!H", data_set[0:2])[0]
@@ -212,6 +203,11 @@ def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
 
 
 def decode_stack_info(data_set: bytearray) -> ld.StackState:
+    """
+    Decode result from reading stack information
+
+    :param data_set: bytes returned from query
+    """
     ss = ld.StackState()
     ss.current_line = struct.unpack("!L", data_set[:4])[0]
     ss.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
@@ -220,11 +216,9 @@ def decode_stack_info(data_set: bytearray) -> ld.StackState:
 
 
 def is_file_binary(file_name: Union[str, Path]) -> bool:
-    """Check if file is expected to be binary by comparing with known expentions.
-
-    :param file_name: name of the file to check
-    :returns: True if file matches know binary file type
-    :rtype: bool
+    """
+    Check if file is expected to be binary by comparing with known expentions.
+    Returns ``True`` if file matches know binary file type
     """
     for bin_type in BIN_FILES:
         if isinstance(file_name, Path):
@@ -236,5 +230,9 @@ def is_file_binary(file_name: Union[str, Path]) -> bool:
 
 
 def ba_to_ustr(bytes_to_convert: bytearray) -> str:
-    """convert a bytearry of characters to unicode string"""
+    """
+    convert a bytearry of characters to unicode string
+
+    :param bytes_to_convert: bytes to convert to unicode string
+    """
     return bytes_to_convert.decode("latin1").strip("\x00").strip()

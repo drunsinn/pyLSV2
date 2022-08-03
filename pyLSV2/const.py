@@ -203,7 +203,7 @@ class LSV2Err(IntEnum):
 
     LSV2_OK = 0
 
-    # reciving
+    # receiving
     LSV2_TIMEOUT = 1
     LSV2_NO_ENQ = 2
     LSV2_TIMEOUT2 = 3
@@ -317,7 +317,7 @@ class LSV2Err(IntEnum):
     T_USER_ERROR = 255
 
     T_ER_NON = -1
-    """not an valid error code. devault value if no error occured"""
+    """not an valid error code. devault value if no error occurred"""
 
 
 class KeyCode(IntEnum):
@@ -783,7 +783,7 @@ class CMD(str, Enum):
     # R_OI = "R_OI" # found via bruteforce test, purpose unknown!
 
     R_PD = "R_PD"
-    """request palet definiton.
+    """request palet definition.
     requires FILE or MONITOR login priviliege"""
 
     R_PR = "R_PR"
@@ -826,7 +826,7 @@ class CMD(str, Enum):
     requires INSPECT login priviliege"""
 
     R_WD = "R_WD"
-    """request window definiton.
+    """request window definition.
     requires MONITOR login priviliege"""
 
     T_FD = "T_FD"
@@ -834,7 +834,7 @@ class CMD(str, Enum):
     requires FILE login priviliege"""
 
     NONE = "NONE"
-    """not a valid command but used internaly"""
+    """not a valid command but used internally"""
 
 
 class RSP(str, Enum):
@@ -892,10 +892,10 @@ class RSP(str, Enum):
     """S_VR: signals that the command R_VR was accepted, it is followed by more data"""
 
     NONE = "NONE"
-    """not a valid response but used internaly to singnal that no response was recived or should be sent"""
+    """not a valid response but used internally to signal that no response was received or should be sent"""
 
     UNKNOWN = "UNKN"
-    """not a valid respons but used internaly ot signal an unknown response was recived"""
+    """not a valid response but used internally to signal an unknown response was received"""
 
 
 class ParCCC(IntEnum):

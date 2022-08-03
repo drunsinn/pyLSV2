@@ -9,12 +9,17 @@ import re
 
 
 class NCTable:
-    """generic object for table files commonly used by TTNC, iTNC, CNCPILOT,
+    """generic object for table files commonly used by TNC, iTNC, CNCPILOT,
     MANUALplus and 6000i CNC
     """
 
     def __init__(
-        self, name: str = "", suffix: str = "", version: str = "", has_unit: bool = False, is_metric: bool = False
+        self,
+        name: str = "",
+        suffix: str = "",
+        version: str = "",
+        has_unit: bool = False,
+        is_metric: bool = False,
     ):
         """init object variables logging"""
         logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -75,7 +80,9 @@ class NCTable:
     def is_metric(self, value: bool):
         self._is_metric = value
 
-    def append_column(self, name: str, start: int, end: int, width: int = 0, empty_value=None):
+    def append_column(
+        self, name: str, start: int, end: int, width: int = 0, empty_value=None
+    ):
         """add column to the table format"""
         self._columns.append(name)
         if width == 0:
@@ -145,7 +152,7 @@ class NCTable:
         return json.dumps(json_data, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def from_json(file_path: pathlib.Path) -> 'NCTable':
+    def from_json(file_path: pathlib.Path) -> "NCTable":
         """return a new NCTable object based on a json configuration file"""
         nct = NCTable()
         with open(file_path, "r", encoding="utf-8") as jfp:
@@ -180,8 +187,7 @@ class NCTable:
             version_string = " Version:%s" % str(self._version)
 
         with open(file_path, "w", encoding="ascii") as tfp:
-            tfp.write("BEGIN %s%s%s\n" %
-                      (file_name, units_string, version_string))
+            tfp.write("BEGIN %s%s%s\n" % (file_name, units_string, version_string))
 
             for column_name in self._columns:
                 if column_name not in self._column_format:
@@ -323,8 +329,7 @@ class TableReader:
                         end=column_match.end(),
                     )
 
-                logging.debug("Found %d columns", len(
-                    nctable.get_column_names()))
+                logging.debug("Found %d columns", len(nctable.get_column_names()))
 
                 for line in tfp.readlines():
                     if line.startswith("[END]"):
@@ -333,7 +338,7 @@ class TableReader:
                     table_entry = {}
                     for column in nctable.get_column_names():
                         table_entry[column] = line[
-                            nctable.get_column_start(column): nctable.get_column_end(
+                            nctable.get_column_start(column) : nctable.get_column_end(
                                 column
                             )
                         ].strip()

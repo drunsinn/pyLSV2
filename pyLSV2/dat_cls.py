@@ -7,7 +7,7 @@ from datetime import datetime
 from .const import ControlType
 
 
-class VersionInfo():
+class VersionInfo:
     def __init__(self):
         """data class for version information, uses properties instead of dataclass for compatibility"""
         self.control_version = ""
@@ -21,6 +21,12 @@ class VersionInfo():
 
     @property
     def control_version(self) -> str:
+        """
+        version identifyer of the control
+
+        :getter: returns the version string
+        :setter: sets the version string
+        """
         return self._control_version
 
     @control_version.setter
@@ -29,6 +35,12 @@ class VersionInfo():
 
     @property
     def control_type(self) -> ControlType:
+        """
+        control type identifyer of the control
+
+        :getter: returns the control type
+        :setter: sets the control type
+        """
         return self._control_type
 
     @control_type.setter
@@ -85,6 +97,7 @@ class VersionInfo():
 
 
 class SystemParameters:
+    """"""
 
     def __init__(self):
         """data class for system parameters, uses properties instead o f dataclass for compatibility"""
@@ -470,7 +483,7 @@ class OverrideState:
 
 class LSV2ErrorMessage:
     def __init__(self):
-        """names were choosen so not to interfere with existing names"""
+        """names were chosen so not to interfere with existing names"""
         self.e_class = -1
         self.e_group = -1
         self.e_number = -1
@@ -613,7 +626,7 @@ class FileEntry:
 
     @property
     def is_protected(self) -> bool:
-        return (not self.is_directory and not self.is_drive)
+        return not self.is_directory and not self.is_drive
 
     @property
     def is_protected(self) -> bool:

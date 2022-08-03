@@ -5,7 +5,7 @@ import logging
 import socket
 import struct
 from typing import Tuple
-from .const import RSP
+from .const import RSP, CMD
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -14,15 +14,21 @@ class LLLSV2Com:
     """Implementation of the low level communication functions for sending and
     receiving LSV2 telegrams via TCP"""
 
-    DEFAULT_PORT = 19000  # Default port for LSV2 on control side
+    DEFAULT_PORT = 19000
+    # Default port for LSV2 on control side
+
     DEFAULT_BUFFER_SIZE = 256
+    # Default size of send and receive buffer
 
     def __init__(self, hostname: str, port: int = 19000, timeout: float = 15.0):
         """Set connection parameters
 
-        :param str hostname: ip or hostname of control.
-        :param int port: port number, defaults to 19000.
-        :param float timeout: number of seconds for time out of connection.
+        :param hostname: ip or hostname of control.
+        :param port: port number, defaults to 19000.
+        :param timeout: number of seconds for time out of connection.
+
+        :raises socket.gaierror: Hostname could not be resolved
+        :raises socket.error: could not create socket
         """
         try:
             self._host_ip = socket.gethostbyname(hostname)
@@ -53,10 +59,10 @@ class LLLSV2Com:
         )
 
     def connect(self):
-        """Establish connection to control
+        """
+        Establish connection to control
 
-        :raise: Exception if connection times out.
-        :rtype: None
+        :raise socket.timeout: Exception if connection times out.
         """
         try:
             self._tcpsock.connect((self._host_ip, self._port))
@@ -64,13 +70,14 @@ class LLLSV2Com:
             logging.error("could not connect to control")
             raise
         self._is_connected = True
-        logging.debug("Connected to host %s at port %s", self._host_ip, self._port)
+        logging.debug("Connected to host %s at port %s",
+                      self._host_ip, self._port)
 
     def disconnect(self):
-        """Close connection
+        """
+        Close connection
 
-        :raise: Exception if connection times out.
-        :rtype: None
+        :raise socket.timeout: Exception if connection times out.
         """
         try:
             if self._tcpsock is not None:
@@ -82,9 +89,13 @@ class LLLSV2Com:
         logging.debug("Connection to %s closed", self._host_ip)
 
     def set_buffer_size(self, buffer_size: int) -> bool:
-        """set the size of the send and receive buffer. the size has to be established
+        """
+        set the size of the send and receive buffer. the size has to be established
         during connection setup. buffer size has to be at least 8 so command and length
-        fit into the telegram"""
+        fit into the telegram.
+
+        :param buffer_size: new size of send and receive buffer
+        """
         if buffer_size < 8:
             self._buffer_size = self.DEFAULT_BUFFER_SIZE
             logging.warning(
@@ -100,16 +111,22 @@ class LLLSV2Com:
         return self._buffer_size
 
     def telegram(
-        self, command, payload: bytearray = bytearray(), wait_for_response: bool = True
+        self,
+        command: CMD,
+        payload: bytearray = bytearray(),
+        wait_for_response: bool = True,
     ) -> Tuple[RSP, bytearray]:
-        """Send LSV2 telegram and receive response if necessary.
+        """
+        Send LSV2 telegram and receive response if necessary.
 
-        :param str command: command string.
-        :param byte array payload: command payload.
-        :param bool wait_for_response: switch for waiting for response from control.
-        :raise: Exception if connection is not already open or error during transmission.
-        :return: response message and content
-        :rtype: list
+        :param command: command string
+        :param payload: command payload
+        :param wait_for_response: switch for waiting for response from control.
+        :raise Exception: if connection is not already open or error during transmission.
+        :raise OverflowError: if payload is to long for current buffer size
+        :raise Exception: ToDo1
+        :raise Exception: ToDo2
+        :raise Exception: ToDo3
         """
         if self._is_connected is False:
             raise Exception("connection is not open!")
@@ -152,7 +169,8 @@ class LLLSV2Com:
             raise
 
         if len(response) > 0:
-            logging.debug("received block of data with length %d", len(response))
+            logging.debug(
+                "received block of data with length %d", len(response))
             if len(response) >= 8:
                 # read 4 bytes for response length
                 response_length = struct.unpack("!L", response[0:4])[0]
@@ -160,8 +178,9 @@ class LLLSV2Com:
                 # read 4 bytes for response type
                 response_command = RSP(response[4:8].decode("utf-8", "ignore"))
             else:
-                # respons is less than 8 bytes long which is not enough space for package length and response message!
-                raise Exception("response to short, less than 8 bytes: %s" % response)
+                # response is less than 8 bytes long which is not enough space for package length and response message!
+                raise Exception(
+                    "response to short, less than 8 bytes: %s" % response)
         else:
             response_length = 0
             response_command = RSP.NONE
