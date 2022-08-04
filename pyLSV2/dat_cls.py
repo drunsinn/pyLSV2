@@ -396,10 +396,10 @@ class ToolInformation:
     def __init__(self):
         self.number = -1
         self.index = -1
-        self.axis = None
+        self.axis = ""
         self.length = -1
         self.radius = -1
-        self.name = None
+        self.name = ""
 
     @property
     def number(self) -> int:
@@ -623,14 +623,6 @@ class FileEntry:
     @is_directory.setter
     def is_directory(self, value: bool):
         self._is_directory = value
-
-    @property
-    def is_protected(self) -> bool:
-        return self._is_protected
-
-    @is_protected.setter
-    def is_protected(self, value: bool):
-        self._is_protected = value
 
     @property
     def is_hidden(self) -> bool:

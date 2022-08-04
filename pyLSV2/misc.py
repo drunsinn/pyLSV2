@@ -85,54 +85,48 @@ def decode_file_system_info(
 
     :param result_set: bytes returned by the system parameter query command R_FI or CR_DR
     """
+    if control_type in (ControlType.MILL_OLD, ControlType.LATHE_OLD):
+        print("select old")
+        # according to documentation an LSV version 1 this should be:
+        # flag_display = 0x01
+        flag_changable = 0x02
+        # flag_highlighted = 0x04
+        flag_hidden = 0x08
+        flag_drive = None
+        flag_subdir = 0x40
+        flag_protected = 0x20
+        # flag_selected = None
+    else:
+        # another newer document has
+        # flag_display = 0x01
+        flag_changable = 0x02
+        # flag_highlighted = 0x04 # was 0x08, this might be an error in the documentation!
+        flag_hidden = 0x08
+        flag_drive = 0x10
+        flag_subdir = 0x20
+        flag_protected = 0x40
+        # flag_selected = 0x80
 
-    """
-    according to documentation an LSV version 1 this should be:
-    ATTR_DISPLAY 0x01
-    ATTR_CHANGABLE 0x02
-    ATTR_HIGHLITED 0x04
-    ATTR_HIDE 0x08
-    ATTR_DIR 0x10
-    ATTR_PROTECT 0x20
-    
-    another document has:
-    ATTR_DISPLAY 0x01
-    ATTR_CHANGEABLE 0x02
-    ATTR_HIGHLIGHTED 0x08 (this might be an error in the documentation!)
-    ATTR_HIDE 0x08
-    ATTR_DIR 0x10
-    ATTR_SUBDIR 0x20
-    ATTR_PROTECT 0x40
-    ATTR_SELECTED 0x80
-    """
+    file_entry = ld.FileEntry()
+    file_entry.size = struct.unpack("!L", data_set[:4])[0]
+    file_entry.timestamp = datetime.fromtimestamp(struct.unpack("!L", data_set[4:8])[0])
 
-    # flag_display = 0x01
-    flag_changable = 0x02
-    # flag_highlighted = 0x04
-    flag_hidden = 0x08
-    flag_dir = 0x10
-    flag_subdir = 0x20
-    flag_protected = 0x40
-    # flag_selected = 0x80
+    file_entry.attributes = struct.unpack("!L", data_set[8:12])[0]
 
-    # if control_type in (ControlType.MILL_OLD,ControlType.LATHE_OLD):
-    #   flag_highlight = 0x04
+    file_entry.is_changable = (file_entry.attributes & flag_changable) != 0
 
-    fi = ld.FileEntry
-    fi.size = struct.unpack("!L", data_set[:4])[0]
-    fi.timestamp = datetime.fromtimestamp(
-        struct.unpack("!L", data_set[4:8])[0])
+    if flag_drive is not None:
+        file_entry.is_drive = (file_entry.attributes & flag_drive) != 0
 
-    fi.attributes = struct.unpack("!L", data_set[8:12])[0]
+    file_entry.is_directory = (file_entry.attributes & flag_subdir) != 0
 
-    fi.is_changable = bool(fi.attributes & flag_changable)
-    fi.is_drive = bool(fi.attributes & flag_dir)
-    fi.is_directory = bool(fi.attributes & flag_subdir)
-    fi.is_protected = bool(fi.attributes & flag_protected)
-    fi.is_hidden = bool(fi.attributes & flag_hidden)
+    file_entry.is_protected = (file_entry.attributes & flag_protected) != 0
+    file_entry.is_hidden = (file_entry.attributes & flag_hidden) != 0
 
-    fi.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
-    return fi
+    file_entry.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
+
+    print(file_entry.name, file_entry.is_directory, file_entry.attributes)
+    return file_entry
 
 
 def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
@@ -146,12 +140,12 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
 
     attribute_list = []
     for i in range(4, len(data_set[4:132]), 4):
-        attr = ba_to_ustr(data_set[i: i + 4])
+        attr = ba_to_ustr(data_set[i : i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     di.dir_attributes = attribute_list
 
-    di.attributes = struct.unpack("!32B", data_set[132:164])
+    di.attributes = bytearray(struct.unpack("!32B", data_set[132:164]))
     di.path = ba_to_ustr(data_set[164:]).replace("/", PATH_SEP)
 
     return di

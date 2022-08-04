@@ -4,7 +4,7 @@
 import gettext
 import os
 
-from .const import ExecState, PgmState, LSV2Err
+from .const import ExecState, LSV2Err, PgmState
 
 
 def get_error_text(

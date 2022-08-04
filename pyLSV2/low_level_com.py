@@ -5,7 +5,9 @@ import logging
 import socket
 import struct
 from typing import Tuple, Union
-from .const import RSP, CMD
+
+from .const import CMD, RSP
+
 
 class LLLSV2Com:
     """Implementation of the low level communication functions for sending and
@@ -27,7 +29,7 @@ class LLLSV2Com:
         :raises socket.gaierror: Hostname could not be resolved
         :raises socket.error: could not create socket
         """
-        self._logger = logging.getLogger('LSV2 TCP')
+        self._logger = logging.getLogger("LSV2 TCP")
 
         try:
             self._host_ip = socket.gethostbyname(hostname)
@@ -69,8 +71,7 @@ class LLLSV2Com:
             self._logger.error("could not connect to control")
             raise
         self._is_connected = True
-        self._logger.debug("Connected to host %s at port %s",
-                      self._host_ip, self._port)
+        self._logger.debug("Connected to host %s at port %s", self._host_ip, self._port)
 
     def disconnect(self):
         """
@@ -168,8 +169,7 @@ class LLLSV2Com:
             raise
 
         if len(response) > 0:
-            self._logger.debug(
-                "received block of data with length %d", len(response))
+            self._logger.debug("received block of data with length %d", len(response))
             if len(response) >= 8:
                 # read 4 bytes for response length
                 response_length = struct.unpack("!L", response[0:4])[0]
@@ -178,8 +178,7 @@ class LLLSV2Com:
                 response_command = RSP(response[4:8].decode("utf-8", "ignore"))
             else:
                 # response is less than 8 bytes long which is not enough space for package length and response message!
-                raise Exception(
-                    "response to short, less than 8 bytes: %s" % response)
+                raise Exception("response to short, less than 8 bytes: %s" % response)
         else:
             response_length = 0
             response_command = RSP.NONE

@@ -83,15 +83,15 @@ class LSV2:
 
     def is_itnc(self) -> bool:
         """return ``True`` if control is a iTNC"""
-        return self._control_type == lc.ControlType.MILL_OLD
+        return self._versions.control_type == lc.ControlType.MILL_OLD
 
     def is_tnc(self) -> bool:
         """return ``True`` if control is a TNC"""
-        return self._control_type == lc.ControlType.MILL_NEW
+        return self._versions.control_type == lc.ControlType.MILL_NEW
 
     def is_pilot(self) -> bool:
         """return ``True`` if control is a CNCPILOT640"""
-        return self._control_type == lc.ControlType.LATHE_NEW
+        return self._versions.control_type == lc.ControlType.LATHE_NEW
 
     def switch_safe_mode(self, enable_safe_mode: bool = True):
         """switch between safe mode and unrestricted mode"""
@@ -144,13 +144,13 @@ class LSV2:
             bytes_to_send = bytearray(payload)
 
         if command is lc.CMD.C_CC:
-            if bytes_to_send is None or len(bytes_to_send) != 2:
+            if len(bytes_to_send) < 2:
                 self._logger.warning(
                     "system command requires a payload of at exactly 2 bytes"
                 )
                 return False
 
-            c_cc_command = struct.unpack("!H", bytes_to_send)[0]
+            c_cc_command = struct.unpack("!H", bytes_to_send[0:2])[0]
             if c_cc_command not in self._known_sys_cmd:
                 self._logger.debug(
                     "unknown or unsupported system command %s", bytes_to_send
@@ -472,11 +472,15 @@ class LSV2:
             else:
                 raise Exception("Could not read version information from control")
 
-            if info_data.control_version in ("TNC640", "TNC620", "TNC320", "TNC128"):
+            if (
+                "TNC6" in info_data.control_version
+                or "TNC320" in info_data.control_version
+                or "TNC128" in info_data.control_version
+            ):
                 info_data.control_type = lc.ControlType.MILL_NEW
-            elif info_data.control_version in ("iTNC530", "iTNC530 Programm"):
+            elif "iTNC530" in info_data.control_version:
                 info_data.control_type = lc.ControlType.MILL_OLD
-            elif info_data.control_version in ("CNCPILOT640",):
+            elif "CNCPILOT640" in info_data.control_version:
                 info_data.control_type = lc.ControlType.LATHE_NEW
             else:
                 self._logger.warning(
@@ -622,7 +626,7 @@ class LSV2:
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 dir_info = lm.decode_directory_info(result)
                 self._logger.debug(
-                    "successfully received directory information %s", dir_info
+                    "successfully received directory information for %s", dir_info.path
                 )
                 return dir_info
             self._logger.error("an error occurred while querying directory info")
@@ -665,10 +669,10 @@ class LSV2:
             payload.append(0x00)
             result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                file_info = lm.decode_file_system_info(result, self._control_type)
-                self._logger.debug(
-                    "successfully received file information %s", file_info
+                file_info = lm.decode_file_system_info(
+                    result, self._versions.control_type
                 )
+                self._logger.debug("received file information for %s", file_info.name)
                 return file_info
             self._logger.warning(
                 "an error occurred while querying file info this might also indicate that it does not exist %s",
@@ -691,12 +695,11 @@ class LSV2:
             if isinstance(result, (list,)):
                 for entry in result:
                     dir_content.append(
-                        lm.decode_file_system_info(entry, self._control_type)
+                        lm.decode_file_system_info(entry, self._versions.control_type)
                     )
+
                 self._logger.debug(
-                    "successfully received %d packages for directory content %s",
-                    len(result),
-                    dir_content,
+                    "received %d packages for directory content", len(dir_content)
                 )
             else:
                 self._logger.error("an error occurred while directory content info")
@@ -743,7 +746,7 @@ class LSV2:
             for part in path_parts:
                 path_to_check += part + lc.PATH_SEP
                 # no file info -> does not exist and has to be created
-                if self.get_file_info(path_to_check) is not None:
+                if self.get_file_info(path_to_check) is None:
                     payload = bytearray()
                     payload.extend(map(ord, path_to_check))
                     payload.append(0x00)  # terminate string
@@ -1582,7 +1585,7 @@ class LSV2:
 
     def get_file_list(
         self, path: str = "", descend: bool = True, pattern: str = ""
-    ) -> list:
+    ) -> List[str]:
         """
         Get list of files in directory structure.
         Requires access level ``FILETRANSFER`` to work.
@@ -1600,7 +1603,7 @@ class LSV2:
                 self._logger.warning("could not change to directory")
                 return []
 
-        if pattern is None:
+        if len(pattern) == 0:
             file_list = self._walk_dir(descend)
         else:
             file_list = []
@@ -1736,7 +1739,8 @@ class LSV2:
             + ".bmp"
         )
 
-        payload = bytearray(map(ord, temp_file_path))
+        payload = bytearray(struct.pack("!H", lc.ParCCC.SCREENDUMP))
+        payload.extend(map(ord, temp_file_path))
         payload.append(0x00)
         result = self._send_recive(lc.CMD.C_CC, payload, lc.RSP.T_OK)
 

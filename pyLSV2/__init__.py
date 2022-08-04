@@ -3,8 +3,8 @@
 """A pure Python3 implementation of the LSV2 protocol"""
 from .client import LSV2
 from .const import *
+from .dat_cls import *
 from .table_reader import *
 from .translate_messages import *
-from .dat_cls import *
 
 __version__ = "0.7.7"
