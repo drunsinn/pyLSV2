@@ -4,11 +4,8 @@
 import logging
 import socket
 import struct
-from typing import Tuple
+from typing import Tuple, Union
 from .const import RSP, CMD
-
-logging.getLogger(__name__).addHandler(logging.NullHandler())
-
 
 class LLLSV2Com:
     """Implementation of the low level communication functions for sending and
@@ -30,6 +27,8 @@ class LLLSV2Com:
         :raises socket.gaierror: Hostname could not be resolved
         :raises socket.error: could not create socket
         """
+        self._logger = logging.getLogger('LSV2 TCP')
+
         try:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
@@ -48,11 +47,11 @@ class LLLSV2Com:
             self._tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self._tcpsock.settimeout(timeout)
         except socket.error as err:
-            logging.error("socket creation failed with error %s", err)
+            self._logger.error("socket creation failed with error %s", err)
             raise
         self._is_connected = False
 
-        logging.debug(
+        self._logger.debug(
             "Socket successfully created, host %s was resolved to IP %s",
             hostname,
             self._host_ip,
@@ -67,10 +66,10 @@ class LLLSV2Com:
         try:
             self._tcpsock.connect((self._host_ip, self._port))
         except socket.timeout:
-            logging.error("could not connect to control")
+            self._logger.error("could not connect to control")
             raise
         self._is_connected = True
-        logging.debug("Connected to host %s at port %s",
+        self._logger.debug("Connected to host %s at port %s",
                       self._host_ip, self._port)
 
     def disconnect(self):
@@ -83,10 +82,10 @@ class LLLSV2Com:
             if self._tcpsock is not None:
                 self._tcpsock.close()
         except socket.timeout:
-            logging.error("error while closing socket")
+            self._logger.error("error while closing socket")
             raise
         self._is_connected = False
-        logging.debug("Connection to %s closed", self._host_ip)
+        self._logger.debug("Connection to %s closed", self._host_ip)
 
     def set_buffer_size(self, buffer_size: int) -> bool:
         """
@@ -98,7 +97,7 @@ class LLLSV2Com:
         """
         if buffer_size < 8:
             self._buffer_size = self.DEFAULT_BUFFER_SIZE
-            logging.warning(
+            self._logger.warning(
                 "size of receive buffer to small, set to default of %d bytes",
                 self._buffer_size,
             )
@@ -112,7 +111,7 @@ class LLLSV2Com:
 
     def telegram(
         self,
-        command: CMD,
+        command: Union[CMD, RSP],
         payload: bytearray = bytearray(),
         wait_for_response: bool = True,
     ) -> Tuple[RSP, bytearray]:
@@ -144,7 +143,7 @@ class LLLSV2Com:
 
         if len(payload) > 0:
             telegram.extend(payload)
-        logging.debug(
+        self._logger.debug(
             "telegram to transmit: command %s payload length %d bytes data: %s",
             command,
             payload_length,
@@ -162,14 +161,14 @@ class LLLSV2Com:
             if wait_for_response:
                 response = self._tcpsock.recv(self._buffer_size)
         except Exception:
-            logging.error(
+            self._logger.error(
                 "something went wrong while waiting for new data to arrive, buffer was set to %d",
                 self._buffer_size,
             )
             raise
 
         if len(response) > 0:
-            logging.debug(
+            self._logger.debug(
                 "received block of data with length %d", len(response))
             if len(response) >= 8:
                 # read 4 bytes for response length
@@ -188,7 +187,7 @@ class LLLSV2Com:
         if response_length > 0:
             response_content = bytearray(response[8:])
             while len(response_content) < response_length:
-                logging.debug(
+                self._logger.debug(
                     "waiting for more data to arrive, %d bytes missing",
                     len(response_content) < response_length,
                 )
@@ -197,7 +196,7 @@ class LLLSV2Com:
                         self._tcpsock.recv(response_length - len(response[8:]))
                     )
                 except Exception:
-                    logging.error(
+                    self._logger.error(
                         "something went wrong while waiting for more data to arrive"
                     )
                     raise

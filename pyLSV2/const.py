@@ -829,10 +829,6 @@ class CMD(str, Enum):
     """request window definition.
     requires MONITOR login priviliege"""
 
-    T_FD = "T_FD"
-    """file transfer done
-    requires FILE login priviliege"""
-
     NONE = "NONE"
     """not a valid command but used internally"""
 
