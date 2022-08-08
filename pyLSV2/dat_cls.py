@@ -95,6 +95,18 @@ class VersionInfo:
     def release_type(self, value: str):
         self._release_type = value
 
+    def is_itnc(self) -> bool:
+        """return ``True`` if control is a iTNC"""
+        return self._control_type == ControlType.MILL_OLD
+
+    def is_tnc(self) -> bool:
+        """return ``True`` if control is a TNC"""
+        return self._control_type == ControlType.MILL_NEW
+
+    def is_pilot(self) -> bool:
+        """return ``True`` if control is a CNCPILOT640"""
+        return self._control_type == ControlType.LATHE_NEW
+
 
 class SystemParameters:
     """"""

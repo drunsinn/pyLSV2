@@ -17,7 +17,8 @@ logging.basicConfig(level=logging.INFO)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('address', nargs='?', default='192.168.56.101', type=str)
+    parser.add_argument('address', nargs='?',
+                        default='192.168.56.101', type=str)
 
     parser.add_argument(
         '-d', '--debug',
@@ -40,12 +41,12 @@ if __name__ == "__main__":
 
     print(
         'Connected to "{Control}" with NC Software "{NC_Version}"'.format(
-            **con.get_versions()
+            **con._read_version()
         )
     )
     print(
         "Running LSV2 Version {LSV2_Version} with Flags {LSV2_Version_Flags}".format(
-            **con.get_system_parameter()
+            **con._read_parameters()
         )
     )
 
@@ -60,7 +61,8 @@ if __name__ == "__main__":
 
     print(
         "PLC Marker: {}".format(
-            con.read_plc_memory(address=0, mem_type=MemoryType.MARKER, count=15)
+            con.read_plc_memory(
+                address=0, mem_type=MemoryType.MARKER, count=15)
         )
     )
     print(
@@ -85,28 +87,39 @@ if __name__ == "__main__":
     )
     print(
         "PLC Word Output: {}".format(
-            con.read_plc_memory(address=10, mem_type=MemoryType.OUTPUT_WORD, count=5)
+            con.read_plc_memory(
+                address=10, mem_type=MemoryType.OUTPUT_WORD, count=5)
         )
     )
 
     # read values from PLC and other locations with telegram R_DP. Only works on iTNC
     if con.is_itnc():
         print(
-            "PLC Double Word 7928: {}".format(con.read_data_path("/PLC/memory/D/7928"))
+            "PLC Double Word 7928: {}".format(
+                con.read_data_path("/PLC/memory/D/7928"))
         )
-        print("PLC Constant 1: {}".format(con.read_data_path("/PLC/memory/K/1")))
-        print("PLC Marker 211: {}".format(con.read_data_path("/PLC/memory/M/211")))
-        print("PLC Byte 7192: {}".format(con.read_data_path("/PLC/memory/B/7192")))
-        print("PLC Word 10908: {}".format(con.read_data_path("/PLC/memory/W/10908")))
+        print("PLC Constant 1: {}".format(
+            con.read_data_path("/PLC/memory/K/1")))
+        print("PLC Marker 211: {}".format(
+            con.read_data_path("/PLC/memory/M/211")))
+        print("PLC Byte 7192: {}".format(
+            con.read_data_path("/PLC/memory/B/7192")))
+        print("PLC Word 10908: {}".format(
+            con.read_data_path("/PLC/memory/W/10908")))
         print("PLC Input 11: {}".format(con.read_data_path("/PLC/memory/I/11")))
-        print("PLC String 30: {}".format(con.read_data_path("/PLC/memory/S/30")))
+        print("PLC String 30: {}".format(
+            con.read_data_path("/PLC/memory/S/30")))
         print(
-            "DOC column of tool 1: {}".format(con.read_data_path("/TABLE/TOOL/T/1/DOC"))
+            "DOC column of tool 1: {}".format(
+                con.read_data_path("/TABLE/TOOL/T/1/DOC"))
         )
-        print("L column of tool 1: {}".format(con.read_data_path("/TABLE/TOOL/T/1/L")))
-        print("R column of tool 1: {}".format(con.read_data_path("/TABLE/TOOL/T/1/R")))
+        print("L column of tool 1: {}".format(
+            con.read_data_path("/TABLE/TOOL/T/1/L")))
+        print("R column of tool 1: {}".format(
+            con.read_data_path("/TABLE/TOOL/T/1/R")))
         print(
-            "PLC column of tool 1: {}".format(con.read_data_path("/TABLE/TOOL/T/1/PLC"))
+            "PLC column of tool 1: {}".format(
+                con.read_data_path("/TABLE/TOOL/T/1/PLC"))
         )
         print(
             "TMAT column of tool 1: {}".format(
@@ -129,7 +142,8 @@ if __name__ == "__main__":
         )
     else:
         # old style
-        print("Current Language: {}".format(con.get_machine_parameter("7230.0")))
+        print("Current Language: {}".format(
+            con.get_machine_parameter("7230.0")))
 
     # changing the value of a machine parameter
     # con.login(pyLSV2.Login.PLCDEBUG)
@@ -186,19 +200,23 @@ if __name__ == "__main__":
             spindel = list(
                 filter(lambda pocket: pocket["P"] == spindel_lable, pockets)
             )[0]
-            print("Current tool number {T} with name {TNAME}".format(**spindel))
+            print(
+                "Current tool number {T} with name {TNAME}".format(**spindel))
 
     # read error messages via LSV2, works only on iTNC controls
     if con.is_itnc():
         e_m = con.get_error_messages()
-        print("Number of currently ative error messages: {:d}".format(len(e_m)))
+        print(
+            "Number of currently ative error messages: {:d}".format(len(e_m)))
         for i, msg in enumerate(e_m):
             print("Error {:d} : {:s}".format(i, msg["Text"]))
 
     # list all NC-Programms in TNC partition
-    h_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[hH]$")
+    h_files = con.get_file_list(
+        path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[hH]$")
     print("Found {:d} Klartext programs: {:}".format(len(h_files), h_files))
-    i_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[iI]$")
+    i_files = con.get_file_list(
+        path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[iI]$")
     print("Found {:d} DIN/ISO programs: {:}".format(len(i_files), i_files))
 
     con.disconnect()

@@ -34,7 +34,8 @@ if __name__ == "__main__":
     )
     ssh_forwarder.start()
     print(
-        "SSH tunnel established. local port is {}".format(ssh_forwarder.local_bind_port)
+        "SSH tunnel established. local port is {}".format(
+            ssh_forwarder.local_bind_port)
     )
 
     print("Establish regular LSV2 connection via local port")
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     lsv2.connect()
     print(
         'Connected to "{Control}" with NC Software "{NC_Version}"'.format(
-            **lsv2.get_versions()
+            **lsv2._read_version()
         )
     )
     print("Close Connection")
