@@ -4,12 +4,13 @@
 import gettext
 import os
 
+from pyLSV2.dat_cls import TransmissionError
+
 from .const import ExecState, LSV2Err, PgmState
 
 
-def get_error_text(
-    error_type: int, error_code: int, language: str = "", locale_path=None
-) -> str:
+def get_error_text(t_error: TransmissionError, language: str = "", locale_path=None
+                   ) -> str:
     """Parse error type and error code and return the error message.
 
     :param int error_type: type of error code.
@@ -38,8 +39,8 @@ def get_error_text(
         )
     _ = translate.gettext
 
-    if error_type != 1:
-        raise NotImplementedError("Unknown error type: %d" % error_type)
+    if t_error.e_type != 1:
+        raise NotImplementedError("Unknown error type: %d" % t_error.e_type)
     return {
         LSV2Err.T_ER_BAD_FORMAT: _("LSV2_ERROR_T_ER_BAD_FORMAT"),
         LSV2Err.T_ER_UNEXPECTED_TELE: _("LSV2_ERROR_T_ER_UNEXPECTED_TELE"),
@@ -118,7 +119,7 @@ def get_error_text(
         LSV2Err.T_BD_OSZI_OVERRUN: _("LSV2_ERROR_T_BD_OSZI_OVERRUN"),
         LSV2Err.T_BD_FD: _("LSV2_ERROR_T_BD_FD"),
         LSV2Err.T_USER_ERROR: _("LSV2_ERROR_T_USER_ERROR"),
-    }.get(error_code, _("LSV2_ERROR_UNKNOWN_CODE"))
+    }.get(t_error.e_code, _("LSV2_ERROR_UNKNOWN_CODE"))
 
 
 def get_program_status_text(code: int, language: str = "", locale_path=None) -> str:

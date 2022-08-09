@@ -3,8 +3,9 @@
 """data classes for pyLSV2"""
 
 from datetime import datetime
+import struct
 
-from .const import ControlType
+from .const import ControlType, LSV2Err
 
 
 class VersionInfo:
@@ -32,6 +33,19 @@ class VersionInfo:
     @control_version.setter
     def control_version(self, value: str):
         self._control_version = value
+
+        if ("TNC6" in value or "TNC320" in value or "TNC128" in value):
+            self.control_type = ControlType.MILL_NEW
+        elif "iTNC530" in value:
+            self.control_type = ControlType.MILL_OLD
+        elif "CNCPILOT640" in value:
+            self.control_type = ControlType.LATHE_NEW
+        else:
+            # TODO: figure out how to bes use logging here
+            #    self._logger.warning(
+            #        "Unknown control type, treat machine as new style mill"
+            #    )
+            self.control_type = ControlType.MILL_NEW
 
     @property
     def control_type(self) -> ControlType:
@@ -691,3 +705,35 @@ class DirectoryEntry:
     @path.setter
     def path(self, value: str):
         self._path = value
+
+
+class TransmissionError:
+    def __init__(self):
+        self.e_code = LSV2Err.T_ER_NON
+        self.e_type = -1
+
+    def __str__(self):
+        return "Error Type: %d, Error Code: %d" % (self.e_type, self.e_code)
+
+    @property
+    def e_type(self):
+        return self._error_type
+
+    @e_type.setter
+    def e_type(self, value):
+        self._error_type = value
+
+    @property
+    def e_code(self):
+        return self._error_code
+
+    @e_code.setter
+    def e_code(self, value):
+        self._error_code = value
+
+    @staticmethod
+    def from_ba(bytes: bytearray):
+        er = TransmissionError()
+        er.e_type = struct.unpack("!BB", bytes)[0]
+        er.e_code = struct.unpack("!BB", bytes)[1]
+        return er

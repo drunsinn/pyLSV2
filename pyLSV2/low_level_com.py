@@ -7,6 +7,7 @@ import struct
 from typing import Tuple, Union
 
 from .const import CMD, RSP
+from .dat_cls import TransmissionError
 
 
 class LLLSV2Com:
@@ -51,13 +52,24 @@ class LLLSV2Com:
         except socket.error as err:
             self._logger.error("socket creation failed with error %s", err)
             raise
+
         self._is_connected = False
+        self._last_lsv2_response = RSP.NONE
+        self._last_error = TransmissionError()
 
         self._logger.debug(
             "Socket successfully created, host %s was resolved to IP %s",
             hostname,
             self._host_ip,
         )
+
+    @property
+    def last_response(self):
+        return self._last_lsv2_response
+
+    @property
+    def last_error(self) -> tuple:
+        return self._last_error
 
     def connect(self):
         """
@@ -70,8 +82,13 @@ class LLLSV2Com:
         except socket.timeout:
             self._logger.error("could not connect to control")
             raise
+
         self._is_connected = True
-        self._logger.debug("Connected to host %s at port %s", self._host_ip, self._port)
+        self._last_lsv2_response = RSP.NONE
+        self._last_error = TransmissionError()
+
+        self._logger.debug("Connected to host %s at port %s",
+                           self._host_ip, self._port)
 
     def disconnect(self):
         """
@@ -85,7 +102,11 @@ class LLLSV2Com:
         except socket.timeout:
             self._logger.error("error while closing socket")
             raise
+
         self._is_connected = False
+        self._last_lsv2_response = RSP.NONE
+        self._last_error = TransmissionError()
+
         self._logger.debug("Connection to %s closed", self._host_ip)
 
     def set_buffer_size(self, buffer_size: int) -> bool:
@@ -137,6 +158,8 @@ class LLLSV2Com:
         else:
             payload_length = len(payload)
 
+        self._last_lsv2_response = RSP.NONE
+
         telegram = bytearray()
         # L -> unsigned long -> 32 bit
         telegram.extend(struct.pack("!L", payload_length))
@@ -156,11 +179,12 @@ class LLLSV2Com:
                 % (len(telegram), self._buffer_size)
             )
 
-        response = bytearray()
+        data_recived = bytearray()
         try:
+            # send bytes to control
             self._tcpsock.send(bytes(telegram))
             if wait_for_response:
-                response = self._tcpsock.recv(self._buffer_size)
+                data_recived = self._tcpsock.recv(self._buffer_size)
         except Exception:
             self._logger.error(
                 "something went wrong while waiting for new data to arrive, buffer was set to %d",
@@ -168,23 +192,26 @@ class LLLSV2Com:
             )
             raise
 
-        if len(response) > 0:
-            self._logger.debug("received block of data with length %d", len(response))
-            if len(response) >= 8:
+        if len(data_recived) > 0:
+            self._logger.debug(
+                "received block of data with length %d", len(data_recived))
+            if len(data_recived) >= 8:
                 # read 4 bytes for response length
-                response_length = struct.unpack("!L", response[0:4])[0]
+                response_length = struct.unpack("!L", data_recived[0:4])[0]
 
                 # read 4 bytes for response type
-                response_command = RSP(response[4:8].decode("utf-8", "ignore"))
+                self._last_lsv2_response = RSP(
+                    data_recived[4:8].decode("utf-8", "ignore"))
             else:
                 # response is less than 8 bytes long which is not enough space for package length and response message!
-                raise Exception("response to short, less than 8 bytes: %s" % response)
+                raise Exception(
+                    "response to short, less than 8 bytes: %s" % data_recived)
         else:
             response_length = 0
-            response_command = RSP.NONE
+            self._last_lsv2_response = RSP.NONE
 
         if response_length > 0:
-            response_content = bytearray(response[8:])
+            response_content = bytearray(data_recived[8:])
             while len(response_content) < response_length:
                 self._logger.debug(
                     "waiting for more data to arrive, %d bytes missing",
@@ -192,14 +219,23 @@ class LLLSV2Com:
                 )
                 try:
                     response_content.extend(
-                        self._tcpsock.recv(response_length - len(response[8:]))
+                        self._tcpsock.recv(
+                            response_length - len(data_recived[8:]))
                     )
                 except Exception:
                     self._logger.error(
-                        "something went wrong while waiting for more data to arrive"
+                        "something went wrong while waiting for more data to arrive. expected %d, recived %d, content so far: %s",
+                        response_length,
+                        len(data_recived),
+                        data_recived
                     )
                     raise
         else:
             response_content = bytearray()
 
-        return response_command, response_content
+        if self._last_lsv2_response is RSP.T_ER:
+            self._last_error = TransmissionError.from_ba(response_content)
+        else:
+            self._last_error = TransmissionError()
+
+        return response_content
