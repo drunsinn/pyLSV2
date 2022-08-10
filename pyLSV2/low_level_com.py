@@ -42,8 +42,7 @@ class LLLSV2Com:
         if port > 0:
             self._port = port
 
-        self._buffer_size = -1
-        self.set_buffer_size(LLLSV2Com.DEFAULT_BUFFER_SIZE)
+        self.buffer_size = LLLSV2Com.DEFAULT_BUFFER_SIZE
 
         try:
             self._tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -64,12 +63,27 @@ class LLLSV2Com:
         )
 
     @property
-    def last_response(self):
+    def last_response(self) -> RSP:
         return self._last_lsv2_response
 
     @property
-    def last_error(self) -> tuple:
+    def last_error(self) -> TransmissionError:
         return self._last_error
+
+    @property
+    def buffer_size(self) -> int:
+        return self._buffer_size
+
+    @buffer_size.setter
+    def buffer_size(self, value: int):
+        if value < 8:
+            self._buffer_size = self.DEFAULT_BUFFER_SIZE
+            self._logger.warning(
+                "size of receive buffer to small, set to default of %d bytes",
+                self._buffer_size,
+            )
+        else:
+            self._buffer_size = value
 
     def connect(self):
         """
@@ -109,27 +123,27 @@ class LLLSV2Com:
 
         self._logger.debug("Connection to %s closed", self._host_ip)
 
-    def set_buffer_size(self, buffer_size: int) -> bool:
-        """
-        set the size of the send and receive buffer. the size has to be established
-        during connection setup. buffer size has to be at least 8 so command and length
-        fit into the telegram.
+    # def set_buffer_size(self, buffer_size: int) -> bool:
+    #     """
+    #     set the size of the send and receive buffer. the size has to be established
+    #     during connection setup. buffer size has to be at least 8 so command and length
+    #     fit into the telegram.
 
-        :param buffer_size: new size of send and receive buffer
-        """
-        if buffer_size < 8:
-            self._buffer_size = self.DEFAULT_BUFFER_SIZE
-            self._logger.warning(
-                "size of receive buffer to small, set to default of %d bytes",
-                self._buffer_size,
-            )
-            return False
-        self._buffer_size = buffer_size
-        return True
+    #     :param buffer_size: new size of send and receive buffer
+    #     """
+    #     if buffer_size < 8:
+    #         self._buffer_size = self.DEFAULT_BUFFER_SIZE
+    #         self._logger.warning(
+    #             "size of receive buffer to small, set to default of %d bytes",
+    #             self._buffer_size,
+    #         )
+    #         return False
+    #     self._buffer_size = buffer_size
+    #     return True
 
-    def get_buffer_size(self) -> int:
-        """return current send/receive buffer size"""
-        return self._buffer_size
+    # def get_buffer_size(self) -> int:
+    #     """return current send/receive buffer size"""
+    #     return self._buffer_size
 
     def telegram(
         self,
@@ -173,10 +187,10 @@ class LLLSV2Com:
             payload_length,
             telegram,
         )
-        if len(telegram) >= self._buffer_size:
+        if len(telegram) >= self.buffer_size:
             raise OverflowError(
                 "telegram to long for set current buffer size: %d >= %d"
-                % (len(telegram), self._buffer_size)
+                % (len(telegram), self.buffer_size)
             )
 
         data_recived = bytearray()
@@ -184,11 +198,11 @@ class LLLSV2Com:
             # send bytes to control
             self._tcpsock.send(bytes(telegram))
             if wait_for_response:
-                data_recived = self._tcpsock.recv(self._buffer_size)
+                data_recived = self._tcpsock.recv(self.buffer_size)
         except Exception:
             self._logger.error(
                 "something went wrong while waiting for new data to arrive, buffer was set to %d",
-                self._buffer_size,
+                self.buffer_size,
             )
             raise
 

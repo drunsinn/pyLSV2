@@ -301,13 +301,13 @@ class LSV2:
 
         if selected_command is None:
             self._logger.debug("use smallest buffer size of 256")
-            self._llcom.set_buffer_size(selected_size)
+            self._llcom.buffer_size = selected_size
         else:
             self._logger.debug("use buffer size of %d", selected_size)
             if self._send_recive(
                 lc.CMD.C_CC, struct.pack("!H", selected_command), lc.RSP.T_OK
             ):
-                self._llcom.set_buffer_size(selected_size)
+                self._llcom.buffer_size = selected_size
             else:
                 raise Exception(
                     "error in communication while setting buffer size to %d"
@@ -1013,7 +1013,7 @@ class LSV2:
                     # use current buffer size but reduce by 10 to make sure it fits together with command and size
                     buffer = bytearray(
                         input_buffer.read(
-                            self._llcom.get_buffer_size() - 8 - 2)
+                            self._llcom.buffer_size - 8 - 2)
                     )
                     if not buffer:
                         # finished reading file
