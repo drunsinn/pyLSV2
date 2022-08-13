@@ -10,8 +10,9 @@ from enum import Enum, IntEnum
 # FS_ENTRY_IS_PROTCTED = 0x40
 # FS_ENTRY_IS_IN_USE = 0x80
 
-#: enable binary file transfer for C_FL and R_FL
+#: enable/disable binary file transfer for C_FL and R_FL
 MODE_BINARY = 0x01
+MODE_NON_BIN = 0x00
 
 PATH_SEP = "\\"
 

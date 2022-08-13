@@ -348,12 +348,13 @@ class LSV2:
             self._logger.error("unknown or unsupported login")
             return False
 
-        payload = bytearray()
-        payload.extend(map(ord, login))
-        payload.append(0x00)
+        payload = lm.ustr_to_ba(login)
+        #payload.extend(map(ord, login))
+        # payload.append(0x00)
         if password is not None and len(password) > 0:
-            payload.extend(map(ord, password))
-            payload.append(0x00)
+            payload.expand(lm.ustr_to_ba(password))
+            #payload.extend(map(ord, password))
+            # payload.append(0x00)
 
         if self._send_recive(lc.CMD.A_LG, payload, lc.RSP.T_OK):
             self._logger.info(
@@ -376,8 +377,9 @@ class LSV2:
         if login is not None:
             if isinstance(login, (lc.Login,)):
                 if login in self._active_logins:
-                    payload.extend(map(ord, login))
-                    payload.append(0x00)
+                    payload.extend(lm.ustr_to_ba(login))
+                    #payload.extend(map(ord, login))
+                    # payload.append(0x00)
                 else:
                     # login is not active
                     return True
@@ -539,19 +541,20 @@ class LSV2:
         Requires access level ``DNC`` to work.
         See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
         """
-        if self.login(login=lc.Login.DNC):
-            payload = struct.pack("!H", lc.ParRRI.PGM_STATE)
-            result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
-            if isinstance(result, (bytearray,)):
-                self._logger.debug(
-                    "successfully read state of active program: %s",
-                    struct.unpack("!H", result)[0],
-                )
-                return lc.PgmState(struct.unpack("!H", result)[0])
-            self._logger.error(
-                "an error occurred while querying program state")
-        else:
+        if not self.login(login=lc.Login.DNC):
             self._logger.error("could not log in as user DNC")
+            return lc.PgmState.UNDEFINED
+
+        payload = struct.pack("!H", lc.ParRRI.PGM_STATE)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
+        if isinstance(result, (bytearray,)):
+            self._logger.debug(
+                "successfully read state of active program: %s",
+                struct.unpack("!H", result)[0],
+            )
+            return lc.PgmState(struct.unpack("!H", result)[0])
+        self._logger.error(
+            "an error occurred while querying program state")
         return lc.PgmState.UNDEFINED
 
     def get_program_stack(self) -> Union[ld.StackState, None]:
@@ -560,19 +563,21 @@ class LSV2:
         Requires access level ``DNC`` to work.
         See https://github.com/tfischer73/Eclipse-Plugin-Heidenhain/issues/1
         """
-        if self.login(login=lc.Login.DNC):
-            payload = struct.pack("!H", lc.ParRRI.SELECTED_PGM)
-            result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                stack_info = lm.decode_stack_info(result)
-                self._logger.debug(
-                    "successfully read active program stack: %s", stack_info
-                )
-                return stack_info
-            self._logger.error(
-                "an error occurred while querying active program state")
-        else:
+        if not self.login(login=lc.Login.DNC):
             self._logger.error("could not log in as user DNC")
+            return None
+
+        payload = struct.pack("!H", lc.ParRRI.SELECTED_PGM)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            stack_info = lm.decode_stack_info(result)
+            self._logger.debug(
+                "successfully read active program stack: %s", stack_info
+            )
+            return stack_info
+        self._logger.error(
+            "an error occurred while querying active program state")
+
         return None
 
     def get_execution_status(self) -> lc.ExecState:
@@ -581,18 +586,19 @@ class LSV2:
         Requires access level ``DNC`` to work.
         See https://github.com/drunsinn/pyLSV2/issues/1
         """
-        if self.login(login=lc.Login.DNC):
-            payload = struct.pack("!H", lc.ParRRI.EXEC_STATE)
-            result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
-            if isinstance(result, (bytearray,)):
-                self._logger.debug(
-                    "read execution state %d", struct.unpack("!H", result)[0]
-                )
-                return lc.ExecState(struct.unpack("!H", result)[0])
-            self._logger.error(
-                "an error occurred while querying execution state")
-        else:
+        if not self.login(login=lc.Login.DNC):
             self._logger.error("could not log in as user DNC")
+            return lc.ExecState.UNDEFINED
+
+        payload = struct.pack("!H", lc.ParRRI.EXEC_STATE)
+        result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
+        if isinstance(result, (bytearray,)):
+            self._logger.debug(
+                "read execution state %d", struct.unpack("!H", result)[0]
+            )
+            return lc.ExecState(struct.unpack("!H", result)[0])
+        self._logger.error(
+            "an error occurred while querying execution state")
         return lc.ExecState.UNDEFINED
 
     def get_directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
@@ -602,27 +608,29 @@ class LSV2:
 
         :param remote_directory: optional. change working directory before reading info
         """
-        if self.login(lc.Login.FILETRANSFER):
-            if (
-                len(remote_directory) > 0
-                and self.change_directory(remote_directory) is False
-            ):
-                self._logger.error(
-                    "could not change current directory to read directory info for %s",
-                    remote_directory,
-                )
-                return ld.DirectoryEntry()
-            result = self._send_recive(lc.CMD.R_DI, None, lc.RSP.S_DI)
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                dir_info = lm.decode_directory_info(result)
-                self._logger.debug(
-                    "successfully received directory information for %s", dir_info.path
-                )
-                return dir_info
-            self._logger.error(
-                "an error occurred while querying directory info")
-        else:
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return ld.DirectoryEntry()
+
+        if (
+            len(remote_directory) > 0
+            and self.change_directory(remote_directory) is False
+        ):
+            self._logger.error(
+                "could not change current directory to read directory info for %s",
+                remote_directory,
+            )
+            return ld.DirectoryEntry()
+        result = self._send_recive(lc.CMD.R_DI, None, lc.RSP.S_DI)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            dir_info = lm.decode_directory_info(result)
+            self._logger.debug(
+                "successfully received directory information for %s", dir_info.path
+            )
+            return dir_info
+        self._logger.error(
+            "an error occurred while querying directory info")
+
         return ld.DirectoryEntry()
 
     def change_directory(self, remote_directory: str) -> bool:
@@ -633,17 +641,19 @@ class LSV2:
 
         :param remote_directory: path of directory on the control
         """
-        if self.login(lc.Login.FILETRANSFER):
-            dir_path = remote_directory.replace("/", lc.PATH_SEP)
-            payload = bytearray(map(ord, dir_path))
-            payload.append(0x00)
-            result = self._send_recive(lc.CMD.C_DC, payload, lc.RSP.T_OK)
-            if isinstance(result, (bool,)) and result is True:
-                self._logger.debug("changed working directory to %s", dir_path)
-                return True
-            self._logger.error("an error occurred while changing directory")
-        else:
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return False
+
+        dir_path = remote_directory.replace("/", lc.PATH_SEP)
+        payload = lm.ustr_to_ba(dir_path)
+        #payload = bytearray(map(ord, dir_path))
+        # payload.append(0x00)
+        result = self._send_recive(lc.CMD.C_DC, payload, lc.RSP.T_OK)
+        if isinstance(result, (bool,)) and result is True:
+            self._logger.debug("changed working directory to %s", dir_path)
+            return True
+        self._logger.error("an error occurred while changing directory")
         return False
 
     def get_file_info(self, remote_file_path: str) -> Union[ld.FileEntry, None]:
@@ -654,24 +664,26 @@ class LSV2:
 
         :param remote_file_path: path of file on the control
         """
-        if self.login(lc.Login.FILETRANSFER):
-            file_path = remote_file_path.replace("/", lc.PATH_SEP)
-            payload = bytearray(map(ord, file_path))
-            payload.append(0x00)
-            result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                file_info = lm.decode_file_system_info(
-                    result, self._versions.control_type
-                )
-                self._logger.debug(
-                    "received file information for %s", file_info.name)
-                return file_info
-            self._logger.warning(
-                "an error occurred while querying file info this might also indicate that it does not exist %s",
-                remote_file_path,
-            )
-        else:
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return None
+
+        file_path = remote_file_path.replace("/", lc.PATH_SEP)
+        payload = lm.ustr_to_ba(file_path)
+        #payload = bytearray(map(ord, file_path))
+        # payload.append(0x00)
+        result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            file_info = lm.decode_file_system_info(
+                result, self._versions.control_type
+            )
+            self._logger.debug(
+                "received file information for %s", file_info.name)
+            return file_info
+        self._logger.warning(
+            "an error occurred while querying file info this might also indicate that it does not exist %s",
+            remote_file_path,
+        )
         return None
 
     def get_directory_content(self) -> List[ld.FileEntry]:
@@ -680,26 +692,28 @@ class LSV2:
         fist call get_directory_info() or else the attributes won't be correct.
         Requires access level ``FILETRANSFER`` to work.
         """
-        dir_content = []
-        if self.login(lc.Login.FILETRANSFER):
-            payload = bytearray(struct.pack("!H", lc.ParRDR.SINGLE))
-            result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
-            if isinstance(result, (list,)):
-                for entry in result:
-                    dir_content.append(
-                        lm.decode_file_system_info(
-                            entry, self._versions.control_type)
-                    )
 
-                self._logger.debug(
-                    "received %d packages for directory content", len(
-                        dir_content)
-                )
-            else:
-                self._logger.error(
-                    "an error occurred while directory content info")
-        else:
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return []
+
+        dir_content = []
+        payload = bytearray(struct.pack("!H", lc.ParRDR.SINGLE))
+        result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
+        if isinstance(result, (list,)):
+            for entry in result:
+                dir_content.append(
+                    lm.decode_file_system_info(
+                        entry, self._versions.control_type)
+                )
+
+            self._logger.debug(
+                "received %d packages for directory content", len(
+                    dir_content)
+            )
+        else:
+            self._logger.error(
+                "an error occurred while directory content info")
         return dir_content
 
     def get_drive_info(self) -> list:
@@ -707,23 +721,25 @@ class LSV2:
         Read info all drives and partitions from the control.
         Requires access level ``FILETRANSFER`` to work.
         """
-        drives_list = []
-        if self.login(lc.Login.FILETRANSFER):
-            payload = bytearray(struct.pack("!H", lc.ParRDR.DRIVES))
-            result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
-            if isinstance(result, (list,)):
-                for entry in result:
-                    drives_list.append(entry)
-                self._logger.debug(
-                    "successfully received %d packages for drive information %s",
-                    len(result),
-                    drives_list,
-                )
-            else:
-                self._logger.error(
-                    "an error occurred while reading drive info")
-        else:
+
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return []
+
+        drives_list = []
+        payload = bytearray(struct.pack("!H", lc.ParRDR.DRIVES))
+        result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
+        if isinstance(result, (list,)):
+            for entry in result:
+                drives_list.append(entry)
+            self._logger.debug(
+                "successfully received %d packages for drive information %s",
+                len(result),
+                drives_list,
+            )
+        else:
+            self._logger.error(
+                "an error occurred while reading drive info")
         return drives_list
 
     def make_directory(self, dir_path: str) -> bool:
@@ -734,31 +750,34 @@ class LSV2:
 
         :param dir_path: path of directory on the control
         """
+        if not self.login(lc.Login.FILETRANSFER):
+            self._logger.error("could not log in as user FILE")
+            return False
+
         path_parts = dir_path.replace("/", lc.PATH_SEP).split(
             lc.PATH_SEP
         )  # convert path
         path_to_check = ""
-        if self.login(lc.Login.FILETRANSFER):
-            for part in path_parts:
-                path_to_check += part + lc.PATH_SEP
-                # no file info -> does not exist and has to be created
-                if self.get_file_info(path_to_check) is None:
-                    payload = bytearray(map(ord, path_to_check))
-                    payload.append(0x00)  # terminate string
-                    result = self._send_recive(
-                        lc.CMD.C_DM, payload, lc.RSP.T_OK)
-                    if isinstance(result, (bool,)) and result is True:
-                        self._logger.debug("Directory created successfully")
-                    else:
-                        self._logger.error(
-                            "an error occurred while creating directory %s", dir_path
-                        )
-                        return False
+
+        for part in path_parts:
+            path_to_check += part + lc.PATH_SEP
+            # no file info -> does not exist and has to be created
+            if self.get_file_info(path_to_check) is None:
+                payload = lm.ustr_to_ba(path_to_check)
+                #payload = bytearray(map(ord, path_to_check))
+                # payload.append(0x00)  # terminate string
+                result = self._send_recive(
+                    lc.CMD.C_DM, payload, lc.RSP.T_OK)
+                if isinstance(result, (bool,)) and result is True:
+                    self._logger.debug("Directory created successfully")
                 else:
-                    self._logger.debug(
-                        "nothing to do as this segment already exists")
-        else:
-            self._logger.error("could not log in as user FILE")
+                    self._logger.error(
+                        "an error occurred while creating directory %s", dir_path
+                    )
+                    return False
+            else:
+                self._logger.debug(
+                    "nothing to do as this segment already exists")
         return True
 
     def delete_empty_directory(self, dir_path: str) -> bool:
@@ -769,21 +788,23 @@ class LSV2:
 
         :param file_path: path of directory on the control
         """
-        if self.login(lc.Login.FILETRANSFER):
-            dir_path = dir_path.replace("/", lc.PATH_SEP)
-            payload = bytearray(map(ord, dir_path))
-            payload.append(0x00)
-            result = self._send_recive(lc.CMD.C_DD, payload, lc.RSP.T_OK)
-            if isinstance(result, (bool)) and result is True:
-                self._logger.debug(
-                    "successfully deleted directory %s", dir_path)
-                return True
-            self._logger.warning(
-                "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
-                dir_path,
-            )
-        else:
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return False
+
+        dir_path = dir_path.replace("/", lc.PATH_SEP)
+        payload = lm.ustr_to_ba(dir_path)
+        #payload = bytearray(map(ord, dir_path))
+        # payload.append(0x00)
+        result = self._send_recive(lc.CMD.C_DD, payload, lc.RSP.T_OK)
+        if isinstance(result, (bool)) and result is True:
+            self._logger.debug(
+                "successfully deleted directory %s", dir_path)
+            return True
+        self._logger.warning(
+            "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
+            dir_path,
+        )
         return False
 
     def delete_file(self, file_path: str) -> bool:
@@ -794,19 +815,21 @@ class LSV2:
 
         :param file_path: path of file on the control
         """
-        if self.login(lc.Login.FILETRANSFER):
-            file_path = file_path.replace("/", lc.PATH_SEP)
-            payload = bytearray(map(ord, file_path))
-            payload.append(0x00)
-            if not self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
-                self._logger.warning(
-                    "an error occurred while deleting file %s, this might also indicate that it it does not exist",
-                    file_path,
-                )
-                return False
-            self._logger.debug("successfully deleted file %s", file_path)
-        else:
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.error("could not log in as user FILE")
+            return False
+
+        file_path = file_path.replace("/", lc.PATH_SEP)
+        payload = lm.ustr_to_ba(file_path)
+        #payload = bytearray(map(ord, file_path))
+        # payload.append(0x00)
+        if not self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
+            self._logger.warning(
+                "an error occurred while deleting file %s, this might also indicate that it it does not exist",
+                file_path,
+            )
+            return False
+        self._logger.debug("successfully deleted file %s", file_path)
         return True
 
     def copy_remote_file(self, source_path: str, target_path: str) -> bool:
@@ -820,43 +843,46 @@ class LSV2:
 
         :raises Exception: ToDo
         """
-        if self.login(lc.Login.FILETRANSFER):
-            source_path = source_path.replace("/", lc.PATH_SEP)
-            target_path = target_path.replace("/", lc.PATH_SEP)
+        if not self.login(lc.Login.FILETRANSFER):
+            self._logger.error("could not log in as user FILE")
+            return False
 
-            if lc.PATH_SEP in source_path:
-                # change directory
-                source_file_name = source_path.split(lc.PATH_SEP)[-1]
-                source_directory = source_path.rstrip(source_file_name)
-                if not self.change_directory(remote_directory=source_directory):
-                    raise Exception("could not open the source directory")
-            else:
-                source_file_name = source_path
-                source_directory = "."
+        source_path = source_path.replace("/", lc.PATH_SEP)
+        target_path = target_path.replace("/", lc.PATH_SEP)
 
-            if target_path.endswith(lc.PATH_SEP):
-                target_path += source_file_name
+        if lc.PATH_SEP in source_path:
+            # change directory
+            source_file_name = source_path.split(lc.PATH_SEP)[-1]
+            source_directory = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_directory):
+                raise Exception("could not open the source directory")
+        else:
+            source_file_name = source_path
+            source_directory = "."
 
-            payload = bytearray()
-            payload.extend(map(ord, source_file_name))
-            payload.append(0x00)
-            payload.extend(map(ord, target_path))
-            payload.append(0x00)
-            self._logger.debug(
-                "prepare to copy file %s from %s to %s",
-                source_file_name,
-                source_directory,
-                target_path,
+        if target_path.endswith(lc.PATH_SEP):
+            target_path += source_file_name
+
+        payload = lm.ustr_to_ba(source_file_name)
+        payload.extend(lm.ustr_to_ba(target_path))
+        #payload = bytearray()
+        #payload.extend(map(ord, source_file_name))
+        # payload.append(0x00)
+        #payload.extend(map(ord, target_path))
+        # payload.append(0x00)
+        self._logger.debug(
+            "prepare to copy file %s from %s to %s",
+            source_file_name,
+            source_directory,
+            target_path,
+        )
+        if not self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
+            self._logger.warning(
+                "an error occurred copying file %s to %s", source_path, target_path
             )
-            if not self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
-                self._logger.warning(
-                    "an error occurred copying file %s to %s", source_path, target_path
-                )
-                return False
-            self._logger.debug("successfully copied file %s", source_path)
-            return True
-        self._logger.error("could not log in as user FILE")
-        return False
+            return False
+        self._logger.debug("successfully copied file %s", source_path)
+        return True
 
     def move_local_file(self, source_path: str, target_path: str) -> bool:
         """
@@ -884,11 +910,13 @@ class LSV2:
             if target_path.endswith(lc.PATH_SEP):
                 target_path += source_file_name
 
-            payload = bytearray()
-            payload.extend(map(ord, source_file_name))
-            payload.append(0x00)
-            payload.extend(map(ord, target_path))
-            payload.append(0x00)
+            payload = lm.ustr_to_ba(source_file_name)
+            payload.extend(lm.ustr_to_ba(target_path))
+            #payload = bytearray()
+            #payload.extend(map(ord, source_file_name))
+            # payload.append(0x00)
+            #payload.extend(map(ord, target_path))
+            # payload.append(0x00)
             self._logger.debug(
                 "prepare to move file %s from %s to %s",
                 source_file_name,
@@ -993,16 +1021,18 @@ class LSV2:
             remote_directory + lc.PATH_SEP + remote_file_name,
         )
 
-        payload = bytearray()
-        payload.extend(map(ord, remote_directory +
-                       lc.PATH_SEP + remote_file_name))
-        payload.append(0x00)
+        payload = lm.ustr_to_ba(
+            remote_directory + lc.PATH_SEP + remote_file_name)
+        #payload = bytearray()
+        # payload.extend(map(ord, remote_directory +
+        #               lc.PATH_SEP + remote_file_name))
+        # payload.append(0x00)
         if binary_mode or lm.is_file_binary(local_path):
             payload.append(lc.MODE_BINARY)
             self._logger.info(
                 "selecting binary transfer mode for this file type")
         else:
-            payload.append(0x00)
+            payload.append(lc.MODE_NON_BIN)
             self._logger.info("selecting non binary transfer mode")
 
         self._llcom.telegram(lc.CMD.C_FL, payload,)
@@ -1088,28 +1118,26 @@ class LSV2:
 
         if local_file.is_dir():
             local_file.joinpath(remote_path.split("/")[-1])
-
-        if local_file.is_file():
-            self._logger.debug("local path exists and points to file")
-            if override_file:
-                local_file.unlink()
-            else:
+        else:  # local_file.is_file():
+            # self._logger.debug("local path exists and points to file")
+            if not override_file:
                 self._logger.warning(
-                    "local file already exists and override was not set. doing nothing"
-                )
+                    "local file already exists and override was not set. nothing to do")
                 return False
+            local_file.unlink()
 
         self._logger.debug("loading file from %s to %s",
                            remote_path, local_file)
 
-        payload = bytearray()
-        payload.extend(map(ord, remote_path))
-        payload.append(0x00)
+        payload = lm.ustr_to_ba(remote_path)
+        #payload = bytearray()
+        #payload.extend(map(ord, remote_path))
+        # payload.append(0x00)
         if binary_mode or lm.is_file_binary(remote_path):
             payload.append(lc.MODE_BINARY)  # force binary transfer
             self._logger.info("using binary transfer mode")
         else:
-            payload.append(0x00)
+            payload.append(lc.MODE_NON_BIN)
             self._logger.info("using non binary transfer mode")
 
         content = self._llcom.telegram(lc.CMD.R_FL, payload,)
@@ -1241,11 +1269,13 @@ class LSV2:
             max_count = self._sys_par.number_of_input_words
             mem_byte_count = 2
             unpack_string = "<H"
-        else:  # mem_type is lc.MemoryType.OUTPUT_WORD:
+        elif mem_type is lc.MemoryType.OUTPUT_WORD:
             start_address = self._sys_par.output_words_start_address
             max_count = self._sys_par.number_of_output_words
             mem_byte_count = 2
             unpack_string = "<H"
+        else:
+            self._logger.error("unknown memory type %s", mem_type)
 
         if count > max_count:
             self._logger.error("maximum number of values is %d", max_count)
@@ -1254,7 +1284,7 @@ class LSV2:
         plc_values = []
 
         if mem_type is lc.MemoryType.STRING:
-            # advance address if necessary
+            # advance address by number of bytes per sting if necessary
             address = address + (count - 1) * mem_byte_count
             for i in range(count):
                 payload = bytearray()
@@ -1343,9 +1373,10 @@ class LSV2:
         if isinstance(name, (int,)):
             name = str(name)
 
-        payload = bytearray()
-        payload.extend(map(ord, name))
-        payload.append(0x00)
+        payload = lm.ustr_to_ba(name)
+        #payload = bytearray()
+        #payload.extend(map(ord, name))
+        # payload.append(0x00)
         result = self._send_recive(lc.CMD.R_MC, payload, lc.RSP.S_MC)
         if isinstance(result, (bytearray,)) and len(result) > 0:
             value = lm.ba_to_ustr(result)
@@ -1377,10 +1408,12 @@ class LSV2:
             payload.extend(struct.pack("!L", 0x00))
         else:
             payload.extend(struct.pack("!L", 0x01))
-        payload.extend(map(ord, name))
-        payload.append(0x00)
-        payload.extend(map(ord, value))
-        payload.append(0x00)
+        payload.extend(lm.ustr_to_ba(name))
+        payload.extend(lm.ustr_to_ba(value))
+        #payload.extend(map(ord, name))
+        # payload.append(0x00)
+        #payload.extend(map(ord, value))
+        # payload.append(0x00)
 
         result = self._send_recive(lc.CMD.C_MC, payload, lc.RSP.T_OK)
         if result:
@@ -1605,8 +1638,9 @@ class LSV2:
         payload.extend(b"\x00")  # <- ???
         payload.extend(b"\x00")  # <- ???
         payload.extend(b"\x00")  # <- ???
-        payload.extend(map(ord, path))
-        payload.append(0x00)  # escape string
+        payload.extend(lm.ustr_to_ba(path))
+        #payload.extend(map(ord, path))
+        # payload.append(0x00)  # escape string
 
         result = self._send_recive(lc.CMD.R_DP, payload, lc.RSP.S_DP)
 
@@ -1705,8 +1739,9 @@ class LSV2:
         )
 
         payload = bytearray(struct.pack("!H", lc.ParCCC.SCREENDUMP))
-        payload.extend(map(ord, temp_file_path))
-        payload.append(0x00)
+        payload.extend(lm.ustr_to_ba(temp_file_path))
+        #payload.extend(map(ord, temp_file_path))
+        # payload.append(0x00)
         result = self._send_recive(lc.CMD.C_CC, payload, lc.RSP.T_OK)
 
         if not (isinstance(result, (bool,)) and result is True):

@@ -109,7 +109,8 @@ def decode_file_system_info(
 
     file_entry = ld.FileEntry()
     file_entry.size = struct.unpack("!L", data_set[:4])[0]
-    file_entry.timestamp = datetime.fromtimestamp(struct.unpack("!L", data_set[4:8])[0])
+    file_entry.timestamp = datetime.fromtimestamp(
+        struct.unpack("!L", data_set[4:8])[0])
 
     file_entry.attributes = struct.unpack("!L", data_set[8:12])[0]
 
@@ -140,7 +141,7 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
 
     attribute_list = []
     for i in range(4, len(data_set[4:132]), 4):
-        attr = ba_to_ustr(data_set[i : i + 4])
+        attr = ba_to_ustr(data_set[i: i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     di.dir_attributes = attribute_list
@@ -231,3 +232,7 @@ def ba_to_ustr(bytes_to_convert: bytearray) -> str:
     :param bytes_to_convert: bytes to convert to unicode string
     """
     return bytes_to_convert.decode("latin1").strip("\x00").strip()
+
+
+def ustr_to_ba(str_to_convert: str) -> bytearray:
+    return bytearray(map(ord, str_to_convert)).append(0x00)
