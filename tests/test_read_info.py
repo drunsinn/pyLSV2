@@ -48,7 +48,7 @@ def test_read_tool_information(address, timeout):
     """test if reading tool information on iTNC works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         assert lsv2.get_spindle_tool_status() is not False
     lsv2.disconnect()
 
@@ -65,7 +65,7 @@ def test_read_error_messages(address, timeout):
     """test if reading error messages on iTNC works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         assert lsv2.get_error_messages() is not False
     lsv2.disconnect()
 

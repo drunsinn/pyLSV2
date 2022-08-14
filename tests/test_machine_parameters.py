@@ -10,7 +10,7 @@ def test_read_machine_parameter(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         # old style
         assert lsv2.get_machine_parameter("7230.0") is not False
     else:
@@ -25,7 +25,7 @@ def test_rw_machine_parameter(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         # old style
         parameter_name = "7230.0"
     else:

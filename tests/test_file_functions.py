@@ -10,9 +10,9 @@ def test_read_info(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_path = "TNC:\\$MDI.H"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_path = "TNC:\\nc_prog\\ncps\\PGM01.nc"
     else:
         mdi_path = "TNC:\\nc_prog\\$mdi.h"
@@ -39,7 +39,7 @@ def test_directory_functions(address, timeout):
     assert lsv2.change_directory(test_dir + "T1\\T2\\T3") is False
     assert lsv2.change_directory(test_dir + "T1\\T2") is True
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         assert lsv2.delete_empty_directory(test_dir + "T1\\T2") is True
         assert lsv2.change_directory("TNC:\\nc_prog") is True
     else:
@@ -59,10 +59,10 @@ def test_remote_file_functions(address, timeout):
 
     test_dir = "TNC:\\nc_prog\\pyLSV2_test\\"
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_dir = "TNC:\\"
         mdi_name = "$MDI.H"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_dir = "TNC:\\nc_prog\\ncps\\"
         mdi_name = "PGM01.nc"
     else:
@@ -77,7 +77,7 @@ def test_remote_file_functions(address, timeout):
 
     assert lsv2.change_directory(test_dir) is True
 
-    if lsv2.is_tnc():
+    if lsv2.versions.is_tnc():
         # only test for tnc controls
         assert (
             lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_dir)
@@ -117,9 +117,9 @@ def test_path_formating(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_path = "TNC:/$MDI.H"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"
@@ -140,7 +140,7 @@ def test_file_search(address, timeout):
     assert result2 > 0
     assert (result2 > result1) is True
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         assert (
             len(
                 lsv2.get_file_list(
@@ -151,7 +151,7 @@ def test_file_search(address, timeout):
             )
             > 0
         )
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         file_path = (
             pyLSV2.DriveName.TNC
             + pyLSV2.PATH_SEP

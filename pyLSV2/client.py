@@ -55,15 +55,15 @@ class LSV2:
     @property
     def versions(self) -> ld.VersionInfo:
         """version information of the connected control"""
-        if len(self._versions.control_version) < 1:
-            self._read_version()
+        #if len(self._versions.control_version) < 1:
+        #    self._read_version()
         return self._versions
 
     @property
     def parameters(self) -> ld.SystemParameters:
         """system parameters of the connected control"""
-        if len(self._sys_par.lsv2_version) < 1:
-            self._read_parameters()
+        #if self._sys_par.lsv2_version < 0:
+        #    self._read_parameters()
         return self._sys_par
 
     @property
@@ -80,8 +80,8 @@ class LSV2:
         """logout of all open logins and close connection"""
         self.logout(login=None)
 
-        self.versions = ld.VersionInfo()
-        self.parameters = ld.SystemParameters()
+        self._versions = ld.VersionInfo()
+        self._sys_par = ld.SystemParameters()
 
         self._llcom.disconnect()
         self._logger.debug("connection to host closed")
@@ -348,21 +348,21 @@ class LSV2:
             self._logger.error("unknown or unsupported login")
             return False
 
-        payload = lm.ustr_to_ba(login)
-        #payload.extend(map(ord, login))
+        payload = lm.ustr_to_ba(login.value)
+        # payload.extend(map(ord, login))
         # payload.append(0x00)
         if password is not None and len(password) > 0:
-            payload.expand(lm.ustr_to_ba(password))
+            payload.extend(lm.ustr_to_ba(password))
             #payload.extend(map(ord, password))
             # payload.append(0x00)
 
         if self._send_recive(lc.CMD.A_LG, payload, lc.RSP.T_OK):
             self._logger.info(
-                "login executed successfully for login %s", login)
+                "login executed successfully for login %s", login.value)
             self._active_logins.append(login)
             return True
 
-        self._logger.error("error logging in as %s", login)
+        self._logger.error("error logging in as %s", login.value)
         return False
 
     def logout(self, login: Union[lc.Login, None] = None) -> bool:
@@ -377,7 +377,7 @@ class LSV2:
         if login is not None:
             if isinstance(login, (lc.Login,)):
                 if login in self._active_logins:
-                    payload.extend(lm.ustr_to_ba(login))
+                    payload.extend(lm.ustr_to_ba(login.value))
                     #payload.extend(map(ord, login))
                     # payload.append(0x00)
                 else:
@@ -455,6 +455,7 @@ class LSV2:
             result = self._send_recive(
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
+            #print(result)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 info_data.control_version = lm.ba_to_ustr(result)
             else:
@@ -1118,7 +1119,7 @@ class LSV2:
 
         if local_file.is_dir():
             local_file.joinpath(remote_path.split("/")[-1])
-        else:  # local_file.is_file():
+        elif local_file.is_file():
             # self._logger.debug("local path exists and points to file")
             if not override_file:
                 self._logger.warning(
@@ -1269,13 +1270,13 @@ class LSV2:
             max_count = self._sys_par.number_of_input_words
             mem_byte_count = 2
             unpack_string = "<H"
-        elif mem_type is lc.MemoryType.OUTPUT_WORD:
+        else: # mem_type is lc.MemoryType.OUTPUT_WORD:
             start_address = self._sys_par.output_words_start_address
             max_count = self._sys_par.number_of_output_words
             mem_byte_count = 2
             unpack_string = "<H"
-        else:
-            self._logger.error("unknown memory type %s", mem_type)
+        #else:
+        #    self._logger.error("unknown memory type %s", mem_type)
 
         if count > max_count:
             self._logger.error("maximum number of values is %d", max_count)

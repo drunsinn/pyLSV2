@@ -47,7 +47,7 @@ def test_data_path_read(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         assert lsv2.read_data_path("/PLC/memory/K/1") is not None
         assert lsv2.read_data_path("/PLC/memory/M/1") is not None
         assert lsv2.read_data_path("/PLC/memory/B/1") is not None

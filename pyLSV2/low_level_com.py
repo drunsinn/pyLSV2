@@ -150,7 +150,7 @@ class LLLSV2Com:
         command: Union[CMD, RSP],
         payload: bytearray = bytearray(),
         wait_for_response: bool = True,
-    ) -> Tuple[RSP, bytearray]:
+    ) -> bytearray:
         """
         Send LSV2 telegram and receive response if necessary.
 
@@ -207,8 +207,8 @@ class LLLSV2Com:
             raise
 
         if len(data_recived) > 0:
-            self._logger.debug(
-                "received block of data with length %d", len(data_recived))
+            #self._logger.debug("received block of data with length %d, data %s", len(data_recived), data_recived)
+            self._logger.debug("received block of data with length %d", len(data_recived))
             if len(data_recived) >= 8:
                 # read 4 bytes for response length
                 response_length = struct.unpack("!L", data_recived[0:4])[0]

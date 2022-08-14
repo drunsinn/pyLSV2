@@ -33,7 +33,7 @@ def test_read_versions(address, timeout):
 def test_context_manager(address, timeout):
     """test if login and basic query works"""
     with pyLSV2.LSV2(address, port=19000, timeout=timeout) as lsv2:
-        assert lsv2._read_version() is not False
+        assert lsv2.versions.control_type is not pyLSV2.ControlType.UNKNOWN
 
 
 def test_switching_safe_mode(address, timeout):

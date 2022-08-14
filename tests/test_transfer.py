@@ -13,10 +13,10 @@ def test_file_recive(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_path = "TNC:/$MDI.H"
         tool_t_path = "TNC:/TOOL.T"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
         tool_t_path = "TNC:/table/toolturn.htt"
     else:
@@ -95,9 +95,9 @@ def test_recive_with_path_formating(address, timeout):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_path = "TNC:/$MDI.H"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"

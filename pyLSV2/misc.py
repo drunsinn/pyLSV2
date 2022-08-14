@@ -86,7 +86,7 @@ def decode_file_system_info(
     :param result_set: bytes returned by the system parameter query command R_FI or CR_DR
     """
     if control_type in (ControlType.MILL_OLD, ControlType.LATHE_OLD):
-        print("select old")
+        # print("select old")
         # according to documentation an LSV version 1 this should be:
         # flag_display = 0x01
         flag_changable = 0x02
@@ -126,7 +126,7 @@ def decode_file_system_info(
 
     file_entry.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
 
-    print(file_entry.name, file_entry.is_directory, file_entry.attributes)
+    #print(file_entry.name, file_entry.is_directory, file_entry.attributes)
     return file_entry
 
 
@@ -235,4 +235,7 @@ def ba_to_ustr(bytes_to_convert: bytearray) -> str:
 
 
 def ustr_to_ba(str_to_convert: str) -> bytearray:
-    return bytearray(map(ord, str_to_convert)).append(0x00)
+    value = str(str_to_convert)
+    ba = bytearray(map(ord, value))
+    ba.append(0x00)
+    return ba
