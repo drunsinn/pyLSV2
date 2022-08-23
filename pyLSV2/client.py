@@ -1183,7 +1183,7 @@ class LSV2:
                         )
                 else:
                     logging.error(
-                        "failed to read string from address %d", mem_start_address + first_element
+                        "failed to read value from address %d", mem_start_address + first_element
                     )
                     return False
             logging.debug("read a total of %d value(s)", len(plc_values))
