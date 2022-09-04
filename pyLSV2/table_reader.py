@@ -103,9 +103,14 @@ class NCTable:
             "width": width,
             "start": start,
             "end": end,
+            "empty_value": empty_value,
+            "min": None,
+            "max": None,
+            "unique": None,
+            "unit": None,
+            "read_only": None,
+            "is_inch": False
         }
-        if empty_value is not None:
-            self._column_format[name]["empty_value"] = empty_value
 
     def remove_column(self, name: str):
         """remove column by name from table format"""
@@ -136,6 +141,29 @@ class NCTable:
         if len(str(value)) > self._column_format[name]["width"]:
             raise Exception("value to long for column")
         self._column_format[name]["empty_value"] = value
+    
+    def update_column_format(self, name, parameters):
+        for key, value in parameters.items():
+            if key == "unit":
+                self._column_format[name]['unit'] = value
+            elif key == "minimum":
+                self._column_format[name]['min'] = value
+            elif key == "maximum":
+                self._column_format[name]['max'] = value
+            elif key == "unique":
+                self._column_format[name]['unique'] = value
+            elif key == "initial":
+                self._column_format[name]['empty_value'] = value
+            elif key == "readonly":
+                self._column_format[name]['read_only'] = value
+            elif key == "key":
+                pass
+            elif key == "width":
+                pass
+            elif key == "unitIsInch":
+                self._column_format[name]['is_inch'] = value
+            else:
+                raise NotImplementedError("key '%s' not implemented" % key)
 
     def _get_column_names(self):
         """get list of columns used in this table"""
@@ -226,7 +254,7 @@ class NCTable:
 
         :param file_path: file location for csv file
         """
-        self._logger.debug("write table to csv, using decimal char '%s'" % decimal_char)
+        self._logger.debug("write table to csv, using decimal char '%s'", decimal_char)
 
         def localize_floats(row):
             float_pattern = re.compile(r"^[+-]?\d+\.\d+$")
@@ -287,6 +315,8 @@ class NCTable:
         """
         logger = logging.getLogger("NCTable parser")
         nctable = NCTable()
+
+        table_config = None
 
         table_file = pathlib.Path(table_path)
         if not table_file.is_file():
@@ -351,22 +381,28 @@ class NCTable:
                     next_line = tfp.readline()
                 elif "TableDescription" in next_line:
                     tab_desc = []
+                    tab_desc.append(next_line.strip())
                     in_preamble = True
                     next_line = tfp.readline()
                     while in_preamble:
-                        tab_desc.append(next_line)
+                        tab_desc.append(next_line.strip())
                         if next_line.startswith(")"):
                             in_preamble = False
                         else:
                             next_line = tfp.readline()
                     next_line = tfp.readline()
-
+                    table_config = NCTable.parse_table_description(tab_desc)
+                
                 column_pattern = re.compile(r"([A-Za-z-\d_:\.]+)(?:\s+)")
                 for column_match in column_pattern.finditer(next_line):
+                    if column_match.group().endswith("\n"):
+                        cl_end = column_match.end() - 1
+                    else:
+                        cl_end = column_match.end()
                     nctable.append_column(
                         name=column_match.group().strip(),
                         start=column_match.start(),
-                        end=column_match.end(),
+                        end=cl_end,
                     )
 
                 logger.debug("Found %d columns", len(nctable.column_names))
@@ -385,9 +421,87 @@ class NCTable:
                     nctable.append_row(table_entry)
 
                 logger.debug("Found %d entries", len(nctable.rows))
+
+                if table_config is not None:
+                    logger.debug("update column config from table description")
+                    for c_d in table_config['TableDescription']['columns']:
+                        cfg_column_name = c_d['CfgColumnDescription']['key']
+                        if cfg_column_name not in nctable.column_names:
+                            raise Exception("found unexpected column %s" % cfg_column_name)
+                        if c_d['CfgColumnDescription']['width'] != nctable.get_column_width(cfg_column_name):
+                            raise Exception("found difference in column width for colmun %s: %d : %d" % (cfg_column_name, c_d['CfgColumnDescription']['width'] ,nctable.get_column_width(cfg_column_name)))
+                        nctable.update_column_format(cfg_column_name, c_d['CfgColumnDescription'])
+
         except UnicodeDecodeError:
             logger.error("File has invalid utf-8 encoding")
         return nctable
+    
+    @staticmethod
+    def parse_table_description(lines):
+        config_data = dict()
+        object_list = list()
+        object_list.append(config_data)
+
+        def str_to_typed_value(value_string:str):
+            if re.match(r"^\"?[+-]?\d+[.,]\d+\"?$", value_string):
+                return float(value_string.strip("\""))
+            elif re.match(r"^\"?[+-]?\d+\"?$", value_string):
+                return int(value_string.strip("\""))
+            if value_string.startswith("\"") and value_string.endswith("\""):
+                return value_string.strip("\"")
+            elif value_string.upper() == "TRUE" :
+                return True
+            elif value_string.upper() == "FALSE" :
+                return False
+            return value_string
+
+        for line in lines:
+            line = line.rstrip(",")
+
+            if line.endswith("("):
+                last_object = object_list[-1]
+                new_category = dict()
+                name = line.split(" ")[0]
+                if isinstance(last_object, (list,)):
+                    last_object.append({name:new_category})
+                else:
+                    if name in last_object:
+                        raise Exception("Element already in dict")
+                    last_object[name] = new_category
+                object_list.append(new_category)
+
+            elif line.endswith("["):
+                last_object = object_list[-1]
+                new_group = list()
+                name = line.split(":=")[0]
+                if isinstance(last_object, (list,)):
+                    last_object.append({name:new_group})
+                else:
+                    if name in last_object:
+                        raise Exception("Element already in dict")
+                    last_object[name] = new_group
+                object_list.append(new_group)
+
+            elif line.endswith(")") or line.endswith("]"):
+                object_list.pop()
+            else:
+                last_object = object_list[-1]
+                if isinstance(last_object, (list,)):
+                    if ":=" in line:
+                        parts = line.split(":=")
+                        last_object.append({parts[0]:str_to_typed_value(parts[1])})
+                    else:
+                        last_object.append(line)
+                    
+                elif isinstance(last_object, (dict, )):
+                    if ":=" in line:
+                        parts = line.split(":=")
+                        last_object[parts[0]] = str_to_typed_value(parts[1])
+                    else:
+                        raise Exception("no keyname??")
+                        #last_object["value_%d" % id_counter] = line
+
+        return config_data
 
     @staticmethod
     def from_json_format(file_path: pathlib.Path) -> "NCTable":
