@@ -226,7 +226,7 @@ class NCTable:
 
         :param file_path: file location for csv file
         """
-        self._logger.debug("write table to csv")
+        self._logger.debug("write table to csv, using decimal char '%s'" % decimal_char)
 
         def localize_floats(row):
             float_pattern = re.compile(r"^[+-]?\d+\.\d+$")
@@ -244,7 +244,7 @@ class NCTable:
                 fieldnames=self.column_names,
             )
             csv_writer.writeheader()
-            for row in nc_table.rows:
+            for row in self.rows:
                 csv_writer.writerow(localize_floats(row))
         self._logger.info("csv file saved successfully")
 

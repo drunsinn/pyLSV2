@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import argparse
 import logging
 import pathlib
-from pyLSV2 import NCTable
-import argparse
 import sys
+
+from pyLSV2 import NCTable
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
