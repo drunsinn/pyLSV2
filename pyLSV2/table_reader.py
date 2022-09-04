@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """module with reader and writer for TNC tables"""
-from typing import Union
+import csv
 import json
 import logging
 import pathlib
 import re
+from typing import Union
 
 
 class NCTable:
@@ -22,7 +23,7 @@ class NCTable:
         is_metric: bool = False,
     ):
         """init object variables logging"""
-        logging.getLogger(__name__).addHandler(logging.NullHandler())
+        self._logger = logging.getLogger("NCTable")
         self.name = name
         self.suffix = suffix
         self.version = version
@@ -31,6 +32,10 @@ class NCTable:
         self._content = []
         self._columns = []
         self._column_format = {}
+
+    def __len__(self):
+        """length of table is equal to number of rows in table"""
+        return len(self._content)
 
     @property
     def name(self) -> str:
@@ -48,10 +53,7 @@ class NCTable:
 
     @suffix.setter
     def suffix(self, value: str):
-        if value is None:
-            self._suffix = None
-        else:
-            self._suffix = value.lower()
+        self._suffix = value.lower()
 
     @property
     def version(self) -> str:
@@ -79,6 +81,16 @@ class NCTable:
     @is_metric.setter
     def is_metric(self, value: bool):
         self._is_metric = value
+
+    @property
+    def rows(self) -> list:
+        """data entries in this table"""
+        return self._content
+
+    @property
+    def column_names(self) -> list:
+        """list of columns used in this table"""
+        return self._columns
 
     def append_column(
         self, name: str, start: int, end: int, width: int = 0, empty_value=None
@@ -125,9 +137,12 @@ class NCTable:
             raise Exception("value to long for column")
         self._column_format[name]["empty_value"] = value
 
-    def get_column_names(self):
+    def _get_column_names(self):
         """get list of columns used in this table"""
-        return self._columns
+        raise DeprecationWarning(
+            "Do not use this funtion anymore! Use ```column_names```"
+        )
+        # return self._columns
 
     def append_row(self, row):
         """add a data entry to the table"""
@@ -137,41 +152,16 @@ class NCTable:
         """add multiple data entries at onec"""
         self._content.extend(rows)
 
-    @property
-    def rows(self):
-        """data entries in this table"""
-        return self._content
-
     def format_to_json(self) -> str:
         """return json configuration representing the table format"""
         json_data = {}
         json_data["version"] = self.version
         json_data["suffix"] = self.suffix
-        json_data["column_list"] = self.get_column_names()
+        json_data["column_list"] = self.column_names
         json_data["column_config"] = self._column_format
         return json.dumps(json_data, ensure_ascii=False, indent=2)
 
-    @staticmethod
-    def from_json(file_path: pathlib.Path) -> "NCTable":
-        """return a new NCTable object based on a json configuration file"""
-        nct = NCTable()
-        with open(file_path, "r", encoding="utf-8") as jfp:
-            json_data = json.load(jfp)
-            nct.version = json_data["version"]
-            nct.suffix = json_data["suffix"]
-            for column in json_data["column_config"]:
-                nct.append_column(
-                    name=column,
-                    start=json_data["column_config"][column]["start"],
-                    end=json_data["column_config"][column]["end"],
-                )
-                if "empty_value" in json_data["column_config"][column]:
-                    nct.set_column_empty_value(
-                        column, json_data["column_config"][column]["empty_value"]
-                    )
-        return nct
-
-    def dump(self, file_path: pathlib.Path, renumber_column=None):
+    def dump_native(self, file_path: pathlib.Path, renumber_column=None):
         """write table data to a file in the format used by the controls"""
         row_counter = 0
         file_name = file_path.name.upper()
@@ -230,17 +220,64 @@ class NCTable:
 
             tfp.write("[END]\n")
 
+    def dump_csv(self, file_path: pathlib.Path, decimal_char: str = "."):
+        """
+        save content of table as csv file
 
-class TableReader:
-    """generic parser for table files commonly used by TNC, iTNC, CNCPILOT,
-    MANUALplus and 6000i CNC
-    """
+        :param file_path: file location for csv file
+        """
+        self._logger.debug("write table to csv")
 
-    def __init__(self):
-        """init object variables logging"""
-        logging.getLogger(__name__).addHandler(logging.NullHandler())
+        def localize_floats(row):
+            float_pattern = re.compile(r"^[+-]?\d+\.\d+$")
+            for key in row.keys():
+                if float_pattern.match(row[key]):
+                    row[key] = row[key].replace(".", decimal_char)
+            return row
 
-    def parse_table(self, table_path: pathlib.Path) -> NCTable:
+        with open(file_path, "w", newline="", encoding="utf8") as csvfp:
+            csv_writer = csv.DictWriter(
+                csvfp,
+                delimiter=";",
+                quotechar='"',
+                quoting=csv.QUOTE_ALL,
+                fieldnames=self.column_names,
+            )
+            csv_writer.writeheader()
+            for row in nc_table.rows:
+                csv_writer.writerow(localize_floats(row))
+        self._logger.info("csv file saved successfully")
+
+    def find_string(
+        self, column_name: str, search_value: Union[str, re.Pattern]
+    ) -> list:
+        """
+        search for string rows by string or pattern
+        returns list of lines that contain the search result
+
+        :param column_name: name of the table column which should be checked
+        :param search_value: the value to check for, can be string or regular expresssion
+        """
+        search_results = []
+        if not column_name in self._columns:
+            self._logger.error(
+                "column with name %s not part of this table", column_name
+            )
+        else:
+            if isinstance(search_value, (str,)):
+                search_results = [
+                    itm for itm in self._content if search_value in itm[column_name]
+                ]
+            elif isinstance(search_value, (re.Pattern,)):
+                search_results = [
+                    itm
+                    for itm in self._content
+                    if search_value.match(itm[column_name]) is not None
+                ]
+        return search_results
+
+    @staticmethod
+    def parse_table(table_path: pathlib.Path) -> "NCTable":
         """Parse a file of one of the common table formats
 
         :param str or Path table_path: Path to the table file
@@ -248,6 +285,7 @@ class TableReader:
         :returns: list od dictionaries. key is the column name, value the content of the table cell
         :rtype: NCTable
         """
+        logger = logging.getLogger("NCTable parser")
         nctable = NCTable()
 
         table_file = pathlib.Path(table_path)
@@ -257,9 +295,9 @@ class TableReader:
         try:
             with table_file.open(mode="r", encoding="utf-8") as tfp:
                 header_line = tfp.readline().strip()
-                logging.debug("Checking line for header: %s", header_line)
+                logger.debug("Checking line for header: %s", header_line)
                 header = re.match(
-                    r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)\')?(?P<mark> U)?$",
+                    r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)(?: Date:(?P<date>\d{4}-\d{2}-\d{2}))?\')?(?P<mark> U)?$",
                     header_line,
                 )
 
@@ -277,7 +315,7 @@ class TableReader:
                     nctable.has_unit = True
                     if "MM" in header.group("unit"):
                         nctable.is_metric = True
-                        logging.debug(
+                        logger.debug(
                             'Header Information for file "%s" Name "%s", file is metric, Version: "%s"',
                             table_file,
                             nctable.name,
@@ -285,7 +323,7 @@ class TableReader:
                         )
                     else:
                         nctable.is_metric = False
-                        logging.debug(
+                        logger.debug(
                             'Header Information for file "%s" Name "%s", file is inch, Version: "%s"',
                             table_file,
                             nctable.name,
@@ -294,7 +332,7 @@ class TableReader:
                 else:
                     nctable.has_unit = False
                     nctable.is_metric = False
-                    logging.debug(
+                    logger.debug(
                         'Header Information for file "%s" Name "%s", file has no units, Version: "%s"',
                         table_file,
                         nctable.name,
@@ -312,9 +350,11 @@ class TableReader:
                             next_line = tfp.readline()
                     next_line = tfp.readline()
                 elif "TableDescription" in next_line:
+                    tab_desc = []
                     in_preamble = True
                     next_line = tfp.readline()
                     while in_preamble:
+                        tab_desc.append(next_line)
                         if next_line.startswith(")"):
                             in_preamble = False
                         else:
@@ -329,14 +369,14 @@ class TableReader:
                         end=column_match.end(),
                     )
 
-                logging.debug("Found %d columns", len(nctable.get_column_names()))
+                logger.debug("Found %d columns", len(nctable.column_names))
 
                 for line in tfp.readlines():
                     if line.startswith("[END]"):
                         break
 
                     table_entry = {}
-                    for column in nctable.get_column_names():
+                    for column in nctable.column_names:
                         table_entry[column] = line[
                             nctable.get_column_start(column) : nctable.get_column_end(
                                 column
@@ -344,10 +384,37 @@ class TableReader:
                         ].strip()
                     nctable.append_row(table_entry)
 
-                logging.debug("Found %d entries", len(nctable.rows))
+                logger.debug("Found %d entries", len(nctable.rows))
         except UnicodeDecodeError:
-            logging.error("File has invalid utf-8 encoding")
+            logger.error("File has invalid utf-8 encoding")
         return nctable
+
+    @staticmethod
+    def from_json_format(file_path: pathlib.Path) -> "NCTable":
+        """return a new NCTable object based on a json configuration file"""
+        logger = logging.getLogger("NCTable format parser")
+        nct = NCTable()
+        with open(file_path, "r", encoding="utf-8") as jfp:
+            json_data = json.load(jfp)
+            nct.version = json_data["version"]
+            nct.suffix = json_data["suffix"]
+            for column in json_data["column_config"]:
+                logger.debug(
+                    "add column %s [%d:%d]",
+                    column,
+                    json_data["column_config"]["start"],
+                    json_data["column_config"][column]["end"],
+                )
+                nct.append_column(
+                    name=column,
+                    start=json_data["column_config"][column]["start"],
+                    end=json_data["column_config"][column]["end"],
+                )
+                if "empty_value" in json_data["column_config"][column]:
+                    nct.set_column_empty_value(
+                        column, json_data["column_config"][column]["empty_value"]
+                    )
+        return nct
 
     @staticmethod
     def format_entry_float(str_value: str) -> Union[float, None]:
