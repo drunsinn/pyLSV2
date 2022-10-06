@@ -51,7 +51,7 @@ class LSV2:
     """Implementation of the LSV2 protocol used to communicate with certain CNC controls"""
 
     def __init__(
-        self, hostname, port=0, timeout=15.0, safe_mode=True, locale_path=None
+        self, hostname, port=0, timeout=15.0, safe_mode=True, locale_path=None, enc_errors='ignore', enc_encoding='utf-8'
     ):
         """init object variables and create socket"""
         logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -87,6 +87,9 @@ class LSV2:
         self._secure_file_send = False
         self._control_type = ControlType.UNKNOWN
         self._last_error_code = None
+
+        self._enc_errors = enc_errors
+        self._enc_encoding = enc_encoding
 
         if locale_path is None:
             self._locale_path = os.path.join(os.path.dirname(__file__), "locales")
@@ -514,13 +517,13 @@ class LSV2:
             stack_info["Main_PGM"] = (
                 result[4:]
                 .split(b"\x00")[0]
-                .decode()
+                .decode(encoding = self._enc_encoding, errors = self._enc_errors)
                 .strip("\x00")  # .replace("\\", "/")
             )
             stack_info["Current_PGM"] = (
                 result[4:]
                 .split(b"\x00")[1]
-                .decode()
+                .decode(encoding = self._enc_encoding, errors = self._enc_errors)
                 .strip("\x00")  # .replace("\\", "/")
             )
             logging.debug(
