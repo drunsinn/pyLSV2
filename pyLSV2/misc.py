@@ -4,7 +4,7 @@
 import struct
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 from . import dat_cls as ld
 from .const import BIN_FILES, PATH_SEP, ControlType
@@ -109,8 +109,7 @@ def decode_file_system_info(
 
     file_entry = ld.FileEntry()
     file_entry.size = struct.unpack("!L", data_set[:4])[0]
-    file_entry.timestamp = datetime.fromtimestamp(
-        struct.unpack("!L", data_set[4:8])[0])
+    file_entry.timestamp = datetime.fromtimestamp(struct.unpack("!L", data_set[4:8])[0])
 
     file_entry.attributes = struct.unpack("!L", data_set[8:12])[0]
 
@@ -126,8 +125,35 @@ def decode_file_system_info(
 
     file_entry.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
 
-    #print(file_entry.name, file_entry.is_directory, file_entry.attributes)
+    # print(file_entry.name, file_entry.is_directory, file_entry.attributes)
     return file_entry
+
+
+def decode_drive_info(data_set: bytearray) -> List:
+    """
+    Split and decode result from drive info
+
+    :param result_set: bytes returned by the system parameter query command R_DR mode 'DRIVE'
+    """
+    offset = 0
+    fixed_length = 15
+    drive_entries = list()
+
+    while (offset + fixed_length + 1) < len(data_set):
+        de = ld.DriveEntry()
+        de.unknown_0 = struct.unpack("!L", data_set[offset : offset + 4])[0]
+        de.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[0]
+        de.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[0]
+
+        if chr(data_set[offset + fixed_length]) == ":":
+            de.name = ba_to_ustr(data_set[offset + 12 : offset + 17])
+            offset += fixed_length + 2
+        else:
+            de.name = ba_to_ustr(data_set[offset + 12 : offset + 19])
+            offset += fixed_length + 2
+        drive_entries.append(de)
+
+    return drive_entries
 
 
 def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
@@ -141,7 +167,7 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
 
     attribute_list = []
     for i in range(4, len(data_set[4:132]), 4):
-        attr = ba_to_ustr(data_set[i: i + 4])
+        attr = ba_to_ustr(data_set[i : i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
     di.dir_attributes = attribute_list

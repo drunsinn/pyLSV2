@@ -686,7 +686,7 @@ class LSV2:
             return []
 
         dir_content = []
-        payload = bytearray(struct.pack("!H", lc.ParRDR.SINGLE))
+        payload = bytearray(struct.pack("!B", lc.ParRDR.SINGLE))
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
         if isinstance(result, (list,)):
             for entry in result:
@@ -712,11 +712,12 @@ class LSV2:
             return []
 
         drives_list = []
-        payload = bytearray(struct.pack("!H", lc.ParRDR.DRIVES))
+        payload = bytearray(struct.pack("!B", lc.ParRDR.DRIVES))
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
         if isinstance(result, (list,)):
             for entry in result:
-                drives_list.append(entry)
+                drives_list.extend(lm.decode_drive_info(entry))
+
             self._logger.debug(
                 "successfully received %d packages for drive information %s",
                 len(result),

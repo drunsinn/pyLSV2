@@ -34,7 +34,7 @@ class VersionInfo:
     def control_version(self, value: str):
         self._control_version = value
 
-        if ("TNC6" in value or "TNC320" in value or "TNC128" in value):
+        if "TNC6" in value or "TNC320" in value or "TNC128" in value:
             self.control_type = ControlType.MILL_NEW
         elif "iTNC530" in value:
             self.control_type = ControlType.MILL_OLD
@@ -516,6 +516,15 @@ class LSV2ErrorMessage:
         self.e_text = ""
         self.dnc = False
 
+    def __str__(self):
+        return "Class: %d, Group: %d, Number: %d, DNC?: %s, Text: '%s'" % (
+            self.e_class,
+            self.e_group,
+            self.e_number,
+            self.dnc,
+            self.e_text,
+        )
+
     @property
     def e_class(self) -> int:
         return self._e_class
@@ -705,6 +714,46 @@ class DirectoryEntry:
     @path.setter
     def path(self, value: str):
         self._path = value
+
+
+class DriveEntry:
+    def __init__(self):
+        self.unknown_0 = int
+        self.unknown_1 = ""
+        self.unknown_2 = int
+        self.name = ""
+
+    @property
+    def unknown_0(self) -> int:
+        return self._unknown_0
+
+    @unknown_0.setter
+    def unknown_0(self, value: int):
+        self._unknown_0 = value
+
+    @property
+    def unknown_1(self) -> str:
+        return self._unknown_1
+
+    @unknown_1.setter
+    def unknown_1(self, value: str):
+        self._unknown_1 = value
+
+    @property
+    def unknown_2(self) -> int:
+        return self._unknown_2
+
+    @unknown_2.setter
+    def unknown_2(self, value: int):
+        self._unknown_2 = value
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
 
 
 class TransmissionError:
