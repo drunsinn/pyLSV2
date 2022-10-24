@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """test to see if plc functions work"""
-
+import pytest
 import pyLSV2
 
 
@@ -38,6 +38,71 @@ def test_plc_read(address, timeout):
     )
 
     lsv2.logout(pyLSV2.Login.PLCDEBUG)
+
+    lsv2.disconnect()
+
+
+def test_plc_read_marker(address, timeout):
+    """test reading of plc markers"""
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2.connect()
+
+    marker_data_0 = lsv2.read_plc_memory(
+        address=0, mem_type=pyLSV2.MemoryType.MARKER, count=1
+    )
+    assert isinstance(marker_data_0, (list,)) is True
+    assert (len(marker_data_0) == 1) is True
+
+    marker_data_1 = lsv2.read_plc_memory(
+        address=1, mem_type=pyLSV2.MemoryType.MARKER, count=1
+    )
+    assert isinstance(marker_data_1, (list,)) is True
+    assert (len(marker_data_1) == 1) is True
+
+    marker_data = lsv2.read_plc_memory(
+        address=0, mem_type=pyLSV2.MemoryType.MARKER, count=2
+    )
+    assert (len(marker_data) == 2) is True
+    assert (marker_data[0] == marker_data_0[0]) is True
+    assert (marker_data[1] == marker_data_1[0]) is True
+
+    lsv2.disconnect()
+
+
+def test_plc_read_string(address, timeout):
+    """test reading of plc strings"""
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2.connect()
+
+    data_0 = lsv2.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.STRING, count=1)
+    assert isinstance(data_0, (list,)) is True
+    assert (len(data_0) == 1) is True
+
+    data_1 = lsv2.read_plc_memory(address=1, mem_type=pyLSV2.MemoryType.STRING, count=1)
+    assert isinstance(data_1, (list,)) is True
+    assert (len(data_1) == 1) is True
+
+    data = lsv2.read_plc_memory(address=0, mem_type=pyLSV2.MemoryType.STRING, count=2)
+    assert (len(data) == 2) is True
+    assert (data[0] == data_0[0]) is True
+    assert (data[1] == data_1[0]) is True
+
+    lsv2.disconnect()
+
+
+def test_plc_read_errors(address, timeout):
+    """test error states for reading plc data"""
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2.connect()
+
+    num_words = lsv2.get_system_parameter()["Words"]
+
+    with pytest.raises(ValueError) as exc_info:
+        data = lsv2.read_plc_memory(
+            address=0, mem_type=pyLSV2.MemoryType.WORD, count=(num_words + 1)
+        )
+    exception_raised = exc_info.value
+    assert isinstance(exception_raised, (ValueError,)) is True
 
     lsv2.disconnect()
 

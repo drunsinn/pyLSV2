@@ -1220,10 +1220,13 @@ class LSV2:
             self._logger.error("can't read more than 255 elements at a time")
             return []
 
+        first_element = address
+        number_of_elements = count  # keep old parameter name for compatibility
+
         if mem_type is lc.MemoryType.MARKER:
-            start_address = self._sys_par.markers_start_address
-            max_count = self._sys_par.number_of_markers
-            mem_byte_count = 1
+            mem_start_address = self._sys_par.markers_start_address
+            max_elemens = self._sys_par.number_of_markers
+            mem_bytes_per_element = 1
             unpack_string = "!?"
         elif mem_type is lc.MemoryType.INPUT:
             start_address = self._sys_par.inputs_start_address
@@ -1275,59 +1278,107 @@ class LSV2:
             max_count = self._sys_par.number_of_output_words
             mem_byte_count = 2
             unpack_string = "<H"
-        #else:
-        #    self._logger.error("unknown memory type %s", mem_type)
+        else:
+            raise ValueError("unknown address type")
 
-        if count > max_count:
-            self._logger.error("maximum number of values is %d", max_count)
-            return []
+        if number_of_elements > max_elemens:
+            raise ValueError("maximum number of values is %d" % max_elemens)
 
         plc_values = []
 
-        if mem_type is lc.MemoryType.STRING:
-            # advance address by number of bytes per sting if necessary
-            address = address + (count - 1) * mem_byte_count
-            for i in range(count):
-                payload = bytearray()
-                payload.extend(
-                    struct.pack("!L", start_address +
-                                address + i * mem_byte_count)
+        if mem_type is MemoryType.STRING:
+
+            for i in range(number_of_elements):
+                address = (
+                    mem_start_address
+                    + first_element * mem_bytes_per_element
+                    + i * mem_bytes_per_element
                 )
-                payload.extend(struct.pack("!B", mem_byte_count))
-                result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
-                if isinstance(result, (bytearray,)) and len(result) > 0:
-                    self._logger.debug(
-                        "read string %d", address + i * mem_byte_count)
+
+                payload = bytearray()
+                payload.extend(struct.pack("!L", address))
+                payload.extend(struct.pack("!B", mem_bytes_per_element))
+                result = self._send_recive(CMD.R_MB, RSP.S_MB, payload=payload)
+                if isinstance(result, (bytearray,)):
+                    logging.debug(
+                        "read string %d with lenght %d",
+                        (first_element + i),
+                        len(result),
+                    )
+
+                    unpack_string = "{}s".format(len(result))
+
                     plc_values.append(
                         struct.unpack(unpack_string, result)[0]
                         .rstrip(b"\x00")
-                        .decode("utf8")
+                        .decode("latin1")
                     )
                 else:
-                    self._logger.error(
-                        "failed to read string from address %d",
-                        start_address + address + i * mem_byte_count,
+                    logging.error(
+                        "failed to read string %d from address %d",
+                        (first_element + i),
+                        address,
                     )
                     return []
         else:
-            payload = bytearray()
-            payload.extend(struct.pack("!L", start_address + address))
-            payload.extend(struct.pack("!B", count * mem_byte_count))
-            result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                self._logger.debug(
-                    "read %d value(s) from address %d", count, address)
-                for i in range(0, len(result), mem_byte_count):
-                    plc_values.append(
-                        struct.unpack(
-                            unpack_string, result[i: i + mem_byte_count])[0]
-                    )
-            else:
-                self._logger.error(
-                    "failed to read string from address %d", start_address + address
-                )
-                return []
 
+            max_elements_per_transfer = math.floor(255 / mem_bytes_per_element)
+            num_groups = math.ceil(number_of_elements / max_elements_per_transfer)
+            logging.debug(
+                "memory type allows %d elements per telegram, split request into %d group(s)",
+                max_elements_per_transfer,
+                num_groups,
+            )
+            remaining_elements = number_of_elements
+
+            for i in range(num_groups):
+                if remaining_elements >= max_elements_per_transfer:
+                    elements_in_group = max_elements_per_transfer
+                    remaining_elements -= max_elements_per_transfer
+                else:
+                    elements_in_group = remaining_elements
+                address = (
+                    mem_start_address
+                    + first_element * mem_bytes_per_element
+                    + i * elements_in_group * mem_bytes_per_element
+                )
+                logging.debug(
+                    "current transfer group %d has %d elements", i, elements_in_group
+                )
+
+                # address = mem_start_address + first_element * mem_bytes_per_element
+
+                payload = bytearray()
+                payload.extend(struct.pack("!L", address))
+                payload.extend(
+                    struct.pack("!B", elements_in_group * mem_bytes_per_element)
+                )
+                result = self._send_recive(CMD.R_MB, RSP.S_MB, payload=payload)
+                if isinstance(result, (bytearray,)):
+                    logging.debug(
+                        "read %d value(s) from address %d",
+                        elements_in_group,
+                        first_element,
+                    )
+                    for i in range(0, len(result), mem_bytes_per_element):
+                        plc_values.append(
+                            struct.unpack(
+                                unpack_string, result[i : i + mem_bytes_per_element]
+                            )[0]
+                        )
+                else:
+                    logging.error(
+                        "failed to read value from address %d",
+                        mem_start_address + first_element,
+                    )
+                    return False
+            logging.debug("read a total of %d value(s)", len(plc_values))
+        if len(plc_values) != number_of_elements:
+            raise Exception(
+                "number of recived values %d is not equal to number of requested %d",
+                len(plc_values),
+                number_of_elements,
+            )
         return plc_values
 
     def set_keyboard_access(self, unlocked: bool) -> bool:
