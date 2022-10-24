@@ -1114,18 +1114,21 @@ class LSV2:
             mem_bytes_per_element = 2
             unpack_string = "<H"
         else:
-            raise Exception("unknown address type")
+            raise ValueError("unknown address type")
 
         if number_of_elements > max_elemens:
-            raise Exception("maximum number of values is %d" % max_elemens)
+            raise ValueError("maximum number of values is %d" % max_elemens)
 
         plc_values = list()
 
         if mem_type is MemoryType.STRING:
 
             for i in range(number_of_elements):
-                address = mem_start_address + first_element * \
-                    mem_bytes_per_element + i * mem_bytes_per_element
+                address = (
+                    mem_start_address
+                    + first_element * mem_bytes_per_element
+                    + i * mem_bytes_per_element
+                )
 
                 payload = bytearray()
                 payload.extend(struct.pack("!L", address))
@@ -1133,26 +1136,34 @@ class LSV2:
                 result = self._send_recive(CMD.R_MB, RSP.S_MB, payload=payload)
                 if isinstance(result, (bytearray,)):
                     logging.debug(
-                        "read string %d with lenght %d", (first_element + i), len(result))
+                        "read string %d with lenght %d",
+                        (first_element + i),
+                        len(result),
+                    )
 
                     unpack_string = "{}s".format(len(result))
 
                     plc_values.append(
                         struct.unpack(unpack_string, result)[0]
                         .rstrip(b"\x00")
-                        .decode("utf8")
+                        .decode("latin1")
                     )
                 else:
                     logging.error(
-                        "failed to read string %d from address %d", (first_element + i), address,)
+                        "failed to read string %d from address %d",
+                        (first_element + i),
+                        address,
+                    )
                     return False
         else:
 
             max_elements_per_transfer = math.floor(255 / mem_bytes_per_element)
-            num_groups = math.ceil(
-                number_of_elements / max_elements_per_transfer)
-            logging.debug("memory type allows %d elements per telegram, split request into %d group(s)",
-                          max_elements_per_transfer, num_groups)
+            num_groups = math.ceil(number_of_elements / max_elements_per_transfer)
+            logging.debug(
+                "memory type allows %d elements per telegram, split request into %d group(s)",
+                max_elements_per_transfer,
+                num_groups,
+            )
             remaining_elements = number_of_elements
 
             for i in range(num_groups):
@@ -1161,35 +1172,48 @@ class LSV2:
                     remaining_elements -= max_elements_per_transfer
                 else:
                     elements_in_group = remaining_elements
-                address = mem_start_address + first_element * mem_bytes_per_element + \
-                    i * elements_in_group * mem_bytes_per_element
+                address = (
+                    mem_start_address
+                    + first_element * mem_bytes_per_element
+                    + i * elements_in_group * mem_bytes_per_element
+                )
                 logging.debug(
-                    "current transfer group %d has %d elements", i, elements_in_group)
+                    "current transfer group %d has %d elements", i, elements_in_group
+                )
 
-                #address = mem_start_address + first_element * mem_bytes_per_element
+                # address = mem_start_address + first_element * mem_bytes_per_element
 
                 payload = bytearray()
                 payload.extend(struct.pack("!L", address))
-                payload.extend(struct.pack(
-                    "!B", elements_in_group * mem_bytes_per_element))
+                payload.extend(
+                    struct.pack("!B", elements_in_group * mem_bytes_per_element)
+                )
                 result = self._send_recive(CMD.R_MB, RSP.S_MB, payload=payload)
                 if isinstance(result, (bytearray,)):
-                    logging.debug("read %d value(s) from address %d",
-                                  elements_in_group, first_element)
+                    logging.debug(
+                        "read %d value(s) from address %d",
+                        elements_in_group,
+                        first_element,
+                    )
                     for i in range(0, len(result), mem_bytes_per_element):
                         plc_values.append(
                             struct.unpack(
-                                unpack_string, result[i: i + mem_bytes_per_element])[0]
+                                unpack_string, result[i : i + mem_bytes_per_element]
+                            )[0]
                         )
                 else:
                     logging.error(
-                        "failed to read value from address %d", mem_start_address + first_element
+                        "failed to read value from address %d",
+                        mem_start_address + first_element,
                     )
                     return False
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
-            raise Exception("number of recived values %d is not equal to number of requested %d", len(
-                plc_values), number_of_elements)
+            raise Exception(
+                "number of recived values %d is not equal to number of requested %d",
+                len(plc_values),
+                number_of_elements,
+            )
         return plc_values
 
     def set_keyboard_access(self, unlocked):
