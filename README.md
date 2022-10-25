@@ -88,57 +88,37 @@ Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/c0631b7cfb
 ## Usage
 See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.
 
-Notice that the definitionns of constant values will be moved from pyLSV2.LSV2 to pyLSV2 directly!
+Notice: The change from 0.xx to 1.xx brought some major incompatible changes in regards to the API:
+ - raise the minimal required python version to 3.5, future releases will even target 3.7
+ - change of function names and parameters to better reflect thier use
+ - change of return types from dict to special data class
+These changes where made intentionaly to make further development easier. See the demo script for an overview of the new API.
 
-### Basic example
+### Basic example without context manager
 ```
  import pyLSV2
  con = pyLSV2.LSV2('192.168.56.101')
  con.connect()
- print(con.get_versions())
+ print(con.versions.control_version)
  con.disconnect()
 ```
 
-### Reading Information from the control
+### Basic example with context manager
 ```
- import logging
  import pyLSV2
- 
- logging.basicConfig(level=logging.DEBUG)
- con = pyLSV2.LSV2('192.168.56.101', safe_mode=False)
- con.connect()
- print(con.get_program_status_text(con.get_program_status()))
- print(con.get_execution_status_text(con.get_execution_status()))
- print(con.get_axes_location())
- con.disconnect()
-```
-
-### File transfer
-```
- import logging
- import pyLSV2
- 
- logging.basicConfig(level=logging.DEBUG)
- con = pyLSV2.LSV2('192.168.56.101', safe_mode=True)
- con.connect()
-
- con.send_file(local_path='./test.H', remote_path='TNC:/',
-               override_file=True, binary_mode=True)
-
- con.recive_file(local_path='./', remote_path='TNC:/nc_prog/$mdi.h',
-                 override_file=True, binary_mode=True)
-
- con.disconnect()
+ with pyLSV2.LSV2('192.168.56.101') as con:
+ ... con.connect()
+ ... print(con.versions.control_version)
 ```
 
 ### Accessing PLC data
  To read values from the PLC memory you need to know the memory area/type and the memory address. There are two ways to read these values.
  
 #### Reading via memory address
- The following command reads 15 marker (bits) starting at address
+ The following command reads 15 marker (bits) starting at address 32
 
 ```
- con.read_plc_memory(address=32, mem_type=pyLSV2.PLC_MEM_TYPE_MARKER, count=15)
+ con.read_plc_memory(32, pyLSV2.PLC_MEM_TYPE_MARKER, 15)
 ```
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for more examples.
 
@@ -187,5 +167,7 @@ Included in this library is also fuctionality to work with Tables used by differ
 https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
 
 https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
+
+https://www.yumpu.com/de/document/read/18882603/-f-heidenhain
 
 https://de.industryarena.com/heidenhain/forum
