@@ -34,22 +34,22 @@ if __name__ == "__main__":
     )
     ssh_forwarder.start()
     print(
-        "SSH tunnel established. local port is {}".format(
-            ssh_forwarder.local_bind_port)
+        "SSH tunnel established. local port is {}".format(ssh_forwarder.local_bind_port)
     )
 
     print("Establish regular LSV2 connection via local port")
-    lsv2 = pyLSV2.LSV2(
+
+    con = pyLSV2.LSV2(
         "127.0.0.1", port=ssh_forwarder.local_bind_port, timeout=5, safe_mode=False
     )
-    lsv2.connect()
+    con.connect()
     print(
-        'Connected to "{Control}" with NC Software "{NC_Version}"'.format(
-            **lsv2._read_version()
+        'Connected to "{:s}" with NC Software "{:s}"'.format(
+            con.versions.control_version, con.versions.nc_version
         )
     )
     print("Close Connection")
-    lsv2.disconnect()
+    con.disconnect()
 
     print("Close SSH tunnel")
     ssh_forwarder.stop()

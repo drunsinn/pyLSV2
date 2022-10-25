@@ -134,33 +134,33 @@ if __name__ == "__main__":
         con = pyLSV2.LSV2(hostname=host_machine, port=host_port, timeout=args.timeout)
         con.connect()
     except socket.gaierror as ex:
-        logging.error('An Exception occurred: "%s"', ex)
-        logging.error('Could not resove host information: "%s"', host_machine)
+        logging.error("An Exception occurred: '%s'", ex)
+        logging.error("Could not resove host information: '%s'", host_machine)
         sys.exit(-2)
 
     if source_is_remote:
         file_info = con.get_file_info(remote_file_path=source_path)
         if not file_info:
-            logging.error('source file dose not exist on remote: "%s"', source_path)
+            logging.error("source file dose not exist on remote: '%s'", source_path)
             sys.exit(-3)
         elif file_info["is_directory"]:
             logging.error(
-                'source on remote is not file but directory: "%s"', source_path
+                "source on remote is not file but directory: '%s'", source_path
             )
             sys.exit(-4)
     else:
         if not source_path.exists():
             if source_path.is_file():
-                logging.error('source file dose not exist: "%s"', source_path)
+                logging.error("source file dose not exist: '%s'", source_path)
                 sys.exit(-5)
             else:  # source_path.is_dir():
-                logging.error('source folder dose not exist: "%s"', source_path)
+                logging.error("source folder dose not exist: '%s'", source_path)
                 sys.exit(-6)
 
     success = False
     if source_is_remote and dest_is_remote:
         logging.debug("Local copy on remote")
-        success = con.copy_local_file(source_path=source_path, target_path=dest_path)
+        success = con.copy_remote_file(source_path=source_path, target_path=dest_path)
     elif source_is_remote and not dest_is_remote:
         logging.debug("copy from remote to this device")
         success = con.recive_file(
