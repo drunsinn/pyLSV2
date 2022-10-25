@@ -109,7 +109,7 @@ class NCTable:
             "unique": None,
             "unit": None,
             "read_only": None,
-            "is_inch": False
+            "is_inch": False,
         }
 
     def remove_column(self, name: str):
@@ -141,27 +141,27 @@ class NCTable:
         if len(str(value)) > self._column_format[name]["width"]:
             raise Exception("value to long for column")
         self._column_format[name]["empty_value"] = value
-    
+
     def update_column_format(self, name, parameters):
         for key, value in parameters.items():
             if key == "unit":
-                self._column_format[name]['unit'] = value
+                self._column_format[name]["unit"] = value
             elif key == "minimum":
-                self._column_format[name]['min'] = value
+                self._column_format[name]["min"] = value
             elif key == "maximum":
-                self._column_format[name]['max'] = value
+                self._column_format[name]["max"] = value
             elif key == "unique":
-                self._column_format[name]['unique'] = value
+                self._column_format[name]["unique"] = value
             elif key == "initial":
-                self._column_format[name]['empty_value'] = value
+                self._column_format[name]["empty_value"] = value
             elif key == "readonly":
-                self._column_format[name]['read_only'] = value
+                self._column_format[name]["read_only"] = value
             elif key == "key":
                 pass
             elif key == "width":
                 pass
             elif key == "unitIsInch":
-                self._column_format[name]['is_inch'] = value
+                self._column_format[name]["is_inch"] = value
             else:
                 raise NotImplementedError("key '%s' not implemented" % key)
 
@@ -392,7 +392,7 @@ class NCTable:
                             next_line = tfp.readline()
                     next_line = tfp.readline()
                     table_config = NCTable.parse_table_description(tab_desc)
-                
+
                 column_pattern = re.compile(r"([A-Za-z-\d_:\.]+)(?:\s+)")
                 for column_match in column_pattern.finditer(next_line):
                     if column_match.group().endswith("\n"):
@@ -424,34 +424,47 @@ class NCTable:
 
                 if table_config is not None:
                     logger.debug("update column config from table description")
-                    for c_d in table_config['TableDescription']['columns']:
-                        cfg_column_name = c_d['CfgColumnDescription']['key']
+                    for c_d in table_config["TableDescription"]["columns"]:
+                        cfg_column_name = c_d["CfgColumnDescription"]["key"]
                         if cfg_column_name not in nctable.column_names:
-                            raise Exception("found unexpected column %s" % cfg_column_name)
-                        if c_d['CfgColumnDescription']['width'] != nctable.get_column_width(cfg_column_name):
-                            raise Exception("found difference in column width for colmun %s: %d : %d" % (cfg_column_name, c_d['CfgColumnDescription']['width'] ,nctable.get_column_width(cfg_column_name)))
-                        nctable.update_column_format(cfg_column_name, c_d['CfgColumnDescription'])
+                            raise Exception(
+                                "found unexpected column %s" % cfg_column_name
+                            )
+                        if c_d["CfgColumnDescription"][
+                            "width"
+                        ] != nctable.get_column_width(cfg_column_name):
+                            raise Exception(
+                                "found difference in column width for colmun %s: %d : %d"
+                                % (
+                                    cfg_column_name,
+                                    c_d["CfgColumnDescription"]["width"],
+                                    nctable.get_column_width(cfg_column_name),
+                                )
+                            )
+                        nctable.update_column_format(
+                            cfg_column_name, c_d["CfgColumnDescription"]
+                        )
 
         except UnicodeDecodeError:
             logger.error("File has invalid utf-8 encoding")
         return nctable
-    
+
     @staticmethod
     def parse_table_description(lines):
         config_data = dict()
         object_list = list()
         object_list.append(config_data)
 
-        def str_to_typed_value(value_string:str):
+        def str_to_typed_value(value_string: str):
             if re.match(r"^\"?[+-]?\d+[.,]\d+\"?$", value_string):
-                return float(value_string.strip("\""))
+                return float(value_string.strip('"'))
             elif re.match(r"^\"?[+-]?\d+\"?$", value_string):
-                return int(value_string.strip("\""))
-            if value_string.startswith("\"") and value_string.endswith("\""):
-                return value_string.strip("\"")
-            elif value_string.upper() == "TRUE" :
+                return int(value_string.strip('"'))
+            if value_string.startswith('"') and value_string.endswith('"'):
+                return value_string.strip('"')
+            elif value_string.upper() == "TRUE":
                 return True
-            elif value_string.upper() == "FALSE" :
+            elif value_string.upper() == "FALSE":
                 return False
             return value_string
 
@@ -463,7 +476,7 @@ class NCTable:
                 new_category = dict()
                 name = line.split(" ")[0]
                 if isinstance(last_object, (list,)):
-                    last_object.append({name:new_category})
+                    last_object.append({name: new_category})
                 else:
                     if name in last_object:
                         raise Exception("Element already in dict")
@@ -475,7 +488,7 @@ class NCTable:
                 new_group = list()
                 name = line.split(":=")[0]
                 if isinstance(last_object, (list,)):
-                    last_object.append({name:new_group})
+                    last_object.append({name: new_group})
                 else:
                     if name in last_object:
                         raise Exception("Element already in dict")
@@ -489,17 +502,17 @@ class NCTable:
                 if isinstance(last_object, (list,)):
                     if ":=" in line:
                         parts = line.split(":=")
-                        last_object.append({parts[0]:str_to_typed_value(parts[1])})
+                        last_object.append({parts[0]: str_to_typed_value(parts[1])})
                     else:
                         last_object.append(line)
-                    
-                elif isinstance(last_object, (dict, )):
+
+                elif isinstance(last_object, (dict,)):
                     if ":=" in line:
                         parts = line.split(":=")
                         last_object[parts[0]] = str_to_typed_value(parts[1])
                     else:
                         raise Exception("no keyname??")
-                        #last_object["value_%d" % id_counter] = line
+                        # last_object["value_%d" % id_counter] = line
 
         return config_data
 

@@ -58,7 +58,7 @@ if __name__ == "__main__":
         print("csv export finished")
 
     else:
-        print(f"table file does not exits {args.source}")
+        print("table file does not exits %s" % args.source)
         sys.exit(-1)
 
     sys.exit(0)
