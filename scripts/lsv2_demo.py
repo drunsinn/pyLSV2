@@ -5,10 +5,7 @@
 """
 import argparse
 import logging
-import sys
-import tempfile
 import time
-from pathlib import Path
 import pyLSV2
 from pyLSV2.const import MemoryType
 
@@ -83,6 +80,12 @@ if __name__ == "__main__":
         print(
             "## currently execution '{:s}' on line {:d}".format(
                 pgm_stack.current_pgm, pgm_stack.current_line
+            )
+        )
+        ovr_stat = con.get_override_info()
+        print(
+            "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
+                ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindel
             )
         )
 
@@ -172,20 +175,21 @@ if __name__ == "__main__":
         i_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[iI]$")
         print("## found {:d} ISO programs on TNC drive".format(len(i_files)))
 
-        exit()
-
-        # demo for reading the current tool with fallback if it is not supported by control
+        print("Read spindle tool information")
         t_info = con.get_spindle_tool_status()
-        if t_info is not False:
+        if t_info is not None:
+            print("# direct reading of current tool successfull")
             print(
-                "Current tool number {Number}.{Index} with Axis {Axis} Length {Length} Radius {Radius}".format(
-                    **t_info
+                "# current tool in spindle: {:d}.{:d} '{:s}'".format(
+                    t_info.number, t_info.index, t_info.name
                 )
             )
         else:
-            print(
-                "Direct reading to current tool not supported for this control type. using backup strategy"
-            )
+            print("# direct reading of current tool not supported for this control")
+
+        exit()
+
+        """
             if con.is_tnc():
                 pocket_table_path = "TNC:/table/tool_p.tch"
                 transfer_binary = True
@@ -213,4 +217,4 @@ if __name__ == "__main__":
                 spindel = list(
                     filter(lambda pocket: pocket["P"] == spindel_lable, pockets)
                 )[0]
-                print("Current tool number {T} with name {TNAME}".format(**spindel))
+                print("Current tool number {T} with name {TNAME}".format(**spindel))"""
