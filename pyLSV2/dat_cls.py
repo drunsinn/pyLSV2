@@ -32,20 +32,17 @@ class VersionInfo:
 
     @control_version.setter
     def control_version(self, value: str):
+        value = value.replace(" ", "")
         self._control_version = value
 
         if "TNC6" in value or "TNC320" in value or "TNC128" in value:
             self.control_type = ControlType.MILL_NEW
-        elif "iTNC530" in value:
+        elif "iTNC530" in value or "ITNC530":
             self.control_type = ControlType.MILL_OLD
         elif "CNCPILOT640" in value:
             self.control_type = ControlType.LATHE_NEW
         else:
-            # TODO: figure out how to bes use logging here
-            #    self._logger.warning(
-            #        "Unknown control type, treat machine as new style mill"
-            #    )
-            self.control_type = ControlType.MILL_NEW
+            self.control_type = ControlType.UNKNOWN
 
     @property
     def control_type(self) -> ControlType:
