@@ -14,7 +14,9 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     """
     Decode the result system parameter query
 
-    :param result_set: bytes returned by the system parameter query command R_PR
+    :param result_set: bytes returned by the system parameter query command R_PR,
+
+    :raises ValueError: Error during parsing of data values
     """
     message_length = len(result_set)
     info_list = []
@@ -24,9 +26,7 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
         info_list = struct.unpack("!14L8B8L2BH4B2L2HLL", result_set)
     else:
         raise ValueError(
-            "unexpected length {} of message content {}".format(
-                message_length, result_set
-            )
+            "unexpected length %s of message content %s", message_length, result_set
         )
     sys_par = ld.SystemParameters()
     sys_par.markers_start_address = info_list[0]
@@ -237,6 +237,36 @@ def decode_stack_info(data_set: bytearray) -> ld.StackState:
     return ss
 
 
+def decode_axis_location(data_set: bytearray) -> dict:
+    """
+    Decode result from reading axis position
+    Returns dictionary with key = axis name, value = position
+
+    :param data_set: bytes returned from query
+
+    :raises ValueError: Error during parsing of data values
+    """
+    # unknown = result[0:1] # <- ???
+    number_of_axes = struct.unpack("!b", data_set[1:2])[0]
+
+    split_list = []
+    start = 2
+    for i, byte in enumerate(data_set[start:]):
+        if byte == 0x00:
+            value = data_set[start : i + 3]
+            split_list.append(ba_to_ustr(value))
+            start = i + 3
+
+    if len(split_list) != (2 * number_of_axes):
+        raise ValueError("error while parsing axis data: %s", data_set)
+
+    axes_values = {}
+    for i in range(number_of_axes):
+        axes_values[split_list[i + number_of_axes]] = float(split_list[i])
+
+    return axes_values
+
+
 def is_file_binary(file_name: Union[str, Path]) -> bool:
     """
     Check if file is expected to be binary by comparing with known expentions.
@@ -257,7 +287,7 @@ def ba_to_ustr(bytes_to_convert: bytearray) -> str:
 
     :param bytes_to_convert: bytes to convert to unicode string
     """
-    return bytes_to_convert.decode("latin1").strip("\x00").strip()
+    return bytes_to_convert.decode("latin1").strip("\x00").rstrip()
 
 
 def ustr_to_ba(str_to_convert: str) -> bytearray:

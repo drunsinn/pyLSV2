@@ -138,6 +138,8 @@ class LSV2:
         :param command: valid LSV2 command to send
         :param payload: data to send along with the command
         :param expected_response: expected response telegram from the control to signal success
+
+        :raises Exception: ToDo2
         """
 
         if payload is None:
@@ -165,7 +167,7 @@ class LSV2:
 
         if self._llcom.last_response is lc.RSP.UNKNOWN:
             self._logger.error("unknown response received")
-            raise RuntimeWarning("unknown response received")
+            raise Exception("unknown response received")
 
         if self._llcom.last_response is lc.RSP.T_ER:
             self._logger.info(
@@ -299,7 +301,9 @@ class LSV2:
                 "could not decide on a buffer size for maximum message length of %d",
                 self._sys_par.max_block_length,
             )
-            raise Exception("unknown buffer size")
+            raise BufferError(
+                "unknown buffer size of %d", self._sys_par.max_block_length
+            )
 
         if selected_command is None:
             self._logger.debug("use smallest buffer size of 256")
@@ -349,12 +353,9 @@ class LSV2:
             return False
 
         payload = lm.ustr_to_ba(login.value)
-        # payload.extend(map(ord, login))
-        # payload.append(0x00)
+
         if password is not None and len(password) > 0:
             payload.extend(lm.ustr_to_ba(password))
-            # payload.extend(map(ord, password))
-            # payload.append(0x00)
 
         if self._send_recive(lc.CMD.A_LG, payload, lc.RSP.T_OK):
             self._logger.debug("login executed successfully for login %s", login.value)
@@ -550,6 +551,7 @@ class LSV2:
             return lc.ExecState.UNDEFINED
 
         payload = struct.pack("!H", lc.ParRRI.EXEC_STATE)
+
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if isinstance(result, (bytearray,)):
             self._logger.debug(
@@ -604,8 +606,7 @@ class LSV2:
 
         dir_path = remote_directory.replace("/", lc.PATH_SEP)
         payload = lm.ustr_to_ba(dir_path)
-        # payload = bytearray(map(ord, dir_path))
-        # payload.append(0x00)
+
         result = self._send_recive(lc.CMD.C_DC, payload, lc.RSP.T_OK)
         if isinstance(result, (bool,)) and result is True:
             self._logger.debug("changed working directory to %s", dir_path)
@@ -627,8 +628,7 @@ class LSV2:
 
         file_path = remote_file_path.replace("/", lc.PATH_SEP)
         payload = lm.ustr_to_ba(file_path)
-        # payload = bytearray(map(ord, file_path))
-        # payload.append(0x00)
+
         result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
             file_info = lm.decode_file_system_info(result, self._versions.control_type)
@@ -653,6 +653,7 @@ class LSV2:
 
         dir_content = []
         payload = bytearray(struct.pack("!B", lc.ParRDR.SINGLE))
+
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
         if isinstance(result, (list,)):
             for entry in result:
@@ -1644,7 +1645,7 @@ class LSV2:
             elif value_type == 5:
                 data_value = struct.unpack("<d", result[4:12])[0]
             elif value_type == 8:
-                data_value = result[4:].strip(b"\x00").decode("utf-8")
+                data_value = lm.ba_to_ustr(result[4:])
             elif value_type == 11:
                 data_value = struct.unpack("!?", result[4:5])[0]
             elif value_type == 16:
@@ -1669,10 +1670,10 @@ class LSV2:
     def get_axes_location(self) -> Union[dict, None]:
         """
         Read axes location from control. Not fully documented, value of first byte unknown.
-        !only tested on TNC640 programming station!
         Requires access level ``DNC`` to work.
+        Returns ``None`` if no data was recived or dictionary with key = axis name, value = position
 
-        :raises Exception: ToDo
+        :raises ValueError: Error during parsing of data values
         """
         if not self.login(lc.Login.DNC):
             self._logger.warning("clould not log in as user DNC")
@@ -1683,26 +1684,8 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            # unknown = result[0:1] # <- ???
-            number_of_axes = struct.unpack("!b", result[1:2])[0]
-
-            split_list = []
-            beginning = 2
-            for i, byte in enumerate(result[beginning:]):
-                if byte == 0x00:
-                    value = result[beginning : i + 3]
-                    split_list.append(value.strip(b"\x00").decode("utf-8"))
-                    beginning = i + 3
-
-            if len(split_list) != (2 * number_of_axes):
-                raise Exception("error parsing axis values")
-
-            axes_values = {}
-            for i in range(number_of_axes):
-                axes_values[split_list[i + number_of_axes]] = float(split_list[i])
-
+            axes_values = lm.decode_axis_location(result)
             self._logger.info("successfully read axes values: %s", axes_values)
-
             return axes_values
 
         self._logger.warning("an error occurred while querying axes position")
