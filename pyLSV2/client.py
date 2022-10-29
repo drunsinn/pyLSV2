@@ -19,7 +19,7 @@ from . import const as lc
 from . import dat_cls as ld
 from . import misc as lm
 from . import translate_messages as lt
-from .low_level_com import LLLSV2Com
+from .low_level_com import LSV2TCP
 
 
 class LSV2:
@@ -42,7 +42,7 @@ class LSV2:
         """
         self._logger = logging.getLogger("LSV2 Client")
 
-        self._llcom = LLLSV2Com(hostname, port, timeout)
+        self._llcom = LSV2TCP(hostname, port, timeout)
 
         self._active_logins = []
 

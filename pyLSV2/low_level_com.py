@@ -10,7 +10,7 @@ from .const import CMD, RSP
 from .dat_cls import TransmissionError
 
 
-class LLLSV2Com:
+class LSV2TCP:
     """Implementation of the low level communication functions for sending and
     receiving LSV2 telegrams via TCP"""
 
@@ -42,7 +42,7 @@ class LLLSV2Com:
         if port > 0:
             self._port = port
 
-        self.buffer_size = LLLSV2Com.DEFAULT_BUFFER_SIZE
+        self.buffer_size = LSV2TCP.DEFAULT_BUFFER_SIZE
 
         try:
             self._tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,8 +101,7 @@ class LLLSV2Com:
         self._last_lsv2_response = RSP.NONE
         self._last_error = TransmissionError()
 
-        self._logger.debug("Connected to host %s at port %s",
-                           self._host_ip, self._port)
+        self._logger.debug("Connected to host %s at port %s", self._host_ip, self._port)
 
     def disconnect(self):
         """
@@ -122,28 +121,6 @@ class LLLSV2Com:
         self._last_error = TransmissionError()
 
         self._logger.debug("Connection to %s closed", self._host_ip)
-
-    # def set_buffer_size(self, buffer_size: int) -> bool:
-    #     """
-    #     set the size of the send and receive buffer. the size has to be established
-    #     during connection setup. buffer size has to be at least 8 so command and length
-    #     fit into the telegram.
-
-    #     :param buffer_size: new size of send and receive buffer
-    #     """
-    #     if buffer_size < 8:
-    #         self._buffer_size = self.DEFAULT_BUFFER_SIZE
-    #         self._logger.warning(
-    #             "size of receive buffer to small, set to default of %d bytes",
-    #             self._buffer_size,
-    #         )
-    #         return False
-    #     self._buffer_size = buffer_size
-    #     return True
-
-    # def get_buffer_size(self) -> int:
-    #     """return current send/receive buffer size"""
-    #     return self._buffer_size
 
     def telegram(
         self,
@@ -207,19 +184,23 @@ class LLLSV2Com:
             raise
 
         if len(data_recived) > 0:
-            #self._logger.debug("received block of data with length %d, data %s", len(data_recived), data_recived)
-            self._logger.debug("received block of data with length %d", len(data_recived))
+            # self._logger.debug("received block of data with length %d, data %s", len(data_recived), data_recived)
+            self._logger.debug(
+                "received block of data with length %d", len(data_recived)
+            )
             if len(data_recived) >= 8:
                 # read 4 bytes for response length
                 response_length = struct.unpack("!L", data_recived[0:4])[0]
 
                 # read 4 bytes for response type
                 self._last_lsv2_response = RSP(
-                    data_recived[4:8].decode("utf-8", "ignore"))
+                    data_recived[4:8].decode("utf-8", "ignore")
+                )
             else:
                 # response is less than 8 bytes long which is not enough space for package length and response message!
                 raise Exception(
-                    "response to short, less than 8 bytes: %s" % data_recived)
+                    "response to short, less than 8 bytes: %s" % data_recived
+                )
         else:
             response_length = 0
             self._last_lsv2_response = RSP.NONE
@@ -233,15 +214,14 @@ class LLLSV2Com:
                 )
                 try:
                     response_content.extend(
-                        self._tcpsock.recv(
-                            response_length - len(data_recived[8:]))
+                        self._tcpsock.recv(response_length - len(data_recived[8:]))
                     )
                 except Exception:
                     self._logger.error(
                         "something went wrong while waiting for more data to arrive. expected %d, recived %d, content so far: %s",
                         response_length,
                         len(data_recived),
-                        data_recived
+                        data_recived,
                     )
                     raise
         else:
@@ -253,3 +233,72 @@ class LLLSV2Com:
             self._last_error = TransmissionError()
 
         return response_content
+
+
+class LSV2RS232:
+    """Implementation of the low level communication functions for sending and
+    receiving LSV2 telegrams via RS232"""
+
+    DEFAULT_BUFFER_SIZE = 256
+    # Default size of send and receive buffer
+
+    def __init__(self, port: str, speed: int, timeout: float = 15.0):
+        raise NotImplementedError()
+
+        self._logger = logging.getLogger("LSV2 RS232")
+
+        self.buffer_size = LSV2RS232.DEFAULT_BUFFER_SIZE
+
+        self._is_connected = False
+        self._last_lsv2_response = RSP.NONE
+        self._last_error = TransmissionError()
+
+    @property
+    def last_response(self) -> RSP:
+        return self._last_lsv2_response
+
+    @property
+    def last_error(self) -> TransmissionError:
+        return self._last_error
+
+    @property
+    def buffer_size(self) -> int:
+        return self._buffer_size
+
+    @buffer_size.setter
+    def buffer_size(self, value: int):
+        if value < 8:
+            self._buffer_size = self.DEFAULT_BUFFER_SIZE
+            self._logger.warning(
+                "size of receive buffer to small, set to default of %d bytes",
+                self._buffer_size,
+            )
+        else:
+            self._buffer_size = value
+
+    def connect(self):
+        """
+        Establish connection to control
+        """
+        raise NotImplementedError()
+
+    def disconnect(self):
+        """
+        Close connection
+        """
+        raise NotImplementedError()
+
+    def telegram(
+        self,
+        command: Union[CMD, RSP],
+        payload: bytearray = bytearray(),
+        wait_for_response: bool = True,
+    ) -> bytearray:
+        """
+        Send LSV2 telegram and receive response if necessary.
+
+        :param command: command string
+        :param payload: command payload
+        :param wait_for_response: switch for waiting for response from control.
+        """
+        raise NotImplementedError()
