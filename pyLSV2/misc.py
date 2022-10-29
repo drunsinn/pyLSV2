@@ -8,6 +8,7 @@ from typing import Union, List
 
 from . import dat_cls as ld
 from .const import BIN_FILES, PATH_SEP, ControlType
+from .err import LSV2DataException
 
 
 def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
@@ -16,7 +17,7 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
 
     :param result_set: bytes returned by the system parameter query command R_PR,
 
-    :raises ValueError: Error during parsing of data values
+    :raises LSV2DataException: Error during parsing of data values
     """
     message_length = len(result_set)
     info_list = []
@@ -25,7 +26,7 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     elif message_length == 124:
         info_list = struct.unpack("!14L8B8L2BH4B2L2HLL", result_set)
     else:
-        raise ValueError(
+        raise LSV2DataException(
             "unexpected length %s of message content %s", message_length, result_set
         )
     sys_par = ld.SystemParameters()
@@ -244,7 +245,7 @@ def decode_axis_location(data_set: bytearray) -> dict:
 
     :param data_set: bytes returned from query
 
-    :raises ValueError: Error during parsing of data values
+    :raises LSV2DataException: Error during parsing of data values
     """
     # unknown = result[0:1] # <- ???
     number_of_axes = struct.unpack("!b", data_set[1:2])[0]
@@ -258,7 +259,7 @@ def decode_axis_location(data_set: bytearray) -> dict:
             start = i + 3
 
     if len(split_list) != (2 * number_of_axes):
-        raise ValueError("error while parsing axis data: %s", data_set)
+        raise LSV2DataException("error while parsing axis data: %s", data_set)
 
     axes_values = {}
     for i in range(number_of_axes):

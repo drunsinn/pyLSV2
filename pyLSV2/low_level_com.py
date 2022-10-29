@@ -4,10 +4,11 @@
 import logging
 import socket
 import struct
-from typing import Tuple, Union
+from typing import Union
 
 from .const import CMD, RSP
 from .dat_cls import TransmissionError
+from .err import LSV2StateException, LSV2ProtocolException
 
 
 class LSV2TCP:
@@ -134,14 +135,13 @@ class LSV2TCP:
         :param command: command string
         :param payload: command payload
         :param wait_for_response: switch for waiting for response from control.
-        :raise Exception: if connection is not already open or error during transmission.
+        :raise LSV2StateException: if connection is not already open or error during transmission.
         :raise OverflowError: if payload is to long for current buffer size
-        :raise Exception: ToDo1
-        :raise Exception: ToDo2
-        :raise Exception: ToDo3
+        :raise LSV2ProtocolException: if the reviced response is too short for a minimal telegram
+        :raise Exception:
         """
         if self._is_connected is False:
-            raise Exception("connection is not open!")
+            raise LSV2StateException("connection is not open!")
 
         if payload is None or len(payload) == 0:
             payload = bytearray()
@@ -184,7 +184,6 @@ class LSV2TCP:
             raise
 
         if len(data_recived) > 0:
-            # self._logger.debug("received block of data with length %d, data %s", len(data_recived), data_recived)
             self._logger.debug(
                 "received block of data with length %d", len(data_recived)
             )
@@ -198,7 +197,7 @@ class LSV2TCP:
                 )
             else:
                 # response is less than 8 bytes long which is not enough space for package length and response message!
-                raise Exception(
+                raise LSV2ProtocolException(
                     "response to short, less than 8 bytes: %s" % data_recived
                 )
         else:
@@ -244,6 +243,7 @@ class LSV2RS232:
 
     def __init__(self, port: str, speed: int, timeout: float = 15.0):
         raise NotImplementedError()
+        import serial
 
         self._logger = logging.getLogger("LSV2 RS232")
 

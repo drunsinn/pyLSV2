@@ -20,6 +20,12 @@ from . import dat_cls as ld
 from . import misc as lm
 from . import translate_messages as lt
 from .low_level_com import LSV2TCP
+from .err import (
+    LSV2DataException,
+    LSV2InputException,
+    LSV2ProtocolException,
+    LSV2StateException,
+)
 
 
 class LSV2:
@@ -139,7 +145,7 @@ class LSV2:
         :param payload: data to send along with the command
         :param expected_response: expected response telegram from the control to signal success
 
-        :raises Exception: ToDo2
+        :raises LSV2ProtocolException: if an unknown/unexpected response was recived
         """
 
         if payload is None:
@@ -167,7 +173,7 @@ class LSV2:
 
         if self._llcom.last_response is lc.RSP.UNKNOWN:
             self._logger.error("unknown response received")
-            raise Exception("unknown response received")
+            raise LSV2ProtocolException("unknown response received")
 
         if self._llcom.last_response is lc.RSP.T_ER:
             self._logger.info(
@@ -262,8 +268,8 @@ class LSV2:
         Buffer size and secure file transfere are enabled based on the capabilitys of the control.
         Automatically enables Login ``INSPECT`` and ``FILETRANSFER``
 
-        :raises Exception: ToDo1
-        :raises Exception: ToDo2
+        :raises LSV2ProtocolException: if buffer size could not be negotiated or setting of buffer
+                                       size did not work
         """
         self.login(login=lc.Login.INSPECT)
 
@@ -301,8 +307,9 @@ class LSV2:
                 "could not decide on a buffer size for maximum message length of %d",
                 self._sys_par.max_block_length,
             )
-            raise BufferError(
-                "unknown buffer size of %d", self._sys_par.max_block_length
+            raise LSV2ProtocolException(
+                "could not negotiate buffer site, unknown buffer size of %d",
+                self._sys_par.max_block_length,
             )
 
         if selected_command is None:
@@ -315,7 +322,7 @@ class LSV2:
             ):
                 self._llcom.buffer_size = selected_size
             else:
-                raise Exception(
+                raise LSV2ProtocolException(
                     "error in communication while setting buffer size to %d"
                     % selected_size
                 )
@@ -378,8 +385,6 @@ class LSV2:
             if isinstance(login, (lc.Login,)):
                 if login in self._active_logins:
                     payload.extend(lm.ustr_to_ba(login.value))
-                    # payload.extend(map(ord, login))
-                    # payload.append(0x00)
                 else:
                     # login is not active
                     return True
@@ -425,7 +430,7 @@ class LSV2:
 
         :param force: if ``True`` the information is re-read even if it is already buffered
 
-        :raises Exception: ToDo
+        :raises LSV2DataException: if basic information could not be read from control
         """
         if len(self._versions.control_version) > 0 and force is False:
             self._logger.debug("version info already in memory, return previous values")
@@ -435,11 +440,12 @@ class LSV2:
             result = self._send_recive(
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
-            # print(result)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 info_data.control_version = lm.ba_to_ustr(result)
             else:
-                raise Exception("Could not read version information from control")
+                raise LSV2DataException(
+                    "Could not read version information from control"
+                )
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -716,8 +722,7 @@ class LSV2:
             # no file info -> does not exist and has to be created
             if self.get_file_info(path_to_check) is None:
                 payload = lm.ustr_to_ba(path_to_check)
-                # payload = bytearray(map(ord, path_to_check))
-                # payload.append(0x00)  # terminate string
+
                 result = self._send_recive(lc.CMD.C_DM, payload, lc.RSP.T_OK)
                 if isinstance(result, (bool,)) and result is True:
                     self._logger.debug("Directory created successfully")
@@ -744,8 +749,7 @@ class LSV2:
 
         dir_path = dir_path.replace("/", lc.PATH_SEP)
         payload = lm.ustr_to_ba(dir_path)
-        # payload = bytearray(map(ord, dir_path))
-        # payload.append(0x00)
+
         result = self._send_recive(lc.CMD.C_DD, payload, lc.RSP.T_OK)
         if isinstance(result, (bool)) and result is True:
             self._logger.debug("successfully deleted directory %s", dir_path)
@@ -770,8 +774,7 @@ class LSV2:
 
         file_path = file_path.replace("/", lc.PATH_SEP)
         payload = lm.ustr_to_ba(file_path)
-        # payload = bytearray(map(ord, file_path))
-        # payload.append(0x00)
+
         if not self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
             self._logger.warning(
                 "an error occurred while deleting file %s, this might also indicate that it it does not exist",
@@ -790,7 +793,8 @@ class LSV2:
         :param source_path: path of file on the control
         :param target_path: path of target location
 
-        :raises Exception: ToDo
+        :raises LSV2StateException: if the selected path could not be found or
+                                    the path is not accesible
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -804,7 +808,7 @@ class LSV2:
             source_file_name = source_path.split(lc.PATH_SEP)[-1]
             source_directory = source_path.rstrip(source_file_name)
             if not self.change_directory(remote_directory=source_directory):
-                raise Exception("could not open the source directory")
+                raise LSV2StateException("could not open the source directory")
         else:
             source_file_name = source_path
             source_directory = "."
@@ -837,7 +841,8 @@ class LSV2:
         :param source_path: path of file on the control
         :param target_path: path of target location with or without filename
 
-        :raises Exception: ToDo
+        :raises LSV2StateException: if the selected path could not be found or
+                                    the path is not accesible
         """
         source_path = source_path.replace("/", lc.PATH_SEP)
         target_path = target_path.replace("/", lc.PATH_SEP)
@@ -846,7 +851,7 @@ class LSV2:
                 source_file_name = source_path.split(lc.PATH_SEP)[-1]
                 source_directory = source_path.rstrip(source_file_name)
                 if not self.change_directory(remote_directory=source_directory):
-                    raise Exception("could not open the source directory")
+                    raise LSV2StateException("could not open the source directory")
             else:
                 source_file_name = source_path
                 source_directory = "."
@@ -856,11 +861,7 @@ class LSV2:
 
             payload = lm.ustr_to_ba(source_file_name)
             payload.extend(lm.ustr_to_ba(target_path))
-            # payload = bytearray()
-            # payload.extend(map(ord, source_file_name))
-            # payload.append(0x00)
-            # payload.extend(map(ord, target_path))
-            # payload.append(0x00)
+
             self._logger.debug(
                 "prepare to move file %s from %s to %s",
                 source_file_name,
@@ -895,9 +896,9 @@ class LSV2:
         :param binary_mode: flag if binary transfer mode should be used, if not set the
                             file name is checked for known binary file type
 
-        :raises Exception: ToDo1
-        :raises Exception: ToDo2
-        :raises Exception: ToDo3
+        :raises LSV2StateException: if local file could not be opened,
+                                    destination direcotry could not be accessed or
+                                    destination file could not be deleted
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -912,7 +913,7 @@ class LSV2:
             self._logger.warning(
                 "the supplied path %s did not resolve to a file", local_file
             )
-            raise Exception("local file does not exist! {}".format(local_file))
+            raise LSV2StateException("local file does not exist! {}".format(local_file))
 
         remote_path = remote_path.replace("/", lc.PATH_SEP)
 
@@ -924,8 +925,8 @@ class LSV2:
                 remote_file_name = remote_path.split(lc.PATH_SEP)[-1]
                 remote_directory = remote_path.rstrip(remote_file_name)
                 if not self.change_directory(remote_directory=remote_directory):
-                    raise Exception(
-                        "could not open the source directory {}".format(
+                    raise LSV2StateException(
+                        "could not open the destination directory {}".format(
                             remote_directory
                         )
                     )
@@ -948,7 +949,7 @@ class LSV2:
                 if not self.delete_file(
                     remote_directory + lc.PATH_SEP + remote_file_name
                 ):
-                    raise Exception(
+                    raise LSV2StateException(
                         "something went wrong while deleting file {}".format(
                             remote_directory + lc.PATH_SEP + remote_file_name
                         )
@@ -1079,9 +1080,7 @@ class LSV2:
         self._logger.debug("loading file from %s to %s", remote_path, local_file)
 
         payload = lm.ustr_to_ba(remote_path)
-        # payload = bytearray()
-        # payload.extend(map(ord, remote_path))
-        # payload.append(0x00)
+
         if binary_mode or lm.is_file_binary(remote_path):
             payload.append(lc.MODE_BINARY)  # force binary transfer
             self._logger.info("using binary transfer mode")
@@ -1165,9 +1164,12 @@ class LSV2:
         Read data from plc memory.
         Requires access level ``PLCDEBUG`` to work.
 
-        :param address: which memory location should be read, starts at 0 up to the max number for each type
+        :param first_element: which memory location should be read, starts at 0 up to the max number for each type
         :param mem_type: what datatype to read
-        :param count: how many elements should be read at a time, from 1 (default) up to 255 or max number
+        :param number_of_elements: how many elements should be read
+
+        :raises LSV2InputException: if unknows memory type is requested or if the to many elements are requested
+        :raises LSV2DataException: if number of recived values does not match the number of expected
         """
 
         if self._sys_par.lsv2_version != -1:
@@ -1233,10 +1235,10 @@ class LSV2:
             mem_byte_count = 2
             unpack_string = "<H"
         else:
-            raise ValueError("unknown address type")
+            raise LSV2InputException("unknown address type")
 
         if (first_element + number_of_elements) > max_elemens:
-            raise ValueError(
+            raise LSV2InputException(
                 "highest address is %d but address of last requested element is %d"
                 % (max_elemens, (first_element + number_of_elements))
             )
@@ -1323,7 +1325,7 @@ class LSV2:
                     return False
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
-            raise Exception(
+            raise LSV2DataException(
                 "number of recived values %d is not equal to number of requested %d",
                 len(plc_values),
                 number_of_elements,
@@ -1614,12 +1616,13 @@ class LSV2:
 
         :param path: data path from which to read the value.
 
-        :raises Exception: ToDo
+        :raises LSV2ProtocolException: if data type could not be determiend
         """
         if not self.versions.is_itnc():
             self._logger.warning(
                 "Reading values from data path does not work on non iTNC controls!"
             )
+            return None
 
         path = path.replace("/", lc.PATH_SEP).replace('"', "'")
 
@@ -1653,7 +1656,7 @@ class LSV2:
             elif value_type == 17:
                 data_value = struct.unpack("!B", result[4:5])[0]
             else:
-                raise Exception(
+                raise LSV2ProtocolException(
                     "unknown return type: %d for %s" % (value_type, result[4:])
                 )
 
@@ -1673,7 +1676,7 @@ class LSV2:
         Requires access level ``DNC`` to work.
         Returns ``None`` if no data was recived or dictionary with key = axis name, value = position
 
-        :raises ValueError: Error during parsing of data values
+        :raises LSV2DataException: Error during parsing of data values
         """
         if not self.login(lc.Login.DNC):
             self._logger.warning("clould not log in as user DNC")
