@@ -722,7 +722,8 @@ class CMD(str, Enum):
     """request character set.
     requires MONITOR login priviliege"""
 
-    # R_CI = "R_CI"  # found via bruteforce test, purpose unknown!
+    R_CI = "R_CI"
+    """R_CI: TODO something to do with scope"""
 
     R_DI = "R_DI"
     """R_DI: directory info - read info about the selected directory.
@@ -771,7 +772,13 @@ class CMD(str, Enum):
     """R_MP: read machine parameter.
     requires INSPECT login priviliege"""
 
-    # R_OC = "R_OC" # found via bruteforce test, purpose unknown!
+    R_OC = "R_OC"
+    """R_OC: TODO: read something to do with scope"""
+    R_OD = "R_OD"
+    """R_OD: TODO: read something to do with scope"""
+    R_OP = "R_OP"
+    """R_OP: TODO: read something to do with scope"""
+
     # R_OD = "R_OD" # found via bruteforce test, purpose unknown!
     # R_OH = "R_OH" # found via bruteforce test, purpose unknown!
     # R_OI = "R_OI" # found via bruteforce test, purpose unknown!
@@ -845,8 +852,14 @@ class RSP(str, Enum):
     M_CC = "M_CC"
     """M_CC: signals that a poeration some king of operation was completed that took some time to complete, ??? response to C_CC??"""
 
+    S_CI = "S_CI"
+    """S_CI: TODO something to do with scope"""
+
     S_DI = "S_DI"
     """S_DI: signals that the command R_DI was accepted, it is followed by more data"""
+
+    S_DT = "S_DT"
+    """S_DT: TODO something to do with date/time and scope?"""
 
     S_DP = "S_DP"
     """S_DP: signals that the command R_DP was accepted, is followed by data value"""
@@ -868,6 +881,13 @@ class RSP(str, Enum):
 
     S_MC = "S_MC"
     """S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data"""
+
+    S_OC = "S_OC"
+    """S_OC: TODO singal that has something to do with the scope"""
+    S_OD = "S_OD"
+    """S_OP: TODO: read something to do with scope"""
+    S_OP = "S_OP"
+    """S_OP: TODO singal that has something to do with the scope"""
 
     S_PR = "S_PR"
     """S_PR: signals that the command R_PR and the parameter was accepted, it is followed by more data"""
