@@ -26,9 +26,7 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     elif message_length == 124:
         info_list = struct.unpack("!14L8B8L2BH4B2L2HLL", result_set)
     else:
-        raise LSV2DataException(
-            "unexpected length %s of message content %s", message_length, result_set
-        )
+        raise LSV2DataException("unexpected length %s of message content %s" % (message_length, result_set))
     sys_par = ld.SystemParameters()
     sys_par.markers_start_address = info_list[0]
     sys_par.number_of_markers = info_list[1]
@@ -141,18 +139,18 @@ def decode_drive_info(data_set: bytearray) -> List:
     drive_entries = list()
 
     while (offset + fixed_length + 1) < len(data_set):
-        de = ld.DriveEntry()
-        de.unknown_0 = struct.unpack("!L", data_set[offset : offset + 4])[0]
-        de.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[0]
-        de.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[0]
+        drive_entry = ld.DriveEntry()
+        drive_entry.unknown_0 = struct.unpack("!L", data_set[offset : offset + 4])[0]
+        drive_entry.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[0]
+        drive_entry.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[0]
 
         if chr(data_set[offset + fixed_length]) == ":":
-            de.name = ba_to_ustr(data_set[offset + 12 : offset + 17])
+            drive_entry.name = ba_to_ustr(data_set[offset + 12 : offset + 17])
             offset += fixed_length + 2
         else:
-            de.name = ba_to_ustr(data_set[offset + 12 : offset + 19])
+            drive_entry.name = ba_to_ustr(data_set[offset + 12 : offset + 19])
             offset += fixed_length + 2
-        drive_entries.append(de)
+        drive_entries.append(drive_entry)
 
     return drive_entries
 
@@ -163,20 +161,20 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
 
     :param result_set: bytes returned by the system parameter query command R_DI
     """
-    di = ld.DirectoryEntry()
-    di.free_size = struct.unpack("!L", data_set[:4])[0]
+    dir_entry = ld.DirectoryEntry()
+    dir_entry.free_size = struct.unpack("!L", data_set[:4])[0]
 
     attribute_list = []
     for i in range(4, len(data_set[4:132]), 4):
         attr = ba_to_ustr(data_set[i : i + 4])
         if len(attr) > 0:
             attribute_list.append(attr)
-    di.dir_attributes = attribute_list
+    dir_entry.dir_attributes = attribute_list
 
-    di.attributes = bytearray(struct.unpack("!32B", data_set[132:164]))
-    di.path = ba_to_ustr(data_set[164:]).replace("/", PATH_SEP)
+    dir_entry.attributes = bytearray(struct.unpack("!32B", data_set[132:164]))
+    dir_entry.path = ba_to_ustr(data_set[164:]).replace("/", PATH_SEP)
 
-    return di
+    return dir_entry
 
 
 def decode_tool_info(data_set: bytearray) -> ld.ToolInformation:
@@ -185,16 +183,16 @@ def decode_tool_info(data_set: bytearray) -> ld.ToolInformation:
 
     :param result_set: bytes returned by the system parameter query command R_RI for tool info
     """
-    ti = ld.ToolInformation()
-    ti.number = struct.unpack("!L", data_set[0:4])[0]
-    ti.index = struct.unpack("!H", data_set[4:6])[0]
-    ti.axis = {0: "X", 1: "Y", 2: "Z"}.get(
+    tool_info = ld.ToolInformation()
+    tool_info.number = struct.unpack("!L", data_set[0:4])[0]
+    tool_info.index = struct.unpack("!H", data_set[4:6])[0]
+    tool_info.axis = {0: "X", 1: "Y", 2: "Z"}.get(
         struct.unpack("!H", data_set[6:8])[0], "unknown"
     )
     if len(data_set) > 8:
-        ti.length = struct.unpack("<d", data_set[8:16])[0]
-        ti.radius = struct.unpack("<d", data_set[16:24])[0]
-    return ti
+        tool_info.length = struct.unpack("<d", data_set[8:16])[0]
+        tool_info.radius = struct.unpack("<d", data_set[16:24])[0]
+    return tool_info
 
 
 def decode_override_state(data_set: bytearray) -> ld.OverrideState:
@@ -203,11 +201,11 @@ def decode_override_state(data_set: bytearray) -> ld.OverrideState:
 
     :param result_set: bytes returned by the system parameter query command R_RI for override info
     """
-    oi = ld.OverrideState()
-    oi.feed = struct.unpack("!L", data_set[0:4])[0] / 100
-    oi.spindel = struct.unpack("!L", data_set[4:8])[0] / 100
-    oi.rapid = struct.unpack("!L", data_set[8:12])[0] / 100
-    return oi
+    ovr_state = ld.OverrideState()
+    ovr_state.feed = struct.unpack("!L", data_set[0:4])[0] / 100
+    ovr_state.spindel = struct.unpack("!L", data_set[4:8])[0] / 100
+    ovr_state.rapid = struct.unpack("!L", data_set[8:12])[0] / 100
+    return ovr_state
 
 
 def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
@@ -216,13 +214,13 @@ def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
 
     :param result_set: bytes returned by the system parameter query command R_RI for first and next error
     """
-    ei = ld.LSV2ErrorMessage()
-    ei.e_class = struct.unpack("!H", data_set[0:2])[0]
-    ei.e_group = struct.unpack("!H", data_set[2:4])[0]
-    ei.e_number = struct.unpack("!l", data_set[4:8])[0]
-    ei.e_text = ba_to_ustr(data_set[8:])
-    ei.dnc = True
-    return ei
+    err_msg = ld.LSV2ErrorMessage()
+    err_msg.e_class = struct.unpack("!H", data_set[0:2])[0]
+    err_msg.e_group = struct.unpack("!H", data_set[2:4])[0]
+    err_msg.e_number = struct.unpack("!l", data_set[4:8])[0]
+    err_msg.e_text = ba_to_ustr(data_set[8:])
+    err_msg.dnc = True
+    return err_msg
 
 
 def decode_stack_info(data_set: bytearray) -> ld.StackState:
@@ -231,11 +229,11 @@ def decode_stack_info(data_set: bytearray) -> ld.StackState:
 
     :param data_set: bytes returned from query
     """
-    ss = ld.StackState()
-    ss.current_line = struct.unpack("!L", data_set[:4])[0]
-    ss.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
-    ss.current_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[1])
-    return ss
+    stack = ld.StackState()
+    stack.current_line = struct.unpack("!L", data_set[:4])[0]
+    stack.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
+    stack.current_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[1])
+    return stack
 
 
 def decode_axis_location(data_set: bytearray) -> dict:
@@ -259,7 +257,7 @@ def decode_axis_location(data_set: bytearray) -> dict:
             start = i + 3
 
     if len(split_list) != (2 * number_of_axes):
-        raise LSV2DataException("error while parsing axis data: %s", data_set)
+        raise LSV2DataException("error while parsing axis data: %s" % data_set)
 
     axes_values = {}
     for i in range(number_of_axes):
@@ -292,7 +290,11 @@ def ba_to_ustr(bytes_to_convert: bytearray) -> str:
 
 
 def ustr_to_ba(str_to_convert: str) -> bytearray:
-    value = str(str_to_convert)
-    ba = bytearray(map(ord, value))
-    ba.append(0x00)
-    return ba
+    """
+    convert a string to a byte array with string termination
+
+    :param str_to_convert: string that should be converted to byte array
+    """
+    str_bytes = bytearray(map(ord, str(str_to_convert)))
+    str_bytes.append(0x00)
+    return str_bytes

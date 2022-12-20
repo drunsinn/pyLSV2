@@ -308,8 +308,8 @@ class LSV2:
                 self._sys_par.max_block_length,
             )
             raise LSV2ProtocolException(
-                "could not negotiate buffer site, unknown buffer size of %d",
-                self._sys_par.max_block_length,
+                "could not negotiate buffer site, unknown buffer size of %d"
+                % self._sys_par.max_block_length
             )
 
         if selected_command is None:
@@ -344,7 +344,8 @@ class LSV2:
 
     def login(self, login: lc.Login, password: str = "") -> bool:
         """
-        Request additional access rights. To elevate this level a logon has to be performed. Some levels require a password.
+        Request additional access rights. To elevate this level a logon has to be performed.
+        Some levels require a password.
         Returns ``True`` if execution was successful.
 
         :param login: One of the known login strings
@@ -1311,10 +1312,10 @@ class LSV2:
                         elements_in_group,
                         first_element,
                     )
-                    for i in range(0, len(result), mem_byte_count):
+                    for j in range(0, len(result), mem_byte_count):
                         plc_values.append(
                             struct.unpack(
-                                unpack_string, result[i : i + mem_byte_count]
+                                unpack_string, result[j : j + mem_byte_count]
                             )[0]
                         )
                 else:
@@ -1322,13 +1323,13 @@ class LSV2:
                         "failed to read value from address %d",
                         start_address + first_element,
                     )
-                    return False
+                    return list()
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
             raise LSV2DataException(
-                "number of recived values %d is not equal to number of requested %d",
+                "number of recived values %d is not equal to number of requested %d" % (
                 len(plc_values),
-                number_of_elements,
+                number_of_elements)
             )
         return plc_values
 
@@ -1391,13 +1392,16 @@ class LSV2:
 
     def set_machine_parameter(self, name: str, value: str, safe_to_disk=False) -> bool:
         """
-        Set machine parameter on control. Writing a parameter takes some time, make sure to set timeout sufficiently high!
+        Set machine parameter on control. Writing a parameter takes some time, make sure to set timeout
+        sufficiently high!
         Requires access ``PLCDEBUG`` level to work.
         Returns ``True`` if completed successfully.
 
         :param name: name of the machine parameter. For iTNC the parameter number hase to be converted to string
-        :param value: new value of the machine parameter. There is no type checking, if the value can not be converted by the control an error will be sent.
-        :param safe_to_disk: If True the new value will be written to the harddisk and stay permanent. If False (default) the value will only be available until the next reboot.
+        :param value: new value of the machine parameter. There is no type checking, if the value can not be
+                        converted by the control an error will be sent.
+        :param safe_to_disk: If True the new value will be written to the harddisk and stay permanent.
+                        If False (default) the value will only be available until the next reboot.
         """
         if not self.login(lc.Login.PLCDEBUG):
             self._logger.warning("clould not log in as user PLCDEBUG")

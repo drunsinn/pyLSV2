@@ -73,10 +73,11 @@ def test_plc_read_errors(address, timeout):
 
     num_words = lsv2.parameters.number_of_words
 
-    with pytest.raises(ValueError) as exc_info:
-        data = lsv2.read_plc_memory(0, pyLSV2.MemoryType.WORD, (num_words + 1))
+    with pytest.raises(pyLSV2.LSV2InputException) as exc_info:
+        _ = lsv2.read_plc_memory(0, pyLSV2.MemoryType.WORD, (num_words + 1))
+
     exception_raised = exc_info.value
-    assert isinstance(exception_raised, (ValueError,)) is True
+    assert isinstance(exception_raised, (pyLSV2.LSV2InputException,)) is True
 
     lsv2.disconnect()
 

@@ -26,7 +26,7 @@ def test_read_versions(address, timeout):
     """test if login and basic query works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
-    assert lsv2._read_version() is not False
+    assert (len(lsv2.versions.control_version) > 1) is True
     lsv2.disconnect()
 
 
@@ -50,8 +50,10 @@ def test_switching_safe_mode(address, timeout):
 def test_login_with_password(address, timeout):
     """check if logging in with a password works"""
     with pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False) as lsv2:
-        if 'iTNC530 Programm' not in lsv2._read_version().control_version:
+        if not (lsv2.versions.control_version.startswith("iTNC530 Programm") or
+                lsv2.versions.control_version.startswith("iTNC530Programm")):
             # logon to plc is not locked?
+            lsv2.logout(pyLSV2.Login.FILEPLC)
             assert lsv2.login(login=pyLSV2.Login.FILEPLC) is False
             assert lsv2.login(login=pyLSV2.Login.FILEPLC,
                               password="807667") is True

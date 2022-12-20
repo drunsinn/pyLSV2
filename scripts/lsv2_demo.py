@@ -73,21 +73,26 @@ if __name__ == "__main__":
         exec_stat_text = pyLSV2.get_execution_status_text(exec_stat)
         print("# execution: {:d} - '{:s}'".format(exec_stat, exec_stat_text))
         pgm_stat = con.get_program_status()
-        pgm_stat_text = pyLSV2.get_program_status_text(pgm_stat)
-        print("# program: {:d} - '{:s}'".format(pgm_stat, pgm_stat_text))
+        if pgm_stat is not None:
+            pgm_stat_text = pyLSV2.get_program_status_text(pgm_stat)
+            print("# program: {:d} - '{:s}'".format(pgm_stat, pgm_stat_text))
+
         pgm_stack = con.get_program_stack()
-        print("# selected program: '{:s}'".format(pgm_stack.main_pgm))
-        print(
-            "## currently execution '{:s}' on line {:d}".format(
-                pgm_stack.current_pgm, pgm_stack.current_line
+        if pgm_stack is not None:
+            print("# selected program: '{:s}'".format(pgm_stack.main_pgm))
+            print(
+                "## currently execution '{:s}' on line {:d}".format(
+                    pgm_stack.current_pgm, pgm_stack.current_line
+                )
             )
-        )
+
         ovr_stat = con.get_override_info()
-        print(
-            "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
-                ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindel
+        if ovr_stat is not None:
+            print(
+                "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
+                    ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindel
+                )
             )
-        )
 
         print("PLC memory:")
         print("# the first 5 entries for some memory types:")
@@ -138,8 +143,7 @@ if __name__ == "__main__":
 
         print("File access")
         drv_info = con.get_drive_info()
-        drv_names = ", ".join([drv.name for drv in drv_info])
-        print("# names of disk drives: {:s}".format(drv_names))
+        print("# names of disk drives: {:s}".format(", ".join([drv.name for drv in drv_info])))
         dir_info = con.get_directory_info()
         print(
             "# current directory is '{:s}' with {:d} bytes of free drive space".format(

@@ -6,5 +6,6 @@ from .const import *
 from .dat_cls import *
 from .table_reader import *
 from .translate_messages import *
+from .err import *
 
-__version__ = "0.7.7"
+__version__ = "1.x.y"
