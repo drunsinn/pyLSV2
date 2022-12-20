@@ -1865,6 +1865,9 @@ class LSV2:
 
         # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
         # -> is independent of channel, axes, intervall or samples
+
+        # maybe the last four bytes are the actual intervall? 0x00 00 0b b8 = 3000
+
         if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
             print("unexpected return pattern for R_CI!")
 
@@ -2022,54 +2025,48 @@ class LSV2:
         payload = bytearray()
 
         # intervall package
-        
         payload.extend(struct.pack("!L", intervall_us))
         #payload.append(0x00)
         #payload.append(0x00)
         #payload.append(0x0b) # -> 0B
         #payload.append(0xb8) # -> B8
 
-        # channel package - one for each channel
-
+        #### channel packages - one for each channel
         # channel 2 axes 0
-        payload.append(0x00)
-        payload.append(0x02) # <- channel number
-        payload.append(0x00)
-        payload.append(0x00) # <- channel axes
+        payload.extend(struct.pack("!H", 2)) # <- channel number
+        #payload.append(0x00)
+        #payload.append(0x02) # <- channel number
+        payload.extend(struct.pack("!H", 0)) # <- signal number
+        #payload.append(0x00)
+        #payload.append(0x00) # <- channel axes
         payload.append(0xff)
         payload.append(0xff)
         payload.append(0xff)
         payload.append(0xff)
 
-        # channel 2 axes 1
-        payload.append(0x00)
-        payload.append(0x02) # <- channel number
-        payload.append(0x00)
-        payload.append(0x01) # <- channel axes
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
+        # # channel 2 axes 1
+        # payload.extend(struct.pack("!H", 2))
+        # payload.extend(struct.pack("!H", 1))
+        # payload.append(0xff)
+        # payload.append(0xff)
+        # payload.append(0xff)
+        # payload.append(0xff)
 
-        # channel 3 axes 0
-        payload.append(0x00)
-        payload.append(0x03) # <- channel number
-        payload.append(0x00)
-        payload.append(0x00) # <- channel axes
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
+        # # channel 3 axes 0
+        # payload.extend(struct.pack("!H", 3))
+        # payload.extend(struct.pack("!H", 0))
+        # payload.append(0xff)
+        # payload.append(0xff)
+        # payload.append(0xff)
+        # payload.append(0xff)
 
-        # channel 3 axes 0
-        payload.append(0x00)
-        payload.append(0x03) # <- channel number
-        payload.append(0x00)
-        payload.append(0x01) # <- channel axes
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
+        # # channel 3 axes 0
+        # payload.extend(struct.pack("!H", 3))
+        # payload.extend(struct.pack("!H", 1))
+        # payload.append(0xff)
+        # payload.append(0xff)
+        # payload.append(0xff)
+        # payload.append(0xff)
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
         if isinstance(result, (bytearray,)) and len(result) > 0:
@@ -2090,20 +2087,22 @@ class LSV2:
         # step 4
 
         """
-        capture 1: one channel tree axes
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\xb8"
+        capture 1: one channel tree axes 3k us intervall
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
 
 
-        capture 2: two channels 1 axes
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\xb8"
+        capture 2: two channels 1 axes 3k us intervall
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
 
 
-        capture 3: two channels 1 axes 16 k buffer
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\xb8"
+        capture 3: two channels 1 axes 3k us intervall 16 k buffer
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
        
         capture 4: two channels 1 axes 6k us intervall
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17\x70"
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x17\x70"
 
+
+        # bytes 12 - 15 are a repeat of the interval value? 3000 and 6000
         """
         payload = bytearray()
         payload.append(0x00)
