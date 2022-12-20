@@ -123,7 +123,7 @@ def get_error_text(
     }.get(t_error.e_code, _("LSV2_ERROR_UNKNOWN_CODE"))
 
 
-def get_program_status_text(code: int, language: str = "", locale_path=None) -> str:
+def get_program_status_text(code: PgmState, language: str = "", locale_path=None) -> str:
     """Translate status code of program state to text
 
     :param int code: status code of program state
@@ -163,7 +163,7 @@ def get_program_status_text(code: int, language: str = "", locale_path=None) -> 
     }.get(code, translate.gettext("PGM_STATE_UNKNOWN"))
 
 
-def get_execution_status_text(code: int, language: str = "", locale_path=None):
+def get_execution_status_text(code: ExecState, language: str = "", locale_path=None):
     """Translate status code of execution state to text
     See https://github.com/drunsinn/pyLSV2/issues/1
 
