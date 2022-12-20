@@ -60,6 +60,7 @@ class VersionInfo:
 
     @property
     def nc_version(self) -> str:
+        """version identifier of the nc software"""
         return self._nc_version
 
     @nc_version.setter
@@ -68,6 +69,7 @@ class VersionInfo:
 
     @property
     def plc_version(self) -> str:
+        """version identifier of the plc software"""
         return self._plc_version
 
     @plc_version.setter
@@ -76,6 +78,7 @@ class VersionInfo:
 
     @property
     def splc_version(self) -> str:
+        """version identifier of the splc software"""
         return self._splc_version
 
     @splc_version.setter
@@ -84,6 +87,7 @@ class VersionInfo:
 
     @property
     def option_bits(self) -> str:
+        """availible options in the control"""
         return self._option_bits
 
     @option_bits.setter
@@ -92,6 +96,7 @@ class VersionInfo:
 
     @property
     def id_number(self) -> str:
+        """id of the control"""
         return self._id_number
 
     @id_number.setter
@@ -100,6 +105,7 @@ class VersionInfo:
 
     @property
     def release_type(self) -> str:
+        """release type ???"""
         return self._release_type
 
     @release_type.setter
@@ -120,8 +126,6 @@ class VersionInfo:
 
 
 class SystemParameters:
-    """"""
-
     def __init__(self):
         """data class for system parameters, uses properties instead o f dataclass for compatibility"""
         self.inputs_start_address = -1
@@ -168,6 +172,7 @@ class SystemParameters:
 
     @property
     def markers_start_address(self) -> int:
+        """memory start address for markers"""
         return self._markers_start_address
 
     @markers_start_address.setter
@@ -176,6 +181,7 @@ class SystemParameters:
 
     @property
     def number_of_markers(self) -> int:
+        """total number of markers"""
         return self._number_of_markers
 
     @number_of_markers.setter
@@ -184,6 +190,7 @@ class SystemParameters:
 
     @property
     def inputs_start_address(self) -> int:
+        """memory start address for inputs"""
         return self._inputs_start_address
 
     @inputs_start_address.setter
@@ -192,6 +199,7 @@ class SystemParameters:
 
     @property
     def number_of_inputs(self) -> int:
+        """total number of inputs"""
         return self._number_of_inputs
 
     @number_of_inputs.setter
@@ -200,6 +208,7 @@ class SystemParameters:
 
     @property
     def outputs_start_address(self) -> int:
+        """memory start address for outputs"""
         return self._outputs_start_address
 
     @outputs_start_address.setter
@@ -208,6 +217,7 @@ class SystemParameters:
 
     @property
     def number_of_outputs(self) -> int:
+        """total number of outputs"""
         return self._number_of_outputs
 
     @number_of_outputs.setter
@@ -216,6 +226,7 @@ class SystemParameters:
 
     @property
     def counters_start_address(self) -> int:
+        """memory start address for counters"""
         return self._counters_start_address
 
     @counters_start_address.setter
@@ -224,6 +235,7 @@ class SystemParameters:
 
     @property
     def number_of_counters(self) -> int:
+        """total number of counters"""
         return self._number_of_counters
 
     @number_of_counters.setter
@@ -232,6 +244,7 @@ class SystemParameters:
 
     @property
     def timers_start_address(self) -> int:
+        """memory start address for timers"""
         return self._timers_start_address
 
     @timers_start_address.setter
@@ -240,6 +253,7 @@ class SystemParameters:
 
     @property
     def number_of_timers(self) -> int:
+        """total number of timers"""
         return self._number_of_timers
 
     @number_of_timers.setter
@@ -248,6 +262,7 @@ class SystemParameters:
 
     @property
     def words_start_address(self) -> int:
+        """memory start address for words"""
         return self._words_start_address
 
     @words_start_address.setter
@@ -256,6 +271,7 @@ class SystemParameters:
 
     @property
     def number_of_words(self) -> int:
+        """total number of words"""
         return self._number_of_words
 
     @number_of_words.setter
@@ -264,6 +280,7 @@ class SystemParameters:
 
     @property
     def strings_start_address(self) -> int:
+        """memory start address for strings"""
         return self._strings_start_address
 
     @strings_start_address.setter
@@ -272,6 +289,7 @@ class SystemParameters:
 
     @property
     def number_of_strings(self) -> int:
+        """total number of strings"""
         return self._number_of_strings
 
     @number_of_strings.setter
@@ -280,6 +298,7 @@ class SystemParameters:
 
     @property
     def max_string_lenght(self) -> int:
+        """maximum number of bytes in a string"""
         return self._max_string_lenght
 
     @max_string_lenght.setter
@@ -288,6 +307,7 @@ class SystemParameters:
 
     @property
     def input_words_start_address(self) -> int:
+        """memory start address for input words"""
         return self._input_words_start_address
 
     @input_words_start_address.setter
@@ -296,6 +316,7 @@ class SystemParameters:
 
     @property
     def number_of_input_words(self) -> int:
+        """total number of input words"""
         return self._number_of_input_words
 
     @number_of_input_words.setter
@@ -304,6 +325,7 @@ class SystemParameters:
 
     @property
     def output_words_start_address(self) -> int:
+        """memory start address for output words"""
         return self._output_words_start_address
 
     @output_words_start_address.setter
@@ -312,6 +334,7 @@ class SystemParameters:
 
     @property
     def number_of_output_words(self) -> int:
+        """total number of outpu words"""
         return self._number_of_output_words
 
     @number_of_output_words.setter
@@ -320,6 +343,7 @@ class SystemParameters:
 
     @property
     def lsv2_version(self) -> int:
+        """version of the LSV2 protocoll used"""
         return self._lsv2_version
 
     @lsv2_version.setter
@@ -328,6 +352,7 @@ class SystemParameters:
 
     @property
     def lsv2_version_flags(self) -> int:
+        """feature flages used by this version of LSV2"""
         return self._lsv2_version_flags
 
     @lsv2_version_flags.setter
@@ -336,6 +361,7 @@ class SystemParameters:
 
     @property
     def lsv2_version_flags_ex(self) -> int:
+        """additional feature flags used by this version of LSV2"""
         return self._lsv2_version_flags_ex
 
     @lsv2_version_flags_ex.setter
@@ -344,6 +370,7 @@ class SystemParameters:
 
     @property
     def max_block_length(self) -> int:
+        """maximal number of bytes that can be sent and recived by the control"""
         return self._max_block_length
 
     @max_block_length.setter
@@ -352,6 +379,7 @@ class SystemParameters:
 
     @property
     def bin_version(self) -> int:
+        """bin version ???"""
         return self._bin_version
 
     @bin_version.setter
@@ -360,6 +388,7 @@ class SystemParameters:
 
     @property
     def bin_revision(self) -> int:
+        """bin revisiion ???"""
         return self._bin_revision
 
     @bin_revision.setter
@@ -368,6 +397,7 @@ class SystemParameters:
 
     @property
     def iso_version(self) -> int:
+        """iso revisiion ???"""
         return self._iso_version
 
     @iso_version.setter
@@ -376,6 +406,7 @@ class SystemParameters:
 
     @property
     def iso_revision(self) -> int:
+        """iso revisiion ???"""
         return self._iso_revision
 
     @iso_revision.setter
@@ -384,6 +415,7 @@ class SystemParameters:
 
     @property
     def hardware_version(self) -> int:
+        """hardware revisiion ???"""
         return self._hardware_version
 
     @hardware_version.setter
@@ -400,6 +432,7 @@ class SystemParameters:
 
     @property
     def number_of_scope_channels(self) -> int:
+        """number of channels used by the scope"""
         return self._number_of_scope_channels
 
     @number_of_scope_channels.setter
@@ -408,6 +441,7 @@ class SystemParameters:
 
     @property
     def password_encryption_key(self) -> int:
+        """???"""
         return self._password_encryption_key
 
     @password_encryption_key.setter
@@ -426,6 +460,7 @@ class ToolInformation:
 
     @property
     def number(self) -> int:
+        """tool number"""
         return self._number
 
     @number.setter
@@ -434,6 +469,7 @@ class ToolInformation:
 
     @property
     def index(self) -> int:
+        """index number"""
         return self._index
 
     @index.setter
@@ -442,6 +478,7 @@ class ToolInformation:
 
     @property
     def axis(self) -> str:
+        """tool/spindle axis"""
         return self._axis
 
     @axis.setter
@@ -450,6 +487,7 @@ class ToolInformation:
 
     @property
     def length(self) -> float:
+        """tool lenght"""
         return self._length
 
     @length.setter
@@ -458,6 +496,7 @@ class ToolInformation:
 
     @property
     def radius(self) -> float:
+        """tool radius"""
         return self._radius
 
     @radius.setter
@@ -466,6 +505,7 @@ class ToolInformation:
 
     @property
     def name(self) -> str:
+        """tool name"""
         return self._name
 
     @name.setter
@@ -481,6 +521,7 @@ class OverrideState:
 
     @property
     def feed(self) -> float:
+        """override value for feed rate"""
         return self._feed
 
     @feed.setter
@@ -489,6 +530,7 @@ class OverrideState:
 
     @property
     def rapid(self) -> float:
+        """override value for rapid feed"""
         return self._rapid
 
     @rapid.setter
@@ -497,6 +539,7 @@ class OverrideState:
 
     @property
     def spindel(self) -> float:
+        """override value for spindle speed"""
         return self._spindel
 
     @spindel.setter
@@ -524,6 +567,7 @@ class LSV2ErrorMessage:
 
     @property
     def e_class(self) -> int:
+        """class of the error message"""
         return self._e_class
 
     @e_class.setter
@@ -532,6 +576,7 @@ class LSV2ErrorMessage:
 
     @property
     def e_group(self) -> int:
+        """group of the error message"""
         return self._e_group
 
     @e_group.setter
@@ -540,6 +585,7 @@ class LSV2ErrorMessage:
 
     @property
     def e_number(self) -> int:
+        """number of the error message"""
         return self._e_number
 
     @e_number.setter
@@ -548,6 +594,7 @@ class LSV2ErrorMessage:
 
     @property
     def e_text(self) -> str:
+        """error message"""
         return self._e_text
 
     @e_text.setter
@@ -556,6 +603,7 @@ class LSV2ErrorMessage:
 
     @property
     def dnc(self) -> bool:
+        """if True, message is related to DNC?"""
         return self._dnc
 
     @dnc.setter
@@ -571,6 +619,7 @@ class StackState:
 
     @property
     def current_line(self) -> int:
+        """line number being executed"""
         return self._current_line
 
     @current_line.setter
@@ -579,6 +628,7 @@ class StackState:
 
     @property
     def main_pgm(self) -> str:
+        """name of the current main program"""
         return self._main_pgm
 
     @main_pgm.setter
@@ -587,6 +637,7 @@ class StackState:
 
     @property
     def current_pgm(self) -> str:
+        """name of the current program being executed"""
         return self._current_pgm
 
     @current_pgm.setter
@@ -610,6 +661,7 @@ class FileEntry:
 
     @property
     def size(self) -> int:
+        """file size in bytes"""
         return self._size
 
     @size.setter
@@ -618,6 +670,7 @@ class FileEntry:
 
     @property
     def timestamp(self) -> datetime:
+        """timestamp of last file change"""
         return self._timestamp
 
     @timestamp.setter
@@ -626,6 +679,7 @@ class FileEntry:
 
     @property
     def attributes(self) -> bytearray:
+        """byte array of file attributes"""
         return self._attributes
 
     @attributes.setter
@@ -634,6 +688,7 @@ class FileEntry:
 
     @property
     def is_protected(self) -> bool:
+        """if True, file is write protected"""
         return self._is_protected
 
     @is_protected.setter
@@ -642,6 +697,7 @@ class FileEntry:
 
     @property
     def is_drive(self) -> bool:
+        """if True, entry describes a drive"""
         return self._is_drive
 
     @is_drive.setter
@@ -650,6 +706,7 @@ class FileEntry:
 
     @property
     def is_directory(self) -> bool:
+        """if True, entry describes a directory"""
         return self._is_directory
 
     @is_directory.setter
@@ -658,6 +715,7 @@ class FileEntry:
 
     @property
     def is_hidden(self) -> bool:
+        """if True, object is hidden in file browser"""
         return self._is_hidden
 
     @is_hidden.setter
@@ -666,6 +724,7 @@ class FileEntry:
 
     @property
     def name(self) -> str:
+        """name of the file system object"""
         return self._name
 
     @name.setter
@@ -682,6 +741,7 @@ class DirectoryEntry:
 
     @property
     def free_size(self) -> int:
+        """number of free bytes"""
         return self._free_size
 
     @free_size.setter
@@ -690,6 +750,7 @@ class DirectoryEntry:
 
     @property
     def dir_attributes(self) -> list:
+        """attriutes of this directoy"""
         return self._dir_attributes
 
     @dir_attributes.setter
@@ -698,6 +759,7 @@ class DirectoryEntry:
 
     @property
     def attributes(self) -> bytearray:
+        """bytes of unknown data"""
         return self._attributes
 
     @attributes.setter
@@ -706,6 +768,7 @@ class DirectoryEntry:
 
     @property
     def path(self) -> str:
+        """path of this directory"""
         return self._path
 
     @path.setter
@@ -715,9 +778,9 @@ class DirectoryEntry:
 
 class DriveEntry:
     def __init__(self):
-        self.unknown_0 = int
+        self.unknown_0 = -1
         self.unknown_1 = ""
-        self.unknown_2 = int
+        self.unknown_2 = -1
         self.name = ""
 
     @property
@@ -778,8 +841,9 @@ class TransmissionError:
         self._error_code = value
 
     @staticmethod
-    def from_ba(bytes: bytearray):
-        er = TransmissionError()
-        er.e_type = struct.unpack("!BB", bytes)[0]
-        er.e_code = struct.unpack("!BB", bytes)[1]
-        return er
+    def from_ba(err_bytes: bytearray):
+        """convert byte array to erro object"""
+        err = TransmissionError()
+        err.e_type = struct.unpack("!BB", err_bytes)[0]
+        err.e_code = struct.unpack("!BB", err_bytes)[1]
+        return err
