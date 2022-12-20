@@ -1739,3 +1739,350 @@ class LSV2:
 
         self._logger.debug("successfully received screen dump")
         return True
+
+
+    @staticmethod
+    def tst_decode_signal_description(data_set: bytearray):
+        """decode the data returned from R_OC / S_OC"""
+        channel_desc = dict()
+
+        channel_desc["number"] = struct.unpack("!H", data_set[0:2])[0]
+
+        name_start = 46
+        name_end = 46
+        zero_byte_found = False
+        while zero_byte_found is False:
+            if data_set[name_end] == 0x00:
+                zero_byte_found = True
+            else:
+                name_end += 1
+        channel_desc["name"]= lm.ba_to_ustr(data_set[name_start : name_end])
+
+        channel_desc["unknown"] = data_set[3: name_start]
+        
+        if len(data_set) == 106:
+            channel_desc["type"] = "axes"
+            
+            axes_start = 59
+            axes_end = 105
+
+            channel_desc["axes_list"] = lm.ba_to_ustr(data_set[axes_start:axes_end]).split(chr(0x00))
+
+            channel_desc["name_suffix"] = lm.ba_to_ustr(data_set[name_end : axes_start])
+            
+        elif len(data_set) == 59:
+
+            channel_desc["type"] = "no axes"
+            channel_desc["axes_list"] = list()
+            channel_desc["name_suffix"] = lm.ba_to_ustr(data_set[name_end : ])
+
+        elif len(data_set) == 94:
+            channel_desc["type"] = "plc"
+            
+            type_start = 59
+            type_end = 93
+
+            channel_desc["axes_list"] = lm.ba_to_ustr(data_set[type_start:type_end]).split(chr(0x00))
+
+            channel_desc["name_suffix"] = lm.ba_to_ustr(data_set[name_end : type_start])
+        else:
+            raise Exception("unknown size for channel description")
+
+        return channel_desc
+
+    @staticmethod
+    def tst_decode_S_CI(data_set:bytearray):
+        """"decode data reurned by R_CI / S_CI"""
+        print("step 1: R_CI result is %d bytes of %s" % (len(data_set), data_set))
+
+
+        # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
+        # -> is independent of channel, axes, intervall or samples
+        if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
+            print("unexpected return pattern for R_CI!")
+
+        return data_set
+
+    @staticmethod
+    def tst_decode_S_OP(data_set:bytearray):
+        """"decode data reurned by R_OP / S_OP"""
+        print("step 2: R_OP result is %d bytes" % (len(data_set)))
+        # contains further description of the channel?
+
+        def split_dataset(ds):
+            for i in range(0, len(ds), 22):
+                yield ds[i:i + 22]
+
+        if (len(data_set) % 22) == 0:
+            print("R_OP dataset has expected length")
+            for i, ds in enumerate(split_dataset(data_set)):
+                print("R_OP section %d: %s" % (i, ds))
+                # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
+            
+        else:
+            print("R_OP dataset has unexpected length %d of %s" % (len(data_set),data_set))
+
+        return data_set
+
+    @staticmethod
+    def decode_timestamp(data_set:bytearray) -> datetime:
+        """"decode data reurned by R_DT -> Date and Time on the control"""
+        timestamp = struct.unpack("!L", data_set[0:4])[0]
+        return datetime.fromtimestamp(timestamp)
+
+    @staticmethod
+    def tst_decode_scope_reading(data_set:bytearray):
+        """decode data reurned by R_OD / S_OD"""
+        print("step 4/5: R_OD result is %d bytes" % (len(data_set), ))
+
+        reading = dict()
+        # first 4 bytes seem to contain a counter
+        # -> sequence number indicats the number of the first value?
+        reading["number"] = struct.unpack("!L", data_set[0:4])[0]
+        print("reading has sequenc number %d" % reading["number"] )
+        header_data = data_set[4:56]
+        reading_section = data_set[56:]
+        print("reading header: %s" % header_data)
+        print("length of reading section: %d" % len(reading_section))
+        
+        """
+        # length
+        one channel one axes = 138
+        one channel two axes = 274
+        one channel tree axes = 406
+        one channel four axes = 540
+
+        recored data for :
+        X = +17
+        Y = 0
+        Z = -6.9
+
+        "
+        header with length 56
+        \x02\x00\x00\x00\x45\x00\x01\xc6\x8c\x02\x40\x00\x80\x06\x00\x00\x7f\x00\x00\x01\x7f\x00\x00\x01\x4a\x38\xe8\xf0\x34\xde\xd3\x05\xec\x11\x67\x11\x50\x18\x27\xf6\x8c\xb1\x00\x00\x00\x00\x01\x96\x53\x5f\x4f\x44\x00\x00\x06\x00
+        
+        
+        \x00\x20\xff\xff\xff\xff <- 0x0020 = 32 = number of data values; 0xff ff ff ff = ??
+        \x00\x02\x98\x10 \x00\x02\x98\x10 \x00\x02\x98\x10 <- 32 * 0x00 02 98 10 = 32 * readings for signal 1
+        
+        \x00\x20\xff\xff\xff\xff
+        \x00\x00\x00\x00 \x00\x00\x00\x00 \x00\x00\x00\x00 <- 32 * 0x00 00 00 00 = 32 * readings for signal 2
+        
+        \x00\x20\xff\xff\xff\xff
+        \x00\x4b\x3d\xb8 \x00\x4b\x3d\xb8 \x00\x4b\x3d\xb8 <- 32 * 0x00 4b 3d b8 = 32 * readings for signal 3
+         
+
+        TODO: how to decode 0x00 02 98 10 to 17,0???
+        """
+
+
+        return reading
+
+    def tst_read_scope_channels(self) -> list:
+        """read availible scope channels"""
+        if not self.versions.is_itnc():
+            self._logger.warning("only works for itnc??")
+            return list()
+
+        if not self.login(lc.Login.SCOPE):
+            self._logger.warning("clould not log in as user for scope funktion")
+            return list()
+
+        channel_list = list()
+
+        content = self._llcom.telegram(lc.CMD.R_OC)
+        if self._llcom.last_response in lc.RSP.S_OC:
+            #print("recived bytes %s" % content)
+            channel_list.append(self.tst_decode_signal_description(content))
+
+            while True:
+                content = self._llcom.telegram(lc.RSP.T_OK)
+
+                if self._llcom.last_response in lc.RSP.S_OC:
+                    #print("recived bytes %s" % content)
+                    channel_list.append(self.tst_decode_signal_description(content))
+                elif self._llcom.last_response in lc.RSP.T_FD:
+                    self._logger.info("finished loading data")
+                    break
+                else:
+                    self._logger.warning("something went wrong")
+
+        return channel_list
+
+    def tst_record_data(self, num_readings:int, intervall_us:int):
+        """record data from scope channels"""
+
+        self._logger.debug("start recoding %d readings with intervall of %d µs" % (num_readings, intervall_us))
+
+        # step 1: usage unknown, is always 0x000000003
+        # is independent of channel, axes, intervall or samples
+        payload = bytearray()
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x03)
+
+        result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
+
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            self.tst_decode_S_CI(result)
+        else:
+            raise Exception()
+
+
+
+        # step 2
+
+        """
+        capture 1: one channel tree axes
+        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x02\x00\x01\xff\xff\xff\xff \x00\x02\x00\x02\xff\xff\xff\xff"
+
+        capture 2: two channels 1 axes
+        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
+
+
+        capture 3: two channels 1 axes 16 k buffer
+        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
+
+
+        capture 4: two channels 1 axes 6k us intervall
+        "\x00\x00\x17\x70 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
+
+
+        "\x00\x4c\x43\x70 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
+        """
+
+        payload = bytearray()
+
+        # intervall package
+        
+        payload.extend(struct.pack("!L", intervall_us))
+        #payload.append(0x00)
+        #payload.append(0x00)
+        #payload.append(0x0b) # -> 0B
+        #payload.append(0xb8) # -> B8
+
+        # channel package - one for each channel
+
+        # channel 2 axes 0
+        payload.append(0x00)
+        payload.append(0x02) # <- channel number
+        payload.append(0x00)
+        payload.append(0x00) # <- channel axes
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+
+        # channel 2 axes 1
+        payload.append(0x00)
+        payload.append(0x02) # <- channel number
+        payload.append(0x00)
+        payload.append(0x01) # <- channel axes
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+
+        # channel 3 axes 0
+        payload.append(0x00)
+        payload.append(0x03) # <- channel number
+        payload.append(0x00)
+        payload.append(0x00) # <- channel axes
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+
+        # channel 3 axes 0
+        payload.append(0x00)
+        payload.append(0x03) # <- channel number
+        payload.append(0x00)
+        payload.append(0x01) # <- channel axes
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0xff)
+
+        result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            self.tst_decode_S_OP(result)
+        else:
+            raise Exception()
+
+
+        # step 3
+        result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            ts = self.decode_timestamp(result)
+            self._logger.debug("Time on Control is %s", ts.isoformat())
+        else:
+            raise Exception()
+
+
+        # step 4
+
+        """
+        capture 1: one channel tree axes
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\xb8"
+
+
+        capture 2: two channels 1 axes
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\xb8"
+
+
+        capture 3: two channels 1 axes 16 k buffer
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\xb8"
+       
+        capture 4: two channels 1 axes 6k us intervall
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17\x70"
+
+        """
+        payload = bytearray()
+        payload.append(0x00)
+        payload.append(0x06)
+        payload.append(0xff)
+        payload.append(0xff)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+        payload.append(0x00)
+
+        # intervall again?
+        payload.extend(struct.pack("!L", intervall_us))
+        #payload.append(0x00)
+        #payload.append(0x00)
+        #payload.append(0x0b) # -> 0B
+        #payload.append(0xb8) # -> B8
+
+        recorded_data = list()
+        content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
+
+        if isinstance(content, (bytearray,)) and len(content) > 0:
+            recorded_data.append(self.tst_decode_scope_reading(content))
+
+            count = num_readings - 1
+            while count > 0:
+                content = self._llcom.telegram(lc.RSP.T_OK)
+
+                if self._llcom.last_response in lc.RSP.S_OD:
+                    recorded_data.append(self.tst_decode_scope_reading(content))
+                else:
+                    self._logger.warning("something went wrong")
+                    break
+                count -= 1
+        else:
+            raise Exception()
+
+        # step 6 - stop recording data
+        #payload = bytearray()
+        #payload.append(0x01) <- - not necessary?
+        #payload.append(0x6f) <- - not necessary?
+        #result = self._send_recive(lc.RSP.T_BD, payload, None)
+        content = self._llcom.telegram(lc.RSP.T_BD)
+
+        return recorded_data
