@@ -9,7 +9,7 @@ after migration to python 3.7+ these will be changed to @dataclass!
 from datetime import datetime
 import struct
 
-from .const import ControlType, LSV2StatusCode
+from .const import ControlType, LSV2StatusCode, ChannelType
 
 
 class VersionInfo:
@@ -924,3 +924,77 @@ class LSV2Error:
         err.e_type = struct.unpack("!BB", err_bytes)[0]
         err.e_code = struct.unpack("!BB", err_bytes)[1]
         return err
+
+
+class ScopeChannel:
+    def __init__(self):
+        self._name = ""
+        self._number = -1
+        self._type = ChannelType.UNKNOWN
+        self._suffix = ""
+        self._signals = list()
+        self._min_interval = -1
+        self._unknown = dict()
+
+    @property
+    def name(self) -> str:
+        """name of the scope channel"""
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
+    @property
+    def number(self) -> int:
+        """number of channel"""
+        return self._number
+
+    @number.setter
+    def number(self, value: int):
+        self._number = value
+
+    @property
+    def type(self) -> ChannelType:
+        """type of channel"""
+        return self._type
+
+    @type.setter
+    def type(self, value: ChannelType):
+        self._type = value
+
+    @property
+    def suffix(self) -> str:
+        """name suffix of the scope channel"""
+        return self._suffix
+
+    @suffix.setter
+    def suffix(self, value: str):
+        self._suffix = value
+
+    @property
+    def signals(self) -> list:
+        """name of the scope channel"""
+        return self._signals
+
+    @signals.setter
+    def signals(self, signals: list):
+        self._signals = signals
+
+    @property
+    def min_interval(self) -> int:
+        """minimum signal interval in us"""
+        return self._min_interval
+
+    @min_interval.setter
+    def min_interval(self, value: int):
+        self._min_interval = value
+
+    @property
+    def unknown(self) -> dict:
+        """dict of values where it's unsure if the are correct"""
+        return self._unknown
+
+    @unknown.setter
+    def unknown(self, value: dict):
+        self._unknown = value

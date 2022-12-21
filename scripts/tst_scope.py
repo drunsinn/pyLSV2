@@ -23,7 +23,11 @@ with pyLSV2.LSV2("localhost", port=19000, timeout=5, safe_mode=False) as con:
     channel_list = con.tst_read_scope_channels()
 
     for channel in channel_list:
-        print("Channel No. {number} of type {type} : {name} supported signals: {axes_list}".format(**channel))
+        print("Channel No. {:d} of type {:d} : {:s}, interval {:d}us".format(channel.number, channel.type, channel.name, channel.min_interval))
+        print(" # signals: {}".format(channel.signals))
+        print(" # unknown number: {num1}".format(**channel.unknown))
+        print(" # data {dataset}".format(**channel.unknown))
+
 
     readings = con.tst_record_data(num_readings=100, intervall_us=6000)
 

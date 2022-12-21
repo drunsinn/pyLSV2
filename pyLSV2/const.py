@@ -976,3 +976,11 @@ class ParRDR(IntEnum):
 
     DRIVES = 0x02
     """mode switch to read drive information"""
+
+class ChannelType(IntEnum):
+    """Enum of scope channel types"""
+
+    UNKNOWN = -1
+    AXES = 1
+    PLC = 2
+    SINGLE = 3

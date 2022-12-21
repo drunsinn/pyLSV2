@@ -1809,11 +1809,13 @@ class LSV2:
 
 
     @staticmethod
-    def tst_decode_signal_description(data_set: bytearray):
+    def tst_decode_signal_description(data_set: bytearray) -> ld.ScopeChannel:
         """decode the data returned from R_OC / S_OC"""
-        channel_desc = dict()
+        #print(data_set)
 
-        channel_desc["number"] = struct.unpack("!H", data_set[0:2])[0]
+        channel_desc = ld.ScopeChannel()
+
+        channel_desc.number = struct.unpack("!H", data_set[0:2])[0]
 
         name_start = 46
         name_end = 46
@@ -1823,35 +1825,41 @@ class LSV2:
                 zero_byte_found = True
             else:
                 name_end += 1
-        channel_desc["name"]= lm.ba_to_ustr(data_set[name_start : name_end])
 
-        channel_desc["unknown"] = data_set[3: name_start]
+        channel_desc.name = lm.ba_to_ustr(data_set[name_start : name_end])
+
+        interval_value_1 = struct.unpack("!H", data_set[2:4])[0]
+        interval_value_2 = struct.unpack("!L", data_set[6:10])[0]
+
+        if interval_value_1 != interval_value_2:
+            raise Exception("error in decoding of channel description data: %s" % data_set)
+
+        channel_desc.min_interval = interval_value_1
+        channel_desc.suffix = struct.unpack("!H", data_set[4:6])[0]
         
+        channel_desc.unknown["dataset"] = data_set
+        channel_desc.unknown["num1"] = struct.unpack("!H", data_set[4:6])[0]
+
         if len(data_set) == 106:
-            channel_desc["type"] = "axes"
+            channel_desc.type = lc.ChannelType.AXES
             
             axes_start = 59
             axes_end = 105
 
-            channel_desc["axes_list"] = lm.ba_to_ustr(data_set[axes_start:axes_end]).split(chr(0x00))
-
-            channel_desc["name_suffix"] = lm.ba_to_ustr(data_set[name_end : axes_start])
-            
+            channel_desc.signals = lm.ba_to_ustr(data_set[axes_start:axes_end]).split(chr(0x00))
+            channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : axes_start])
         elif len(data_set) == 59:
+            channel_desc.type = lc.ChannelType.SINGLE
 
-            channel_desc["type"] = "no axes"
-            channel_desc["axes_list"] = list()
-            channel_desc["name_suffix"] = lm.ba_to_ustr(data_set[name_end : ])
-
+            channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : ])
         elif len(data_set) == 94:
-            channel_desc["type"] = "plc"
+            channel_desc.type = lc.ChannelType.PLC
             
             type_start = 59
             type_end = 93
 
-            channel_desc["axes_list"] = lm.ba_to_ustr(data_set[type_start:type_end]).split(chr(0x00))
-
-            channel_desc["name_suffix"] = lm.ba_to_ustr(data_set[name_end : type_start])
+            channel_desc.signals = lm.ba_to_ustr(data_set[type_start:type_end]).split(chr(0x00))
+            channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : type_start])
         else:
             raise Exception("unknown size for channel description")
 
@@ -1869,7 +1877,8 @@ class LSV2:
         # maybe the last four bytes are the actual intervall? 0x00 00 0b b8 = 3000
 
         if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
-            print("unexpected return pattern for R_CI!")
+            print(" # unexpected return pattern for R_CI!")
+            raise Exception("unknown data for S_CI result")
 
         return data_set
 
@@ -1986,11 +1995,19 @@ class LSV2:
 
         # step 1: usage unknown, is always 0x000000003
         # is independent of channel, axes, intervall or samples
+        """
+        In 0x00 00 00 00 -> Out Error Wrong Parameter
+        In 0x00 00 00 01 -> Out 0x00 00 00 01 00 00 00 00
+        In 0x00 00 00 02 -> Out 0x00 00 00 01 00 00 00 01
+        In 0x00 00 00 03 -> Out 0x00 00 00 02 00 00 0b b8
+        In 0x00 00 00 04 -> Out Error Wrong Parameter
+        """
         payload = bytearray()
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x03)
+        payload.extend(struct.pack("!L", 3))
+        #payload.append(0x00)
+        #payload.append(0x00)
+        #payload.append(0x00)
+        #payload.append(0x03)
 
         result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
 
@@ -1998,8 +2015,6 @@ class LSV2:
             self.tst_decode_S_CI(result)
         else:
             raise Exception()
-
-
 
         # step 2
 
@@ -2020,6 +2035,13 @@ class LSV2:
 
 
         "\x00\x4c\x43\x70 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
+
+        
+        ######
+        
+        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x02\x00\x01\xff\xff\xff\xff \x00\x08\xff\xff\xff\xff\xff\xff \x00\x0f\x00\x00\x00\x00\x03\xe8"
+
+
         """
 
         payload = bytearray()
@@ -2039,20 +2061,21 @@ class LSV2:
         payload.extend(struct.pack("!H", 0)) # <- signal number
         #payload.append(0x00)
         #payload.append(0x00) # <- channel axes
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
-        payload.append(0xff)
+        payload.extend(bytearray(b"\xff\xff\xff\xff"))
+        #payload.append(0xff)
+        #payload.append(0xff)
+        #payload.append(0xff)
+        #payload.append(0xff)
 
-        # # channel 2 axes 1
-        # payload.extend(struct.pack("!H", 2))
-        # payload.extend(struct.pack("!H", 1))
-        # payload.append(0xff)
-        # payload.append(0xff)
-        # payload.append(0xff)
-        # payload.append(0xff)
+        # # channel 8 - feedrate
+        payload.extend(struct.pack("!H", 8))
+        payload.extend(bytearray(b"\xff\xff\xff\xff\xff\xff"))
 
-        # # channel 3 axes 0
+        # # channel 15 PLC value M1000
+        payload.extend(struct.pack("!H", 8))
+        payload.extend(struct.pack("!H", 0)) # <- PLC memory type: 0=M, 1=T, 2=C, 3=I, 4=O, 5=B, 6=W, 7=D, 8=IB, 9=IW, 10=ID, 11=OB, 12=OW, 12=OD
+        payload.extend(struct.pack("!L", 1000))
+
         # payload.extend(struct.pack("!H", 3))
         # payload.extend(struct.pack("!H", 0))
         # payload.append(0xff)
@@ -2074,6 +2097,7 @@ class LSV2:
         else:
             raise Exception()
 
+        return list()
 
         # step 3
         result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
