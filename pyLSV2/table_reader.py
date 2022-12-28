@@ -142,7 +142,8 @@ class NCTable:
             raise Exception("value to long for column")
         self._column_format[name]["empty_value"] = value
 
-    def update_column_format(self, name, parameters):
+    def update_column_format(self, name:str, parameters:dict):
+        """takes a column name and a dictionaly to update the current table configuration"""
         for key, value in parameters.items():
             if key == "unit":
                 self._column_format[name]["unit"] = value
@@ -168,7 +169,7 @@ class NCTable:
     def _get_column_names(self):
         """get list of columns used in this table"""
         raise DeprecationWarning(
-            "Do not use this funtion anymore! Use ```column_names```"
+            "Do not use this function anymore! Use ```column_names```"
         )
         # return self._columns
 
@@ -284,7 +285,7 @@ class NCTable:
         returns list of lines that contain the search result
 
         :param column_name: name of the table column which should be checked
-        :param search_value: the value to check for, can be string or regular expresssion
+        :param search_value: the value to check for, can be string or regular expression
         """
         search_results = []
         if not column_name in self._columns:
@@ -310,7 +311,7 @@ class NCTable:
 
         :param str or Path table_path: Path to the table file
 
-        :returns: list od dictionaries. key is the column name, value the content of the table cell
+        :returns: list of dictionaries. key is the column name, value the content of the table cell
         :rtype: NCTable
         """
         logger = logging.getLogger("NCTable parser")
@@ -450,7 +451,12 @@ class NCTable:
         return nctable
 
     @staticmethod
-    def parse_table_description(lines):
+    def parse_table_description(lines: list):
+        """
+        parse the header of a table to get the table configuration
+        
+        :param list lines: list of strings cut from the table header
+        """
         config_data = dict()
         object_list = list()
         object_list.append(config_data)

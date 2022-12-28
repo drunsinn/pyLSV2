@@ -208,13 +208,13 @@ def decode_override_state(data_set: bytearray) -> ld.OverrideState:
     return ovr_state
 
 
-def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
+def decode_error_message(data_set: bytearray) -> ld.NCErrorMessage:
     """
     Decode result from reading error messages
 
     :param result_set: bytes returned by the system parameter query command R_RI for first and next error
     """
-    err_msg = ld.LSV2ErrorMessage()
+    err_msg = ld.NCErrorMessage()
     err_msg.e_class = struct.unpack("!H", data_set[0:2])[0]
     err_msg.e_group = struct.unpack("!H", data_set[2:4])[0]
     err_msg.e_number = struct.unpack("!l", data_set[4:8])[0]
@@ -230,9 +230,9 @@ def decode_stack_info(data_set: bytearray) -> ld.StackState:
     :param data_set: bytes returned from query
     """
     stack = ld.StackState()
-    stack.current_line = struct.unpack("!L", data_set[:4])[0]
-    stack.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
-    stack.current_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[1])
+    stack.line_no = struct.unpack("!L", data_set[:4])[0]
+    stack.main = ba_to_ustr(data_set[4:].split(b"\x00")[0])
+    stack.current = ba_to_ustr(data_set[4:].split(b"\x00")[1])
     return stack
 
 

@@ -89,10 +89,10 @@ Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/c0631b7cfb
 See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.
 
 Notice: The change from 0.xx to 1.xx brought some major incompatible changes in regards to the API:
- - raise the minimal required python version to 3.5, future releases will even target 3.7
- - change of function names and parameters to better reflect thier use
+ - raise the minimal required python version to 3.5, future releases (1.1.x) will target 3.7 or higher
+ - change of function names and parameters to better reflect their use
  - change of return types from dict to special data class
-These changes where made intentionaly to make further development easier. See the demo script for an overview of the new API.
+These changes where made intentionally to make further development easier. See the demo script for an overview of the new API.
 
 ### Basic example without context manager
 ```

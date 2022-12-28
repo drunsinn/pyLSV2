@@ -46,7 +46,7 @@ if __name__ == "__main__":
         print("Basics:")
         print(
             "# Connected to a '{:s}' running software version '{:s}'".format(
-                con.versions.control_version, con.versions.nc_version
+                con.versions.control, con.versions.nc_sw
             )
         )
         print(
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         )
 
         # read error messages via LSV2, works only on iTNC controls
-        print("# read error messages, only availible on iTNC530")
+        print("# read error messages, only available on iTNC530")
         if con.versions.is_itnc():
             e_m = con.get_error_messages()
             print("## Number of currently active error messages: {:d}".format(len(e_m)))
@@ -79,10 +79,10 @@ if __name__ == "__main__":
 
         pgm_stack = con.get_program_stack()
         if pgm_stack is not None:
-            print("# selected program: '{:s}'".format(pgm_stack.main_pgm))
+            print("# selected program: '{:s}'".format(pgm_stack.main))
             print(
                 "## currently execution '{:s}' on line {:d}".format(
-                    pgm_stack.current_pgm, pgm_stack.current_line
+                    pgm_stack.current, pgm_stack.line_no
                 )
             )
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         print("## input: {}".format(con.read_plc_memory(0, MemoryType.INPUT, 5)))
         print("## output: {}".format(con.read_plc_memory(0, MemoryType.OUTPUT_WORD, 5)))
 
-        print("# data values via data path, only availible on iTNC530")
+        print("# data values via data path, only available on iTNC530")
         if con.versions.is_itnc():
             print("## marker 0: {}".format(con.read_data_path("/PLC/memory/M/0")))
             print("## marker 1: {}".format(con.read_data_path("/PLC/memory/M/1")))
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             print("## word 10908: {}".format(con.read_data_path("/PLC/memory/W/10908")))
         else:
             print("## function 'read_data_path()' not suportet for this control")
-        print("# table values via data path, only availible on iTNC530")
+        print("# table values via data path, only available on iTNC530")
         if con.versions.is_itnc():
             print("## values from tool table for tool T1:")
             print("## DOC column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/DOC")))
@@ -143,7 +143,11 @@ if __name__ == "__main__":
 
         print("File access")
         drv_info = con.get_drive_info()
-        print("# names of disk drives: {:s}".format(", ".join([drv.name for drv in drv_info])))
+        print(
+            "# names of disk drives: {:s}".format(
+                ", ".join([drv.name for drv in drv_info])
+            )
+        )
         dir_info = con.get_directory_info()
         print(
             "# current directory is '{:s}' with {:d} bytes of free drive space".format(
@@ -182,7 +186,7 @@ if __name__ == "__main__":
         print("Read spindle tool information")
         t_info = con.get_spindle_tool_status()
         if t_info is not None:
-            print("# direct reading of current tool successfull")
+            print("# direct reading of current tool successful")
             print(
                 "# current tool in spindle: {:d}.{:d} '{:s}'".format(
                     t_info.number, t_info.index, t_info.name
@@ -190,35 +194,3 @@ if __name__ == "__main__":
             )
         else:
             print("# direct reading of current tool not supported for this control")
-
-        exit()
-
-        """
-            if con.is_tnc():
-                pocket_table_path = "TNC:/table/tool_p.tch"
-                transfer_binary = True
-                spindel_lable = "0.0"
-            elif con.is_itnc():
-                pocket_table_path = "TNC:/TOOL_P.TCH"
-                transfer_binary = False
-                spindel_lable = "0"
-            else:
-                pocket_table_path = "TNC:/table/ToolAllo.tch"
-                transfer_binary = True
-                spindel_lable = "0.0"
-
-            with tempfile.TemporaryDirectory(
-                suffix=None, prefix="pyLSV2_"
-            ) as tmp_dir_name:
-                local_recive_path = Path(tmp_dir_name).joinpath("tool_p.tch")
-                con.recive_file(
-                    local_path=str(local_recive_path),
-                    remote_path=pocket_table_path,
-                    binary_mode=transfer_binary,
-                )
-                tr = pyLSV2.TableReader()
-                pockets = tr.parse_table(local_recive_path)
-                spindel = list(
-                    filter(lambda pocket: pocket["P"] == spindel_lable, pockets)
-                )[0]
-                print("Current tool number {T} with name {TNAME}".format(**spindel))"""

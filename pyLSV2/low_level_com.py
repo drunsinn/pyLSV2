@@ -7,7 +7,7 @@ import struct
 from typing import Union
 
 from .const import CMD, RSP
-from .dat_cls import TransmissionError
+from .dat_cls import LSV2Error
 from .err import LSV2StateException, LSV2ProtocolException
 
 
@@ -55,7 +55,7 @@ class LSV2TCP:
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
         self._logger.debug(
             "Socket successfully created, host %s was resolved to IP %s",
@@ -68,7 +68,7 @@ class LSV2TCP:
         return self._last_lsv2_response
 
     @property
-    def last_error(self) -> TransmissionError:
+    def last_error(self) -> LSV2Error:
         return self._last_error
 
     @property
@@ -100,7 +100,7 @@ class LSV2TCP:
 
         self._is_connected = True
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
         self._logger.debug("Connected to host %s at port %s", self._host_ip, self._port)
 
@@ -119,7 +119,7 @@ class LSV2TCP:
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
         self._logger.debug("Connection to %s closed", self._host_ip)
 
@@ -217,7 +217,7 @@ class LSV2TCP:
                     )
                 except Exception:
                     self._logger.error(
-                        "something went wrong while waiting for more data to arrive. expected %d, recived %d, content so far: %s",
+                        "something went wrong while waiting for more data to arrive. expected %d, received %d, content so far: %s",
                         response_length,
                         len(data_recived),
                         data_recived,
@@ -227,9 +227,9 @@ class LSV2TCP:
             response_content = bytearray()
 
         if self._last_lsv2_response is RSP.T_ER:
-            self._last_error = TransmissionError.from_ba(response_content)
+            self._last_error = LSV2Error.from_ba(response_content)
         else:
-            self._last_error = TransmissionError()
+            self._last_error = LSV2Error()
 
         return response_content
 
@@ -251,14 +251,14 @@ class LSV2RS232:
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
     @property
     def last_response(self) -> RSP:
         return self._last_lsv2_response
 
     @property
-    def last_error(self) -> TransmissionError:
+    def last_error(self) -> LSV2Error:
         return self._last_error
 
     @property

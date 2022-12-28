@@ -195,7 +195,7 @@ class MemoryType(IntEnum):
     OUTPUT_WORD = 11
 
 
-class LSV2Err(IntEnum):
+class LSV2StatusCode(IntEnum):
     """Enum for LSV2 protocol error numbers
     range 0 - 19: protocol or transmission errors
     range 20 - 99: telegram errors
@@ -622,8 +622,8 @@ class OldKeyCode(IntEnum):
     PGMMGT = 0x0061
     TOGGEL_INC = 0x0044
 
-    Cl_Pgm = 0x0062  # TODO
-    Pgm_Nr = 0x003B  # TODO
+    CL_PGM = 0x0062
+    PGM_NR = 0x003B
 
     ARROW_LEFT = 0x0059
     ARROW_DOWN = 0x0067

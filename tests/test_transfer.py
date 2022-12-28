@@ -53,7 +53,7 @@ def test_file_transfer_binary(address, timeout):
         local_recive_path = Path(tmp_dir_name).joinpath("test.bmp")
         remote_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + local_send_path.name
 
-        assert lsv2.get_file_info(remote_path) is not True  # is False dosn't work...
+        assert lsv2.get_file_info(remote_path) is not True  # is False doesn't work...
 
         assert (
             lsv2.send_file(
@@ -91,7 +91,7 @@ def test_file_transfer_binary(address, timeout):
 
 
 def test_recive_with_path_formating(address, timeout):
-    """test if reading of file information with / instead of \\ as path seperator"""
+    """test if reading of file information with / instead of \\ as path separator"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 

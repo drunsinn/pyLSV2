@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""script to convert tabel files to csv"""
+"""script to convert table files to csv"""
 import argparse
 import logging
 import pathlib

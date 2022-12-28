@@ -74,7 +74,7 @@ class LSV2:
         return self._sys_par
 
     @property
-    def last_error(self) -> ld.TransmissionError:
+    def last_error(self) -> ld.LSV2Error:
         """type and code of the last transmission error"""
         return self._llcom.last_error
 
@@ -145,7 +145,7 @@ class LSV2:
         :param payload: data to send along with the command
         :param expected_response: expected response telegram from the control to signal success
 
-        :raises LSV2ProtocolException: if an unknown/unexpected response was recived
+        :raises LSV2ProtocolException: if an unknown/unexpected response was received
         """
 
         if payload is None:
@@ -177,7 +177,7 @@ class LSV2:
 
         if self._llcom.last_response is lc.RSP.T_ER:
             self._logger.info(
-                "an error was recived after the last transmission, %s '%s'",
+                "an error was received after the last transmission, %s '%s'",
                 self.last_error,
                 lt.get_error_text(self.last_error),
             )
@@ -194,10 +194,9 @@ class LSV2:
 
         if expected_response is lc.RSP.NONE:
             self._logger.debug("no response expected")
-            # TODO: no response expected
             return False
 
-        # TODO: handle unexpected response
+        self._logger.warning("received unexpected response %s", self._llcom.last_response)
         return False
 
     def _send_recive_block(
@@ -279,7 +278,7 @@ class LSV2:
 
         self._logger.debug(
             "setting connection settings for %s and block length %s",
-            self._versions.control_type,
+            self._versions.type,
             self._sys_par.max_block_length,
         )
 
@@ -433,7 +432,7 @@ class LSV2:
 
         :raises LSV2DataException: if basic information could not be read from control
         """
-        if len(self._versions.control_version) > 0 and force is False:
+        if len(self._versions.control) > 0 and force is False:
             self._logger.debug("version info already in memory, return previous values")
         else:
             info_data = ld.VersionInfo()
@@ -442,7 +441,7 @@ class LSV2:
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.control_version = lm.ba_to_ustr(result)
+                info_data.control = lm.ba_to_ustr(result)
             else:
                 raise LSV2DataException(
                     "Could not read version information from control"
@@ -454,7 +453,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.nc_version = lm.ba_to_ustr(result)
+                info_data.nc_sw = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -462,7 +461,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.plc_version = lm.ba_to_ustr(result)
+                info_data.plc = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -481,7 +480,7 @@ class LSV2:
                 info_data.id_number = lm.ba_to_ustr(result)
 
             if self.versions.is_itnc():
-                info_data.release_type = "not supported"
+                info_data.release = "not supported"
             else:
                 result = self._send_recive(
                     lc.CMD.R_VR,
@@ -489,7 +488,7 @@ class LSV2:
                     lc.RSP.S_VR,
                 )
                 if isinstance(result, (bytearray,)) and len(result) > 0:
-                    info_data.release_type = lm.ba_to_ustr(result)
+                    info_data.release = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -497,9 +496,9 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.splc_version = lm.ba_to_ustr(result)
+                info_data.splc = lm.ba_to_ustr(result)
             else:
-                info_data.splc_version = "not supported"
+                info_data.splc = "not supported"
 
             self._logger.debug("got version info: %s", info_data)
             self._versions = info_data
@@ -625,7 +624,7 @@ class LSV2:
         """
         Query information about a file.
         Requires access level ``FILETRANSFER`` to work.
-        Retuns ``None`` of file dosn't exist or missing access rigths
+        Returns ``None`` of file doesn't exist or missing access rights
 
         :param remote_file_path: path of file on the control
         """
@@ -638,7 +637,7 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            file_info = lm.decode_file_system_info(result, self._versions.control_type)
+            file_info = lm.decode_file_system_info(result, self._versions.type)
             self._logger.debug("received file information for %s", file_info.name)
             return file_info
         self._logger.warning(
@@ -665,7 +664,7 @@ class LSV2:
         if isinstance(result, (list,)):
             for entry in result:
                 dir_content.append(
-                    lm.decode_file_system_info(entry, self._versions.control_type)
+                    lm.decode_file_system_info(entry, self._versions.type)
                 )
 
             self._logger.debug(
@@ -795,7 +794,7 @@ class LSV2:
         :param target_path: path of target location
 
         :raises LSV2StateException: if the selected path could not be found or
-                                    the path is not accesible
+                                    the path is not accessible
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -843,7 +842,7 @@ class LSV2:
         :param target_path: path of target location with or without filename
 
         :raises LSV2StateException: if the selected path could not be found or
-                                    the path is not accesible
+                                    the path is not accessible
         """
         source_path = source_path.replace("/", lc.PATH_SEP)
         target_path = target_path.replace("/", lc.PATH_SEP)
@@ -898,7 +897,7 @@ class LSV2:
                             file name is checked for known binary file type
 
         :raises LSV2StateException: if local file could not be opened,
-                                    destination direcotry could not be accessed or
+                                    destination directory could not be accessed or
                                     destination file could not be deleted
         """
         if not self.login(lc.Login.FILETRANSFER):
@@ -1169,8 +1168,8 @@ class LSV2:
         :param mem_type: what datatype to read
         :param number_of_elements: how many elements should be read
 
-        :raises LSV2InputException: if unknows memory type is requested or if the to many elements are requested
-        :raises LSV2DataException: if number of recived values does not match the number of expected
+        :raises LSV2InputException: if unknowns memory type is requested or if the to many elements are requested
+        :raises LSV2DataException: if number of received values does not match the number of expected
         """
 
         if self._sys_par.lsv2_version != -1:
@@ -1259,7 +1258,7 @@ class LSV2:
                 result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
                 if isinstance(result, (bytearray,)):
                     logging.debug(
-                        "read string %d with lenght %d",
+                        "read string %d with length %d",
                         (first_element + i),
                         len(result),
                     )
@@ -1327,7 +1326,7 @@ class LSV2:
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
             raise LSV2DataException(
-                "number of recived values %d is not equal to number of requested %d" % (
+                "number of received values %d is not equal to number of requested %d" % (
                 len(plc_values),
                 number_of_elements)
             )
@@ -1534,7 +1533,7 @@ class LSV2:
                 messages.append(lm.decode_error_message(result))
                 result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
 
-            if self.last_error is lc.LSV2Err.T_ER_NO_NEXT_ERROR:
+            if self.last_error is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
                 self._logger.debug("successfully read all errors")
             else:
                 self._logger.warning(
@@ -1543,7 +1542,7 @@ class LSV2:
 
             return messages
 
-        if self.last_error is lc.LSV2Err.T_ER_NO_NEXT_ERROR:
+        if self.last_error is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
             self._logger.debug("successfully read first error but no error active")
             return messages
 
@@ -1665,7 +1664,7 @@ class LSV2:
                 )
 
             self._logger.info(
-                "successfuly read data path: %s and got value '%s'", path, data_value
+                "successfully read data path: %s and got value '%s'", path, data_value
             )
             return data_value
         self._logger.warning(
@@ -1678,7 +1677,7 @@ class LSV2:
         """
         Read axes location from control. Not fully documented, value of first byte unknown.
         Requires access level ``DNC`` to work.
-        Returns ``None`` if no data was recived or dictionary with key = axis name, value = position
+        Returns ``None`` if no data was received or dictionary with key = axis name, value = position
 
         :raises LSV2DataException: Error during parsing of data values
         """
