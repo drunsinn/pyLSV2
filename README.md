@@ -83,42 +83,52 @@ been tested:
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
-Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst) for a more in depth explanation on the detials of LSV2.
+Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst) for a more in depth explanation on the details of LSV2.
 
 ## Usage
 See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for a demonstration of some of the functions.
 
+### Notes for upgrade to v1.xx
 Notice: The change from 0.xx to 1.xx brought some major incompatible changes in regards to the API:
  - raise the minimal required python version to 3.5, future releases (1.1.x) will target 3.7 or higher
  - change of function names and parameters to better reflect their use
- - change of return types from dict to special data class
+ - change of return types from dict to data classes to reduce the dependency on magic strings
 These changes where made intentionally to make further development easier. See the demo script for an overview of the new API.
+
+#### exemplary overview of the changes from v0.x to v1.x
+| Functionality                                       | Version 0.x                      | Version 1.x                   |
+|-----------------------------------------------------|----------------------------------|-------------------------------|
+| read nc software version                            | con.get_versions()["NC_Version"] | con.versions.nc_sw            |
+| check if control is a iTNC                          | con.is_itnc()                    | con.version.is_itnc()         |
+| get execution status via con.get_execution_status() | returns plain int value          | returns enum ExecState        |
+| read override values via con.get_override_info()    | returns dict or False            | returns OverrideState or None |
+| read axes position via con.get_axes_location()      | returns dict or False            | returns dict or None          |
 
 ### Basic example without context manager
 ```
  import pyLSV2
- con = pyLSV2.LSV2('192.168.56.101')
+ con = pyLSV2.LSV2("192.168.56.101")
  con.connect()
- print(con.versions.control_version)
+ print(con.versions.control)
  con.disconnect()
 ```
 
 ### Basic example with context manager
 ```
  import pyLSV2
- with pyLSV2.LSV2('192.168.56.101') as con:
+ with pyLSV2.LSV2("192.168.56.101") as con:
  ... con.connect()
- ... print(con.versions.control_version)
+ ... print(con.versions.control)
 ```
 
 ### Accessing PLC data
  To read values from the PLC memory you need to know the memory area/type and the memory address. There are two ways to read these values.
  
 #### Reading via memory address
- The following command reads 15 marker (bits) starting at address 32
+ The following command reads 15 marker (bits) starting at address 32. This returns a list with 15 boolean values.
 
 ```
- con.read_plc_memory(32, pyLSV2.PLC_MEM_TYPE_MARKER, 15)
+ con.read_plc_memory(32, pyLSV2.MemoryType.MARKER, 15)
 ```
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
 
@@ -149,16 +159,16 @@ These changes where made intentionally to make further development easier. See t
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
 
 ### SSH Tunnel
-Newer controls allow the use of ssh to encrypt the communication via LSV2. See scripts/ssh_tunnel_demo.py for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
+Newer controls allow the use of ssh to encrypt the communication via LSV2. See [ssh_tunnel_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/ssh_tunnel_demo.py) for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
 # Tables
-Included in this library is also fuctionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
+Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
- See [table_reader_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/table_reader_demo.py) for a demonstration on how to read a table and convert it to a different format.
+ See [tyb2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
 
 # Testing
- To run the test you either need a machine or a programming station. The controls has to be on and the 
- PLC program has to be running. You can add the IP-Address and timeout as a parameter
+ To run the test you either need a machine or a programming station. The control has to be on and the 
+ PLC program has to be running. The IP address and timeout are set via command line parameters.
 ```
  pytest --address=192.168.56.103 --timeout=5
 ```
@@ -171,3 +181,5 @@ https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
 https://www.yumpu.com/de/document/read/18882603/-f-heidenhain
 
 https://de.industryarena.com/heidenhain/forum
+
+https://github.com/drunsinn/pyLSV2/files/10254868/SDK_Help.zip

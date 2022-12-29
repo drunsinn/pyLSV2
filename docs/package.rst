@@ -18,10 +18,6 @@ Table reader
 .. autoclass:: pyLSV2.NCTable
     :members:
 
-.. autoclass:: pyLSV2.TableReader
-    :members:
-
-
 Dataclasses
 -----------
 

@@ -44,7 +44,7 @@ if __name__ == "__main__":
     )
     con.connect()
     print(
-        'Connected to "{:s}" with NC Software "{:s}"'.format(
+        "Connected to '{:s}' with NC Software '{:s}'".format(
             con.versions.control, con.versions.nc_sw
         )
     )
