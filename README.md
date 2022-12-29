@@ -162,7 +162,7 @@ These changes where made intentionally to make further development easier. See t
 Newer controls allow the use of ssh to encrypt the communication via LSV2. See [ssh_tunnel_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/ssh_tunnel_demo.py) for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
 # Tables
-Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
+ Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
  See [tyb2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
 
@@ -172,6 +172,13 @@ Included in this library is also functionality to work with Tables used by diffe
 ```
  pytest --address=192.168.56.103 --timeout=5
 ```
+
+# determin minimum required python version
+ The minimum required python version was checked with [vermin](https://github.com/netromdk/vermin).
+```
+ vermin --no-parse-comments .
+```
+The results indicate that pyLSV2 should work with python 3.5 and even with 3.4 if you install the packported modules argparse, enum and typing.
 
 # Resources
 https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
