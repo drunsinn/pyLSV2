@@ -29,9 +29,15 @@ setup(
     keywords="LSV2 cnc communication transfer plc",
     classifiers=[
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.4",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Development Status :: 4 - Beta",
         "Topic :: System :: Archiving",
+        "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: System :: Monitoring",
+        "Typing :: Typed",
     ],
 )
