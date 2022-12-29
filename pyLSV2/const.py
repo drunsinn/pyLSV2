@@ -3,13 +3,6 @@
 """Constant values used in LSV2"""
 from enum import Enum, IntEnum
 
-# #: files system attributes
-# FS_ENTRY_IS_HIDDEN = 0x08
-# FS_ENTRY_IS_DRIVE = 0x10
-# FS_ENTRY_IS_DIRECTORY = 0x20
-# FS_ENTRY_IS_PROTCTED = 0x40
-# FS_ENTRY_IS_IN_USE = 0x80
-
 #: enable/disable binary file transfer for C_FL and R_FL
 MODE_BINARY = 0x01
 MODE_NON_BIN = 0x00

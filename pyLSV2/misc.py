@@ -26,7 +26,9 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     elif message_length == 124:
         info_list = struct.unpack("!14L8B8L2BH4B2L2HLL", result_set)
     else:
-        raise LSV2DataException("unexpected length %s of message content %s" % (message_length, result_set))
+        raise LSV2DataException(
+            "unexpected length %s of message content %s" % (message_length, result_set)
+        )
     sys_par = ld.SystemParameters()
     sys_par.markers_start_address = info_list[0]
     sys_par.number_of_markers = info_list[1]
@@ -94,7 +96,7 @@ def decode_file_system_info(
         flag_drive = None
         flag_subdir = 0x40
         flag_protected = 0x20
-        # flag_selected = None
+        flag_selected = None
     else:
         # another newer document has
         # flag_display = 0x01
@@ -104,7 +106,7 @@ def decode_file_system_info(
         flag_drive = 0x10
         flag_subdir = 0x20
         flag_protected = 0x40
-        # flag_selected = 0x80
+        flag_selected = 0x80
 
     file_entry = ld.FileEntry()
     file_entry.size = struct.unpack("!L", data_set[:4])[0]
@@ -121,6 +123,9 @@ def decode_file_system_info(
 
     file_entry.is_protected = (file_entry.attributes & flag_protected) != 0
     file_entry.is_hidden = (file_entry.attributes & flag_hidden) != 0
+
+    if flag_selected is not None:
+        file_entry.is_selected = (file_entry.attributes & flag_selected) != 0
 
     file_entry.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
 
@@ -141,8 +146,12 @@ def decode_drive_info(data_set: bytearray) -> List:
     while (offset + fixed_length + 1) < len(data_set):
         drive_entry = ld.DriveEntry()
         drive_entry.unknown_0 = struct.unpack("!L", data_set[offset : offset + 4])[0]
-        drive_entry.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[0]
-        drive_entry.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[0]
+        drive_entry.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[
+            0
+        ]
+        drive_entry.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[
+            0
+        ]
 
         if chr(data_set[offset + fixed_length]) == ":":
             drive_entry.name = ba_to_ustr(data_set[offset + 12 : offset + 17])

@@ -14,6 +14,7 @@ from .const import ControlType, LSV2StatusCode
 
 class VersionInfo:
     """data class for version information"""
+
     def __init__(self):
         """init with default values"""
         self.control = ""
@@ -132,6 +133,7 @@ class VersionInfo:
 
 class SystemParameters:
     """data class for system parameters"""
+
     def __init__(self):
         """init with default values"""
         self.inputs_start_address = -1
@@ -458,6 +460,7 @@ class SystemParameters:
 
 class ToolInformation:
     """data class for information about a tool"""
+
     def __init__(self):
         """init with default values"""
         self.number = -1
@@ -524,6 +527,7 @@ class ToolInformation:
 
 class OverrideState:
     """data class for the override states"""
+
     def __init__(self):
         """init with default values"""
         self.feed = -1.0
@@ -560,7 +564,8 @@ class OverrideState:
 
 class NCErrorMessage:
     """data class for nc error messages
-    LSV2 error messages are handled with """
+    LSV2 error messages are handled with"""
+
     def __init__(self):
         """
         init with default values,
@@ -629,6 +634,7 @@ class NCErrorMessage:
 
 class StackState:
     """data class for the current execution stack"""
+
     def __init__(self):
         """init with default values"""
         self.line_no = -1
@@ -665,6 +671,7 @@ class StackState:
 
 class FileEntry:
     """data class for file information"""
+
     def __init__(self):
         """init with default values"""
         self.size = -1
@@ -676,6 +683,7 @@ class FileEntry:
         self.is_directory = False
         self.is_protected = False
         self.is_hidden = False
+        self.is_selected = False
 
         self.name = ""
 
@@ -743,6 +751,15 @@ class FileEntry:
         self._is_hidden = value
 
     @property
+    def is_selected(self) -> bool:
+        """if True, object is selected for execution"""
+        return self._is_selected
+
+    @is_selected.setter
+    def is_selected(self, value: bool):
+        self._is_selected = value
+
+    @property
     def name(self) -> str:
         """name of the file system object"""
         return self._name
@@ -754,6 +771,7 @@ class FileEntry:
 
 class DirectoryEntry:
     """data class for directory information"""
+
     def __init__(self):
         """init with default values"""
         self.free_size = -1
@@ -800,6 +818,7 @@ class DirectoryEntry:
 
 class DriveEntry:
     """data class for drive information"""
+
     def __init__(self):
         """init with default values"""
         self.unknown_0 = -1
@@ -846,6 +865,7 @@ class DriveEntry:
 
 class LSV2Error:
     """data class for LSV2 errors"""
+
     def __init__(self):
         """init with default values"""
         self.e_code = LSV2StatusCode.T_ER_NON
