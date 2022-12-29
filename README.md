@@ -83,10 +83,10 @@ been tested:
 
 If you have tested it on one of your machines with a different software version, please let us know!
 
-Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/c0631b7cfbe033ce2727ea07fe5202e967e086c9/docs/protocol.rst) for a more in depth explanation on the detials of LSV2.
+Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst) for a more in depth explanation on the detials of LSV2.
 
 ## Usage
-See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for a demonstration of some of the functions.
+See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for a demonstration of some of the functions.
 
 Notice: The change from 0.xx to 1.xx brought some major incompatible changes in regards to the API:
  - raise the minimal required python version to 3.5, future releases (1.1.x) will target 3.7 or higher
@@ -120,7 +120,7 @@ These changes where made intentionally to make further development easier. See t
 ```
  con.read_plc_memory(32, pyLSV2.PLC_MEM_TYPE_MARKER, 15)
 ```
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for more examples.
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
 
  The available memory aread and their python data type
 | Memory Type              | Python Type |
@@ -146,7 +146,7 @@ These changes where made intentionally to make further development easier. See t
  con.read_data_path('/TABLE/TOOL/T/1/DOC')
 ```
  
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/c85d1dc64ce7c5f7e2941d0f558a22a6c702798f/scripts/lsv2_demo.py) for more examples.
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
 
 ### SSH Tunnel
 Newer controls allow the use of ssh to encrypt the communication via LSV2. See scripts/ssh_tunnel_demo.py for an example on how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
@@ -154,7 +154,7 @@ Newer controls allow the use of ssh to encrypt the communication via LSV2. See s
 # Tables
 Included in this library is also fuctionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
- See [table_reader_demo.py](https://github.com/drunsinn/pyLSV2/blob/31b9d867c28bb34c7b9e0cfc80270d4277b2079a/scripts/table_reader_demo.py) for a demonstration on how to read a table and convert it to a different format.
+ See [table_reader_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/table_reader_demo.py) for a demonstration on how to read a table and convert it to a different format.
 
 # Testing
  To run the test you either need a machine or a programming station. The controls has to be on and the 
