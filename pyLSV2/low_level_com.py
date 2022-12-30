@@ -235,7 +235,7 @@ class LSV2TCP:
 
 
 class LSV2RS232:
-    """Implementation of the low level communication functions for sending and
+    """placeholder implementation of the low level communication functions for sending and
     receiving LSV2 telegrams via RS232"""
 
     DEFAULT_BUFFER_SIZE = 256

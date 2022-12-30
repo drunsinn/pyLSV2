@@ -212,7 +212,7 @@ def decode_override_state(data_set: bytearray) -> ld.OverrideState:
     """
     ovr_state = ld.OverrideState()
     ovr_state.feed = struct.unpack("!L", data_set[0:4])[0] / 100
-    ovr_state.spindel = struct.unpack("!L", data_set[4:8])[0] / 100
+    ovr_state.spindle = struct.unpack("!L", data_set[4:8])[0] / 100
     ovr_state.rapid = struct.unpack("!L", data_set[8:12])[0] / 100
     return ovr_state
 

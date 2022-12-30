@@ -404,7 +404,7 @@ class LSV2:
     def _read_parameters(self, force: bool = False) -> ld.SystemParameters:
         """
         Read all available system parameter entries. The results are buffered since it is also used internally.
-        This means additinal calls dont cause communication with the control.
+        This means additional calls dont cause communication with the control.
 
         :param force: if ``True`` the information is re-read even if it is already buffered
         """
@@ -426,7 +426,7 @@ class LSV2:
     def _read_version(self, force=False) -> ld.VersionInfo:
         """
         Read all available version information entries. The results are buffered since it is also used internally.
-        This means additinal calls dont cause communication with the control.
+        This means additional calls dont cause communication with the control.
 
         :param force: if ``True`` the information is re-read even if it is already buffered
 

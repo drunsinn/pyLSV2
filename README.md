@@ -166,6 +166,23 @@ Newer controls allow the use of ssh to encrypt the communication via LSV2. See [
 
  See [tyb2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
 
+ This script can also be used as a command line tool
+```
+ usage: tab2csv.py [-h] [--decimal_char DECIMAL_CHAR] [-d | -v] source
+ 
+ command line script parsing table files
+ 
+ positional arguments:
+   source                table file to parse
+ 
+ options:
+   -h, --help            show this help message and exit
+   --decimal_char DECIMAL_CHAR
+                         override local decimal char
+   -d, --debug           enable log level DEBUG
+   -v, --verbose         enable log level INFO
+```
+
 # Testing
  To run the test you either need a machine or a programming station. The control has to be on and the 
  PLC program has to be running. The IP address and timeout are set via command line parameters.
@@ -173,20 +190,16 @@ Newer controls allow the use of ssh to encrypt the communication via LSV2. See [
  pytest --address=192.168.56.103 --timeout=5
 ```
 
-# determin minimum required python version
+# determine minimum required python version
  The minimum required python version was checked with [vermin](https://github.com/netromdk/vermin).
 ```
  vermin --no-parse-comments .
 ```
-The results indicate that pyLSV2 should work with python 3.5 and even with 3.4 if you install the packported modules argparse, enum and typing.
+The results indicate that pyLSV2 should work with python 3.5 and even with 3.4 if you install the packported modules argparse, enum and typing. While argpares is only used in the demo script the other two are necessary. Therefore it should be possible to use pyLSV2 with the curretn version of [IronPython](https://ironpython.net/) if you install these two modules.
 
 # Resources
-https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
-
-https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
-
-https://www.yumpu.com/de/document/read/18882603/-f-heidenhain
-
-https://de.industryarena.com/heidenhain/forum
-
-https://github.com/drunsinn/pyLSV2/files/10254868/SDK_Help.zip
+ - https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
+ - https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
+ - https://www.yumpu.com/de/document/read/18882603/-f-heidenhain
+ - https://de.industryarena.com/heidenhain/forum
+ - https://github.com/drunsinn/pyLSV2/files/10254868/SDK_Help.zip

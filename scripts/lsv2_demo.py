@@ -90,7 +90,7 @@ if __name__ == "__main__":
         if ovr_stat is not None:
             print(
                 "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
-                    ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindel
+                    ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindle
                 )
             )
 

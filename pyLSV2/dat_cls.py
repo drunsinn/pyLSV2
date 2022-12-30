@@ -532,7 +532,7 @@ class OverrideState:
         """init with default values"""
         self.feed = -1.0
         self.rapid = -1.0
-        self.spindel = -1.0
+        self.spindle = -1.0
 
     @property
     def feed(self) -> float:
@@ -553,12 +553,12 @@ class OverrideState:
         self._rapid = value
 
     @property
-    def spindel(self) -> float:
+    def spindle(self) -> float:
         """override value for spindle speed"""
         return self._spindel
 
-    @spindel.setter
-    def spindel(self, value: float):
+    @spindle.setter
+    def spindle(self, value: float):
         self._spindel = value
 
 
