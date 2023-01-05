@@ -1322,7 +1322,7 @@ class LSV2:
                         "failed to read value from address %d",
                         start_address + first_element,
                     )
-                    return list()
+                    return []
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
             raise LSV2DataException(

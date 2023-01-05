@@ -65,14 +65,18 @@ class LSV2TCP:
 
     @property
     def last_response(self) -> RSP:
+        """get the response to the last telegram"""
         return self._last_lsv2_response
 
     @property
     def last_error(self) -> LSV2Error:
+        """get the error if the last telegram failed"""
         return self._last_error
 
     @property
     def buffer_size(self) -> int:
+        """size of the buffer used for sending and receiving data.
+        has to be negotiated with the control"""
         return self._buffer_size
 
     @buffer_size.setter
@@ -255,14 +259,18 @@ class LSV2RS232:
 
     @property
     def last_response(self) -> RSP:
+        """get the response to the last telegram"""
         return self._last_lsv2_response
 
     @property
     def last_error(self) -> LSV2Error:
+        """get the error if the last telegram failed"""
         return self._last_error
 
     @property
     def buffer_size(self) -> int:
+        """size of the buffer used for sending and receiving data.
+        has to be negotiated with the control"""
         return self._buffer_size
 
     @buffer_size.setter

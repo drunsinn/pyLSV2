@@ -141,7 +141,7 @@ def decode_drive_info(data_set: bytearray) -> List:
     """
     offset = 0
     fixed_length = 15
-    drive_entries = list()
+    drive_entries = []
 
     while (offset + fixed_length + 1) < len(data_set):
         drive_entry = ld.DriveEntry()

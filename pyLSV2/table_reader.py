@@ -133,8 +133,7 @@ class NCTable:
         """get value define as default value for column"""
         if "empty_value" in self._column_format[name]:
             return self._column_format[name]["empty_value"]
-        else:
-            return None
+        return None
 
     def set_column_empty_value(self, name, value):
         """set the default value of a column"""
@@ -142,7 +141,7 @@ class NCTable:
             raise Exception("value to long for column")
         self._column_format[name]["empty_value"] = value
 
-    def update_column_format(self, name:str, parameters:dict):
+    def update_column_format(self, name: str, parameters: dict):
         """takes a column name and a dictionaly to update the current table configuration"""
         for key, value in parameters.items():
             if key == "unit":
@@ -454,23 +453,23 @@ class NCTable:
     def parse_table_description(lines: list):
         """
         parse the header of a table to get the table configuration
-        
+
         :param list lines: list of strings cut from the table header
         """
-        config_data = dict()
-        object_list = list()
+        config_data = {}
+        object_list = []
         object_list.append(config_data)
 
         def str_to_typed_value(value_string: str):
             if re.match(r"^\"?[+-]?\d+[.,]\d+\"?$", value_string):
                 return float(value_string.strip('"'))
-            elif re.match(r"^\"?[+-]?\d+\"?$", value_string):
+            if re.match(r"^\"?[+-]?\d+\"?$", value_string):
                 return int(value_string.strip('"'))
             if value_string.startswith('"') and value_string.endswith('"'):
                 return value_string.strip('"')
-            elif value_string.upper() == "TRUE":
+            if value_string.upper() == "TRUE":
                 return True
-            elif value_string.upper() == "FALSE":
+            if value_string.upper() == "FALSE":
                 return False
             return value_string
 
@@ -479,7 +478,7 @@ class NCTable:
 
             if line.endswith("("):
                 last_object = object_list[-1]
-                new_category = dict()
+                new_category = {}
                 name = line.split(" ")[0]
                 if isinstance(last_object, (list,)):
                     last_object.append({name: new_category})
@@ -491,7 +490,7 @@ class NCTable:
 
             elif line.endswith("["):
                 last_object = object_list[-1]
-                new_group = list()
+                new_group = []
                 name = line.split(":=")[0]
                 if isinstance(last_object, (list,)):
                     last_object.append({name: new_group})
@@ -572,6 +571,6 @@ class NCTable:
         str_value = str_value.strip()
         if len(str_value) == 0:
             return None
-        elif str_value == "1":
+        if str_value == "1":
             return True
         return False

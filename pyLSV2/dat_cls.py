@@ -38,14 +38,22 @@ class VersionInfo:
 
     @control.setter
     def control(self, value: str):
-        value = value.replace(" ", "")
+        value = value.replace(" ", "").strip()
         self._control_version = value
 
-        if "TNC6" in value or "TNC320" in value or "TNC128" in value:
-            self.type = ControlType.MILL_NEW
-        elif "iTNC530" in value or "ITNC530":
+        value = value.upper()
+
+        if value.startswith("ITNC530"):
             self.type = ControlType.MILL_OLD
-        elif "CNCPILOT640" in value:
+        elif value.startswith("TNC640"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("TNC620"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("TNC320"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("TNC128"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("CNCPILOT640"):
             self.type = ControlType.LATHE_NEW
         else:
             self.type = ControlType.UNKNOWN
