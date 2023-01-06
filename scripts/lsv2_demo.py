@@ -9,8 +9,6 @@ import time
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-logging.basicConfig(level=logging.ERROR)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
