@@ -4,7 +4,7 @@
 import struct
 from datetime import datetime
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Dict
 
 from . import dat_cls as ld
 from .const import BIN_FILES, PATH_SEP, ControlType
@@ -133,7 +133,7 @@ def decode_file_system_info(
     return file_entry
 
 
-def decode_drive_info(data_set: bytearray) -> List:
+def decode_drive_info(data_set: bytearray) -> List[ld.DriveEntry]:
     """
     Split and decode result from drive info
 
@@ -245,7 +245,7 @@ def decode_stack_info(data_set: bytearray) -> ld.StackState:
     return stack
 
 
-def decode_axis_location(data_set: bytearray) -> dict:
+def decode_axis_location(data_set: bytearray) -> Dict[str, float]:
     """
     Decode result from reading axis position
     Returns dictionary with key = axis name, value = position

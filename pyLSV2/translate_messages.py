@@ -3,6 +3,7 @@
 """error code definitions and decoding, translation of status information into readable text"""
 import gettext
 import os
+from typing import Union
 
 from .dat_cls import LSV2Error
 
@@ -10,7 +11,7 @@ from .const import ExecState, LSV2StatusCode, PgmState
 
 
 def get_error_text(
-    t_error: LSV2Error, language: str = "", locale_path=None
+    t_error: LSV2Error, language: str = "", locale_path: Union[str, None] = None
 ) -> str:
     """Parse error type and error code and return the error message.
 
@@ -92,7 +93,9 @@ def get_error_text(
         LSV2StatusCode.T_ER_OUT_OF_RANGE: _("LSV2_ERROR_T_ER_OUT_OF_RANGE"),
         LSV2StatusCode.T_ER_INVALID_AXIS: _("LSV2_ERROR_T_ER_INVALID_AXIS"),
         LSV2StatusCode.T_ER_STREAMING_ACTIVE: _("LSV2_ERROR_T_ER_STREAMING_ACTIVE"),
-        LSV2StatusCode.T_ER_NO_STREAMING_ACTIVE: _("LSV2_ERROR_T_ER_NO_STREAMING_ACTIVE"),
+        LSV2StatusCode.T_ER_NO_STREAMING_ACTIVE: _(
+            "LSV2_ERROR_T_ER_NO_STREAMING_ACTIVE"
+        ),
         LSV2StatusCode.T_ER_TO_MANY_OPEN_TCP: _("LSV2_ERROR_T_ER_TO_MANY_OPEN_TCP"),
         LSV2StatusCode.T_ER_NO_FREE_HANDLE: _("LSV2_ERROR_T_ER_NO_FREE_HANDLE"),
         LSV2StatusCode.T_ER_PLCMEMREMA_CLEAR: _("LSV2_ERROR_T_ER_PLCMEMREMA_CLEAR"),
@@ -123,7 +126,9 @@ def get_error_text(
     }.get(t_error.e_code, _("LSV2_ERROR_UNKNOWN_CODE"))
 
 
-def get_program_status_text(code: PgmState, language: str = "", locale_path=None) -> str:
+def get_program_status_text(
+    code: PgmState, language: str = "", locale_path: Union[str, None] = None
+) -> str:
     """Translate status code of program state to text
 
     :param int code: status code of program state
@@ -163,7 +168,9 @@ def get_program_status_text(code: PgmState, language: str = "", locale_path=None
     }.get(code, translate.gettext("PGM_STATE_UNKNOWN"))
 
 
-def get_execution_status_text(code: ExecState, language: str = "", locale_path=None):
+def get_execution_status_text(
+    code: ExecState, language: str = "", locale_path: Union[str, None] = None
+):
     """Translate status code of execution state to text
     See https://github.com/drunsinn/pyLSV2/issues/1
 

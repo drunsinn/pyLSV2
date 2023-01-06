@@ -5,7 +5,7 @@
 import pyLSV2
 
 
-def test_read_machine_parameter(address, timeout):
+def test_read_machine_parameter(address: str, timeout: float):
     """test to see if reading of machine parameters works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -20,7 +20,7 @@ def test_read_machine_parameter(address, timeout):
     lsv2.disconnect()
 
 
-def test_rw_machine_parameter(address, timeout):
+def test_rw_machine_parameter(address: str, timeout: float):
     """test to see if reading and writing of machine parameters works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()

@@ -5,7 +5,7 @@ import pytest
 import pyLSV2
 
 
-def test_plc_read(address, timeout):
+def test_plc_read(address: str, timeout: float):
     """test to see if reading of plc data works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -24,7 +24,7 @@ def test_plc_read(address, timeout):
     lsv2.disconnect()
 
 
-def test_plc_read_marker(address, timeout):
+def test_plc_read_marker(address: str, timeout: float):
     """test reading of plc markers"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -45,7 +45,7 @@ def test_plc_read_marker(address, timeout):
     lsv2.disconnect()
 
 
-def test_plc_read_string(address, timeout):
+def test_plc_read_string(address: str, timeout: float):
     """test reading of plc strings"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -66,7 +66,7 @@ def test_plc_read_string(address, timeout):
     lsv2.disconnect()
 
 
-def test_plc_read_errors(address, timeout):
+def test_plc_read_errors(address: str, timeout: float):
     """test error states for reading plc data"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -82,7 +82,7 @@ def test_plc_read_errors(address, timeout):
     lsv2.disconnect()
 
 
-def test_data_path_read(address, timeout):
+def test_data_path_read(address: str, timeout: float):
     """test to see if reading via data path works. run only on iTNC"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()

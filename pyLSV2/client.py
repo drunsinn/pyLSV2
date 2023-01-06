@@ -13,7 +13,8 @@ import pathlib
 import re
 import struct
 from datetime import datetime
-from typing import List, Union
+from types import TracebackType
+from typing import List, Union, Optional, Type, Dict
 
 from . import const as lc
 from . import dat_cls as ld
@@ -98,7 +99,12 @@ class LSV2:
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ):
         """exit context"""
         self.disconnect()
         # print(exc_type, exc_value, exc_tb, sep="\n")
@@ -206,7 +212,7 @@ class LSV2:
         command: Union[lc.CMD, lc.RSP],
         payload: bytearray,
         expected_response: lc.RSP = lc.RSP.NONE,
-    ) -> Union[bool, list]:
+    ) -> Union[bool, List[bytearray]]:
         """
         Takes a command and optional payload, sends it to the control and continues reading telegrams until a
         telegram contains the expected response or an error response. If the correct response is received, returns
@@ -676,7 +682,7 @@ class LSV2:
             self._logger.warning("an error occurred while directory content info")
         return dir_content
 
-    def drive_info(self) -> list:
+    def drive_info(self) -> List[ld.DriveEntry]:
         """
         Read info all drives and partitions from the control.
         Requires access level ``FILETRANSFER`` to work.
@@ -1388,7 +1394,9 @@ class LSV2:
         )
         return ""
 
-    def set_machine_parameter(self, name: str, value: str, safe_to_disk=False) -> bool:
+    def set_machine_parameter(
+        self, name: str, value: str, safe_to_disk: bool = False
+    ) -> bool:
         """
         Set machine parameter on control. Writing a parameter takes some time, make sure to set timeout
         sufficiently high!
@@ -1506,7 +1514,7 @@ class LSV2:
         )
         return None
 
-    def get_error_messages(self) -> list:
+    def get_error_messages(self) -> List[ld.NCErrorMessage]:
         """
         Get information about the first or next error displayed on the control
         Requires access level ``DNC`` to work.
@@ -1551,9 +1559,9 @@ class LSV2:
 
         return []
 
-    def _walk_dir(self, descend=True) -> list:
+    def _walk_dir(self, descend: bool = True) -> List[str]:
         """
-        helber function to recursively search in directories for files.
+        helper function to recursively search in directories for files.
         Requires access level ``FILETRANSFER`` to work.
 
         :param descend: control if search should run recursively
@@ -1672,7 +1680,7 @@ class LSV2:
         )
         return None
 
-    def axes_location(self) -> Union[dict, None]:
+    def axes_location(self) -> Union[Dict[str, float], None]:
         """
         Read axes location from control. Not fully documented, value of first byte unknown.
         Requires access level ``DNC`` to work.

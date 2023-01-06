@@ -876,28 +876,28 @@ class LSV2Error:
 
     def __init__(self):
         """init with default values"""
-        self.e_code = LSV2StatusCode.T_ER_NON
         self.e_type = -1
+        self.e_code = LSV2StatusCode.T_ER_NON
 
     def __str__(self):
         return "Error Type: %d, Error Code: %d" % (self.e_type, self.e_code)
 
     @property
-    def e_type(self) -> LSV2StatusCode:
+    def e_type(self) -> int:
         """error type"""
         return self._error_type
 
     @e_type.setter
-    def e_type(self, value):
+    def e_type(self, value: int):
         self._error_type = value
 
     @property
-    def e_code(self):
+    def e_code(self) -> LSV2StatusCode:
         """error code"""
         return self._error_code
 
     @e_code.setter
-    def e_code(self, value):
+    def e_code(self, value: LSV2StatusCode):
         self._error_code = value
 
     @staticmethod

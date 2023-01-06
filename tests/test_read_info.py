@@ -5,7 +5,7 @@
 import pyLSV2
 
 
-def test_read_pgm_status(address, timeout):
+def test_read_pgm_status(address: str, timeout: float):
     """test if reading the status of the selected program works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -22,7 +22,7 @@ def test_read_pgm_status(address, timeout):
     lsv2.disconnect()
 
 
-def test_read_pgm_stack(address, timeout):
+def test_read_pgm_stack(address: str, timeout: float):
     """test if reading the program stack works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -30,7 +30,7 @@ def test_read_pgm_stack(address, timeout):
     lsv2.disconnect()
 
 
-def test_read_execution_state(address, timeout):
+def test_read_execution_state(address: str, timeout: float):
     """test if reading the executions state works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -44,7 +44,7 @@ def test_read_execution_state(address, timeout):
     lsv2.disconnect()
 
 
-def test_read_tool_information(address, timeout):
+def test_read_tool_information(address: str, timeout: float):
     """test if reading tool information on iTNC works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -53,7 +53,7 @@ def test_read_tool_information(address, timeout):
     lsv2.disconnect()
 
 
-def test_read_override_information(address, timeout):
+def test_read_override_information(address: str, timeout: float):
     """test if reading override values works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -61,7 +61,7 @@ def test_read_override_information(address, timeout):
     lsv2.disconnect()
 
 
-def test_read_error_messages(address, timeout):
+def test_read_error_messages(address: str, timeout: float):
     """test if reading error messages on iTNC works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -70,7 +70,7 @@ def test_read_error_messages(address, timeout):
     lsv2.disconnect()
 
 
-def test_read_axes_location(address, timeout):
+def test_read_axes_location(address: str, timeout: float):
     """test if reading axis location works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()

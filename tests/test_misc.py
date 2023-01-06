@@ -7,7 +7,7 @@ from pathlib import Path
 import pyLSV2
 
 
-def test_grab_screen_dump(address, timeout):
+def test_grab_screen_dump(address: str, timeout: float):
     """test if creating a screen dump works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()

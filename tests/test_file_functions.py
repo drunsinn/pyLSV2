@@ -5,7 +5,7 @@
 import pyLSV2
 
 
-def test_read_info(address, timeout):
+def test_read_info(address: str, timeout: float):
     """test if reading of file information works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
@@ -26,7 +26,7 @@ def test_read_info(address, timeout):
     lsv2.disconnect()
 
 
-def test_directory_functions(address, timeout):
+def test_directory_functions(address: str, timeout: float):
     """test if functions to change, create and delete directories work"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
 
@@ -52,7 +52,7 @@ def test_directory_functions(address, timeout):
     lsv2.disconnect()
 
 
-def test_remote_file_functions(address, timeout):
+def test_remote_file_functions(address: str, timeout: float):
     """test if functions for manipulating the remote file system work"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
@@ -112,7 +112,7 @@ def test_remote_file_functions(address, timeout):
     lsv2.disconnect()
 
 
-def test_path_formating(address, timeout):
+def test_path_formating(address: str, timeout: float):
     """test if reading of file information with / instead of \\ as path separator"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
@@ -129,7 +129,7 @@ def test_path_formating(address, timeout):
     lsv2.disconnect()
 
 
-def test_file_search(address, timeout):
+def test_file_search(address: str, timeout: float):
     """test if searching for files works. assumes that at least one file is present in root directory"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()

@@ -246,16 +246,14 @@ class LSV2RS232:
     # Default size of send and receive buffer
 
     def __init__(self, port: str, speed: int, timeout: float = 15.0):
-        raise NotImplementedError()
-        import serial
-
         self._logger = logging.getLogger("LSV2 RS232")
-
         self.buffer_size = LSV2RS232.DEFAULT_BUFFER_SIZE
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
         self._last_error = LSV2Error()
+        raise NotImplementedError()
+        import serial
 
     @property
     def last_response(self) -> RSP:
@@ -289,12 +287,14 @@ class LSV2RS232:
         Establish connection to control
         """
         raise NotImplementedError()
+        pass
 
     def disconnect(self):
         """
         Close connection
         """
         raise NotImplementedError()
+        pass
 
     def telegram(
         self,
