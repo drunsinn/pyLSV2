@@ -635,6 +635,8 @@ class LSV2:
         Returns ``None`` of file doesn't exist or missing access rights
 
         :param remote_file_path: path of file on the control
+
+        :raises LSV2ProtocolException: if an error occured during reading of file info
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -648,9 +650,15 @@ class LSV2:
             file_info = lm.decode_file_system_info(result, self._versions.type)
             self._logger.debug("received file information for %s", file_info.name)
             return file_info
-        self._logger.warning(
-            "an error occurred while querying file info this might also indicate that it does not exist %s",
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+            self._logger.debug("file does not exist")
+            return None
+
+        self._logger.error(
+            "an error occurred while querying file info for %s : '%s'",
             remote_file_path,
+            lt.get_error_text(self.last_error),
         )
         return None
 
@@ -679,7 +687,10 @@ class LSV2:
                 "received %d packages for directory content", len(dir_content)
             )
         else:
-            self._logger.warning("an error occurred while directory content info")
+            self._logger.warning(
+                "an error occurred while directory content info: '%s'",
+                lt.get_error_text(self.last_error),
+            )
         return dir_content
 
     def drive_info(self) -> List[ld.DriveEntry]:
@@ -705,7 +716,10 @@ class LSV2:
                 drives_list,
             )
         else:
-            self._logger.warning("an error occurred while reading drive info")
+            self._logger.warning(
+                "an error occurred while reading drive info: '%s'",
+                lt.get_error_text(self.last_error),
+            )
         return drives_list
 
     def make_directory(self, dir_path: str) -> bool:
@@ -736,7 +750,9 @@ class LSV2:
                     self._logger.debug("Directory created successfully")
                 else:
                     self._logger.warning(
-                        "an error occurred while creating directory %s", dir_path
+                        "an error occurred while creating directory %s: '%s'",
+                        dir_path,
+                        lt.get_error_text(self.last_error),
                     )
                     return False
             else:
@@ -762,8 +778,19 @@ class LSV2:
         if isinstance(result, (bool)) and result is True:
             self._logger.debug("successfully deleted directory %s", dir_path)
             return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_DIR:
+            self._logger.debug("noting to do, direcotry %s didn't exist", dir_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_DEL_DIR:
+            self._logger.debug(
+                "could not delete direcotry %s since it is not empty", dir_path
+            )
+            return False
+
         self._logger.warning(
-            "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
+            "an error occurred while deleting directory %s",
             dir_path,
         )
         return False
@@ -783,14 +810,23 @@ class LSV2:
         file_path = file_path.replace("/", lc.PATH_SEP)
         payload = lm.ustr_to_ba(file_path)
 
-        if not self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
-            self._logger.warning(
-                "an error occurred while deleting file %s, this might also indicate that it it does not exist",
-                file_path,
-            )
+        if self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
+            self._logger.debug("successfully deleted file %s", file_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+            self._logger.debug("noting to do, file %s didn't exist", file_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_DELETE:
+            self._logger.info("could not delete file %s since it is in use", file_path)
             return False
-        self._logger.debug("successfully deleted file %s", file_path)
-        return True
+
+        self._logger.warning(
+            "an error occurred while deleting file %s",
+            file_path,
+        )
+        return False
 
     def copy_remote_file(self, source_path: str, target_path: str) -> bool:
         """
@@ -832,15 +868,16 @@ class LSV2:
             source_directory,
             target_path,
         )
-        if not self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
-            self._logger.warning(
-                "an error occurred copying file %s to %s", source_path, target_path
-            )
-            return False
-        self._logger.debug("successfully copied file %s", source_path)
-        return True
+        if self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
+            self._logger.debug("successfully copied file %s", source_path)
+            return True
 
-    def move_local_file(self, source_path: str, target_path: str) -> bool:
+        self._logger.warning(
+            "an error occurred copying file %s to %s", source_path, target_path
+        )
+        return False
+
+    def move_file(self, source_path: str, target_path: str) -> bool:
         """
         Move file on control from one place to another.
         Requires access level ``FILETRANSFER`` to work.
@@ -876,13 +913,29 @@ class LSV2:
                 source_directory,
                 target_path,
             )
-            if not self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
-                self._logger.warning(
-                    "an error occurred moving file %s to %s", source_path, target_path
+            if self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
+                self._logger.debug("successfully moved file %s", source_path)
+                return True
+
+            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_FILE_EXISTS:
+                self._logger.info(
+                    "could not move file %s to %s since already exists",
+                    source_path,
+                    target_path,
                 )
                 return False
-            self._logger.debug("successfully moved file %s", source_path)
-            return True
+
+            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+                self._logger.info(
+                    "could not move file since either source or target path does not exist",
+                )
+                return False
+
+            self._logger.warning(
+                "an error occurred moving file %s to %s", source_path, target_path
+            )
+            return False
+
         self._logger.warning("could not log in as user FILE")
         return False
 

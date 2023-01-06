@@ -103,6 +103,7 @@ These changes where made intentionally to make further development easier. See t
 | get execution status via     | con.get_execution_status() returns plain int value  | con.execution_status() returns enum ExecState     |
 | read override values via     | con.get_override_info() returns dict or False       | con.override_info() returns OverrideState or None |
 | read axes position via       | con.get_axes_location() returns dict or False       | con.axes_location() returns dict or None          |
+| move a file on the control   | con.move_local_file()                               | con.move_file()                                   |
 
 ### Basic example without context manager
 ```

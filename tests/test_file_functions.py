@@ -97,9 +97,7 @@ def test_remote_file_functions(address: str, timeout: float):
 
     assert lsv2.file_info(test_file_2) is not False
 
-    assert (
-        lsv2.move_local_file(source_path=test_file_2, target_path=test_file_3) is True
-    )
+    assert lsv2.move_file(source_path=test_file_2, target_path=test_file_3) is True
     assert lsv2.file_info(test_file_3) is not False
 
     assert lsv2.delete_file(test_file_3) is True
