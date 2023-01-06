@@ -9,6 +9,11 @@ import time
 import pyLSV2
 from pyLSV2.const import MemoryType
 
+__author__ = "drunsinn"
+__license__ = "MIT"
+__version__ = "1.0"
+__email__ = "dr.unsinn@googlemail.com"
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 

@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*
 """package configuration for pyLSV2"""
 from setuptools import find_packages, setup
-from pyLSV2 import __version__, __doc__
+from pyLSV2 import __doc__, __version__, __author__, __license__, __email__
 
 setup(
     name="pyLSV2",
-    python_requires=">=3.5",
+    python_requires=">=3.4",
     packages=find_packages(
         include=[
             "pyLSV2",
@@ -19,13 +19,12 @@ setup(
     description=__doc__,
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author="drunsinn",
-    author_email="dr.unsinn@googlemail.com",
+    author=__author__,
+    author_email=__email__,
     url="https://github.com/drunsinn/pyLSV2",
-    license="MIT",
+    license=__license__,
     install_requires=[],
     scripts=["scripts/lsv2cmd.py", "scripts/tab2csv.py"],
-    zip_safe=True,
     keywords="LSV2 cnc communication transfer plc",
     classifiers=[
         "Programming Language :: Python :: 3",

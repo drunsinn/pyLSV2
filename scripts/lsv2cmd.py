@@ -12,6 +12,11 @@ import socket
 
 import pyLSV2
 
+__author__ = "drunsinn"
+__license__ = "MIT"
+__version__ = "1.0"
+__email__ = "dr.unsinn@googlemail.com"
+
 REMOTE_PATH_REGEX = r"^(?P<prot>lsv2(\+ssh)?):\/\/(?P<host>[\w\.-]*)(?::(?P<port>\d{2,5}))?(?:\/(?P<drive>(TNC|PLC):))(?P<path>(\/[\$\.\w\d_-]+)*)\/?$"
 
 if __name__ == "__main__":
