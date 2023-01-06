@@ -3,17 +3,16 @@
 """This script lets you use some of the functions included in pyLSV2 via
    the command line.
 """
+import os
 import sys
 import logging
 import argparse
 import re
 import socket
-from pathlib import Path
 
 import pyLSV2
 
-REMOTE_PATH_REGEX = r"^(?P<prot>lsv2):\/\/(?P<host>[\w\.]*)(?::(?P<port>\d{2,5}))?(?:\/(?P<drive>(TNC|PLC):))(?P<path>(\/[\$\.\w\d_-]+)*)\/?$"
-logging.basicConfig(level=logging.INFO)
+REMOTE_PATH_REGEX = r"^(?P<prot>lsv2(\+ssh)?):\/\/(?P<host>[\w\.-]*)(?::(?P<port>\d{2,5}))?(?:\/(?P<drive>(TNC|PLC):))(?P<path>(\/[\$\.\w\d_-]+)*)\/?$"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -29,6 +28,7 @@ if __name__ == "__main__":
         help="destination file. Either local path or URL with format lsv2://<hostname_or_ip>:<port>/TNC:/<path_to_file>",
         type=str,
     )
+
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument(
         "-d",
@@ -46,7 +46,9 @@ if __name__ == "__main__":
         action="store_const",
         dest="loglevel",
         const=logging.INFO,
+        default=logging.WARNING,
     )
+
     parser.add_argument(
         "-t", "--timeout", help="timeout duration in seconds", type=float, default=10.0
     )
@@ -60,26 +62,34 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel)
+    logger = logging.getLogger("lsv2cmd")
 
-    logging.debug('Start logging with level "%s"', logging.getLevelName(args.loglevel))
+    logger.debug("Start logging with level '%s'", logging.getLevelName(args.loglevel))
+    logger.debug("Source Path: %s", args.source)
+    logger.debug("Destination Path: %s", args.destination)
 
     source_is_remote = False
     dest_is_remote = False
 
-    host_machine = None
+    host_machine = ""
     host_port = 19000
     use_ssh = False
 
+    source_path = ""
+    dest_path = ""
+
     source_match = re.match(REMOTE_PATH_REGEX, args.source)
+    logger.debug("result of regex for source: %s", source_match)
+
     if source_match is not None:
         source_is_remote = True
         source_path = source_match.group("drive") + source_match.group("path")
-        host_machine = source_match.group("host")
+        host_machine = str(source_match.group("host"))
         if source_match.group("port") is not None:
             host_port = int(source_match.group("port"))
-        if source_match.group("prot") == "ssh":
+        if "ssh" in source_match.group("prot"):
             use_ssh = True
-        logging.info(
+        logger.info(
             "Source path %s is on remote %s:%d via %s",
             source_path,
             host_machine,
@@ -87,28 +97,29 @@ if __name__ == "__main__":
             source_match.group("prot"),
         )
     else:
-        source_path = Path(args.source)
-        logging.info("Source path %s is local", source_path.resolve())
+        source_path = args.source
+        logger.info("Source path %s is local", os.path.abspath(source_path))
 
     dest_match = re.match(REMOTE_PATH_REGEX, args.destination)
+    logger.debug("result of regex for destination: %s", dest_match)
+
     if dest_match is not None:
         dest_is_remote = True
         dest_path = dest_match.group("drive") + dest_match.group("path")
-
         if source_is_remote and host_machine != dest_match.group("host"):
-            logging.error(
-                'Cant copy between different remotes "%s" and "%s"',
+            logger.error(
+                "Can't copy between different remotes '%s' and '%s'",
                 host_machine,
                 dest_match.group("host"),
             )
             sys.exit(-1)
 
-        host_machine = dest_match.group("host")
+        host_machine = str(dest_match.group("host"))
         if dest_match.group("port") is not None:
             host_port = int(dest_match.group("port"))
-        if dest_match.group("prot") == "ssh":
+        if "ssh" in dest_match.group("prot"):
             use_ssh = True
-        logging.info(
+        logger.info(
             "Destination path %s is on remote %s:%s via %s",
             dest_path,
             host_machine,
@@ -116,8 +127,8 @@ if __name__ == "__main__":
             dest_match.group("prot"),
         )
     else:
-        dest_path = Path(args.destination)
-        logging.info("Destination path %s is local", dest_path.resolve())
+        dest_path = args.destination
+        logger.info("Destination path %s is local", os.path.abspath(dest_path))
 
     if use_ssh:
         import sshtunnel
@@ -128,52 +139,54 @@ if __name__ == "__main__":
         ssh_forwarder.start()
         host_machine = "127.0.0.1"
         host_port = ssh_forwarder.local_bind_port
-        logging.info("SSH tunnel established. local port is %d", host_port)
+        logger.info("SSH tunnel established. local port is %d", host_port)
 
     try:
         con = pyLSV2.LSV2(hostname=host_machine, port=host_port, timeout=args.timeout)
         con.connect()
     except socket.gaierror as ex:
-        logging.error("An Exception occurred: '%s'", ex)
-        logging.error("Could not resove host information: '%s'", host_machine)
+        logger.error("An Exception occurred: '%s'", ex)
+        logger.error("Could not resove host information: '%s'", host_machine)
         sys.exit(-2)
 
     if source_is_remote:
-        file_info = con.file_info(remote_file_path=source_path)
+        file_info = con.file_info(remote_file_path=str(source_path))
         if not file_info:
-            logging.error("source file dose not exist on remote: '%s'", source_path)
+            logger.error("source file dose not exist on remote: '%s'", source_path)
             sys.exit(-3)
-        elif file_info["is_directory"]:
-            logging.error(
+        elif file_info.is_directory or file_info.is_drive:
+            logger.error(
                 "source on remote is not file but directory: '%s'", source_path
             )
             sys.exit(-4)
     else:
-        if not source_path.exists():
-            if source_path.is_file():
-                logging.error("source file dose not exist: '%s'", source_path)
+        if os.path.exists(source_path):
+            logger.debug("source file exists")
+        else:
+            if os.path.isfile(source_path):
+                logger.error("source file dose not exist: '%s'", source_path)
                 sys.exit(-5)
-            else:  # source_path.is_dir():
-                logging.error("source folder dose not exist: '%s'", source_path)
+            else:
+                logger.error("source folder dose not exist: '%s'", source_path)
                 sys.exit(-6)
 
     success = False
     if source_is_remote and dest_is_remote:
-        logging.debug("Local copy on remote")
+        logger.debug("Local copy on remote")
         success = con.copy_remote_file(source_path=source_path, target_path=dest_path)
     elif source_is_remote and not dest_is_remote:
-        logging.debug("copy from remote to this device")
+        logger.debug("copy from remote to local")
         success = con.recive_file(
             remote_path=source_path, local_path=dest_path, override_file=args.force
         )
     else:
-        logging.debug("copy from this device to remote")
+        logger.debug("copy from local to remote")
         success = con.send_file(
             local_path=source_path, remote_path=dest_path, override_file=args.force
         )
     con.disconnect()
 
     if success:
-        logging.info("File copied successful")
+        logger.info("File copied successful")
         sys.exit(0)
     sys.exit(-10)
