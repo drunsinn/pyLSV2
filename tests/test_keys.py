@@ -18,15 +18,15 @@ def test_key_press_sim(address, timeout):
 
     assert lsv2.send_key_code(pyLSV2.KeyCode.MODE_MANUAL) is True
     time.sleep(1)
-    assert lsv2.get_execution_status() is pyLSV2.ExecState.MANUAL
+    assert lsv2.execution_state() is pyLSV2.ExecState.MANUAL
 
     assert lsv2.send_key_code(pyLSV2.KeyCode.MODE_PGM_EDIT) is True
     time.sleep(1)
-    assert lsv2.get_execution_status() is pyLSV2.ExecState.MANUAL
+    assert lsv2.execution_state() is pyLSV2.ExecState.MANUAL
 
     assert lsv2.send_key_code(pyLSV2.KeyCode.MODE_AUTOMATIC) is True
     time.sleep(1)
-    assert lsv2.get_execution_status() is pyLSV2.ExecState.AUTOMATIC
+    assert lsv2.execution_state() is pyLSV2.ExecState.AUTOMATIC
 
     assert lsv2.set_keyboard_access(True) is True
 

@@ -68,16 +68,16 @@ if __name__ == "__main__":
             print("## function 'get_error_messages()' not suportet for this control")
 
         print("Machine:")
-        print("# axes positions: {}".format(con.get_axes_location()))
-        exec_stat = con.get_execution_status()
+        print("# axes positions: {}".format(con.axes_location()))
+        exec_stat = con.execution_state()
         exec_stat_text = pyLSV2.get_execution_status_text(exec_stat)
         print("# execution: {:d} - '{:s}'".format(exec_stat, exec_stat_text))
-        pgm_stat = con.get_program_status()
+        pgm_stat = con.program_status()
         if pgm_stat is not None:
             pgm_stat_text = pyLSV2.get_program_status_text(pgm_stat)
             print("# program: {:d} - '{:s}'".format(pgm_stat, pgm_stat_text))
 
-        pgm_stack = con.get_program_stack()
+        pgm_stack = con.program_stack()
         if pgm_stack is not None:
             print("# selected program: '{:s}'".format(pgm_stack.main))
             print(
@@ -86,7 +86,7 @@ if __name__ == "__main__":
                 )
             )
 
-        ovr_stat = con.get_override_info()
+        ovr_stat = con.override_state()
         if ovr_stat is not None:
             print(
                 "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
@@ -142,20 +142,20 @@ if __name__ == "__main__":
         con.set_keyboard_access(True)
 
         print("File access")
-        drv_info = con.get_drive_info()
+        drv_info = con.drive_info()
         print(
             "# names of disk drives: {:s}".format(
                 ", ".join([drv.name for drv in drv_info])
             )
         )
-        dir_info = con.get_directory_info()
+        dir_info = con.directory_info()
         print(
             "# current directory is '{:s}' with {:d} bytes of free drive space".format(
                 dir_info.path, dir_info.free_size
             )
         )
 
-        dir_content = con.get_directory_content()
+        dir_content = con.directory_content()
         only_files = filter(
             lambda f_e: f_e.is_directory is False and f_e.is_drive is False,
             dir_content,
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         print("## found {:d} ISO programs on TNC drive".format(len(i_files)))
 
         print("Read spindle tool information")
-        t_info = con.get_spindle_tool_status()
+        t_info = con.spindle_tool_status()
         if t_info is not None:
             print("# direct reading of current tool successful")
             print(

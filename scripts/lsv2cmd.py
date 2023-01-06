@@ -139,7 +139,7 @@ if __name__ == "__main__":
         sys.exit(-2)
 
     if source_is_remote:
-        file_info = con.get_file_info(remote_file_path=source_path)
+        file_info = con.file_info(remote_file_path=source_path)
         if not file_info:
             logging.error("source file dose not exist on remote: '%s'", source_path)
             sys.exit(-3)

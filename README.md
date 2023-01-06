@@ -96,13 +96,13 @@ Notice: The change from 0.xx to 1.xx brought some major incompatible changes in 
 These changes where made intentionally to make further development easier. See the demo script for an overview of the new API.
 
 #### exemplary overview of the changes from v0.x to v1.x
-| Functionality                                       | Version 0.x                      | Version 1.x                   |
-|-----------------------------------------------------|----------------------------------|-------------------------------|
-| read nc software version                            | con.get_versions()["NC_Version"] | con.versions.nc_sw            |
-| check if control is a iTNC                          | con.is_itnc()                    | con.version.is_itnc()         |
-| get execution status via con.get_execution_status() | returns plain int value          | returns enum ExecState        |
-| read override values via con.get_override_info()    | returns dict or False            | returns OverrideState or None |
-| read axes position via con.get_axes_location()      | returns dict or False            | returns dict or None          |
+| Functionality                | Version 0.x                                         | Version 1.x                                       |
+|------------------------------|-----------------------------------------------------|---------------------------------------------------|
+| read nc software version     | con.get_versions()["NC_Version"]                    | con.versions.nc_sw                                |
+| check if control is a iTNC   | con.is_itnc()                                       | con.version.is_itnc()                             |
+| get execution status via     | con.get_execution_status() returns plain int value  | con.execution_status() returns enum ExecState     |
+| read override values via     | con.get_override_info() returns dict or False       | con.override_info() returns OverrideState or None |
+| read axes position via       | con.get_axes_location() returns dict or False       | con.axes_location() returns dict or None          |
 
 ### Basic example without context manager
 ```

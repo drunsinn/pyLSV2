@@ -170,7 +170,6 @@ class NCTable:
         raise DeprecationWarning(
             "Do not use this function anymore! Use ```column_names```"
         )
-        # return self._columns
 
     def append_row(self, row):
         """add a data entry to the table"""

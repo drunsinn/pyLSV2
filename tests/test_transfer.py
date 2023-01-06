@@ -53,7 +53,7 @@ def test_file_transfer_binary(address, timeout):
         local_recive_path = Path(tmp_dir_name).joinpath("test.bmp")
         remote_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + local_send_path.name
 
-        assert lsv2.get_file_info(remote_path) is not True  # is False doesn't work...
+        assert lsv2.file_info(remote_path) is not True  # is False doesn't work...
 
         assert (
             lsv2.send_file(

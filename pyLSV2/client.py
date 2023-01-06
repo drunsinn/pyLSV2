@@ -196,7 +196,9 @@ class LSV2:
             self._logger.debug("no response expected")
             return False
 
-        self._logger.warning("received unexpected response %s", self._llcom.last_response)
+        self._logger.warning(
+            "received unexpected response %s", self._llcom.last_response
+        )
         return False
 
     def _send_recive_block(
@@ -505,7 +507,7 @@ class LSV2:
 
         return self._versions
 
-    def get_program_status(self) -> lc.PgmState:
+    def program_status(self) -> lc.PgmState:
         """
         Ret status code of currently active program.
         Requires access level ``DNC`` to work.
@@ -526,7 +528,7 @@ class LSV2:
         self._logger.warning("an error occurred while querying program state")
         return lc.PgmState.UNDEFINED
 
-    def get_program_stack(self) -> Union[ld.StackState, None]:
+    def program_stack(self) -> Union[ld.StackState, None]:
         """
         Get path of currently active nc program(s) and current line number.
         Requires access level ``DNC`` to work.
@@ -546,7 +548,7 @@ class LSV2:
 
         return None
 
-    def get_execution_status(self) -> lc.ExecState:
+    def execution_state(self) -> lc.ExecState:
         """
         Get status code of program state
         Requires access level ``DNC`` to work.
@@ -567,7 +569,7 @@ class LSV2:
         self._logger.warning("an error occurred while querying execution state")
         return lc.ExecState.UNDEFINED
 
-    def get_directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
+    def directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
         """
         Read information about the currenct working directory on the control.
         Requires access level ``FILETRANSFER`` to work.
@@ -620,7 +622,7 @@ class LSV2:
         self._logger.warning("an error occurred while changing directory")
         return False
 
-    def get_file_info(self, remote_file_path: str) -> Union[ld.FileEntry, None]:
+    def file_info(self, remote_file_path: str) -> Union[ld.FileEntry, None]:
         """
         Query information about a file.
         Requires access level ``FILETRANSFER`` to work.
@@ -646,7 +648,7 @@ class LSV2:
         )
         return None
 
-    def get_directory_content(self) -> List[ld.FileEntry]:
+    def directory_content(self) -> List[ld.FileEntry]:
         """
         Query content of current working directory from the control. In some situations it is necessary to
         fist call get_directory_info() or else the attributes won't be correct.
@@ -674,7 +676,7 @@ class LSV2:
             self._logger.warning("an error occurred while directory content info")
         return dir_content
 
-    def get_drive_info(self) -> list:
+    def drive_info(self) -> list:
         """
         Read info all drives and partitions from the control.
         Requires access level ``FILETRANSFER`` to work.
@@ -720,7 +722,7 @@ class LSV2:
         for part in path_parts:
             path_to_check += part + lc.PATH_SEP
             # no file info -> does not exist and has to be created
-            if self.get_file_info(path_to_check) is None:
+            if self.file_info(path_to_check) is None:
                 payload = lm.ustr_to_ba(path_to_check)
 
                 result = self._send_recive(lc.CMD.C_DM, payload, lc.RSP.T_OK)
@@ -932,16 +934,14 @@ class LSV2:
                     )
         else:
             remote_file_name = remote_path
-            remote_directory = self.get_directory_info().path  # get pwd
+            remote_directory = self.directory_info().path  # get pwd
         remote_directory = remote_directory.rstrip(lc.PATH_SEP)
 
-        if not self.get_directory_info(remote_directory):
+        if not self.directory_info(remote_directory):
             self._logger.debug("remote path does not exist, create directory(s)")
             self.make_directory(remote_directory)
 
-        remote_info = self.get_file_info(
-            remote_directory + lc.PATH_SEP + remote_file_name
-        )
+        remote_info = self.file_info(remote_directory + lc.PATH_SEP + remote_file_name)
 
         if remote_info:
             self._logger.debug("remote path exists and points to file's")
@@ -1061,7 +1061,7 @@ class LSV2:
             local_file = local_path
 
         remote_path = remote_path.replace("/", lc.PATH_SEP)
-        remote_file_info = self.get_file_info(remote_path)
+        remote_file_info = self.file_info(remote_path)
         if not remote_file_info:
             self._logger.warning("remote file does not exist: %s", remote_path)
             return False
@@ -1326,9 +1326,8 @@ class LSV2:
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
             raise LSV2DataException(
-                "number of received values %d is not equal to number of requested %d" % (
-                len(plc_values),
-                number_of_elements)
+                "number of received values %d is not equal to number of requested %d"
+                % (len(plc_values), number_of_elements)
             )
         return plc_values
 
@@ -1463,7 +1462,7 @@ class LSV2:
         )
         return False
 
-    def get_spindle_tool_status(self) -> Union[ld.ToolInformation, None]:
+    def spindle_tool_status(self) -> Union[ld.ToolInformation, None]:
         """
         Get information about the tool currently in the spindle
         Requires access level ``DNC`` to work.
@@ -1485,7 +1484,7 @@ class LSV2:
         )
         return None
 
-    def get_override_info(self) -> Union[ld.OverrideState, None]:
+    def override_state(self) -> Union[ld.OverrideState, None]:
         """
         Get information about the override info.
         Requires access level ``DNC`` to work.
@@ -1563,9 +1562,9 @@ class LSV2:
             self._logger.warning("clould not log in as user FILE")
             return []
 
-        current_path = self.get_directory_info().path
+        current_path = self.directory_info().path
         content = []
-        for entry in self.get_directory_content():
+        for entry in self.directory_content():
             if entry.name == "." or entry.name == ".." or entry.name.endswith(":"):
                 continue
             current_fs_element = str(current_path + entry.name).replace(
@@ -1673,7 +1672,7 @@ class LSV2:
         )
         return None
 
-    def get_axes_location(self) -> Union[dict, None]:
+    def axes_location(self) -> Union[dict, None]:
         """
         Read axes location from control. Not fully documented, value of first byte unknown.
         Requires access level ``DNC`` to work.
