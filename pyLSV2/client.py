@@ -63,15 +63,11 @@ class LSV2:
     @property
     def versions(self) -> ld.VersionInfo:
         """version information of the connected control"""
-        # if len(self._versions.control_version) < 1:
-        #    self._read_version()
         return self._versions
 
     @property
     def parameters(self) -> ld.SystemParameters:
         """system parameters of the connected control"""
-        # if self._sys_par.lsv2_version < 0:
-        #    self._read_parameters()
         return self._sys_par
 
     @property
@@ -106,8 +102,13 @@ class LSV2:
         exc_tb: Optional[TracebackType],
     ):
         """exit context"""
+        self._logger.debug(
+            "close context with exeption type '%s', value '%s' and traceback '%s'",
+            exc_type,
+            exc_value,
+            exc_tb,
+        )
         self.disconnect()
-        # print(exc_type, exc_value, exc_tb, sep="\n")
 
     def switch_safe_mode(self, enable_safe_mode: bool = True):
         """switch between safe mode and unrestricted mode"""
@@ -891,52 +892,53 @@ class LSV2:
         """
         source_path = source_path.replace("/", lc.PATH_SEP)
         target_path = target_path.replace("/", lc.PATH_SEP)
+
         if self.login(lc.Login.FILETRANSFER):
-            if lc.PATH_SEP in source_path:
-                source_file_name = source_path.split(lc.PATH_SEP)[-1]
-                source_directory = source_path.rstrip(source_file_name)
-                if not self.change_directory(remote_directory=source_directory):
-                    raise LSV2StateException("could not open the source directory")
-            else:
-                source_file_name = source_path
-                source_directory = "."
+            self._logger.warning("could not log in as user FILE")
+            return False
 
-            if target_path.endswith(lc.PATH_SEP):
-                target_path += source_file_name
+        if lc.PATH_SEP in source_path:
+            source_file_name = source_path.split(lc.PATH_SEP)[-1]
+            source_directory = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_directory):
+                raise LSV2StateException("could not open the source directory")
+        else:
+            source_file_name = source_path
+            source_directory = "."
 
-            payload = lm.ustr_to_ba(source_file_name)
-            payload.extend(lm.ustr_to_ba(target_path))
+        if target_path.endswith(lc.PATH_SEP):
+            target_path += source_file_name
 
-            self._logger.debug(
-                "prepare to move file %s from %s to %s",
-                source_file_name,
-                source_directory,
+        payload = lm.ustr_to_ba(source_file_name)
+        payload.extend(lm.ustr_to_ba(target_path))
+
+        self._logger.debug(
+            "prepare to move file %s from %s to %s",
+            source_file_name,
+            source_directory,
+            target_path,
+        )
+        if self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
+            self._logger.debug("successfully moved file %s", source_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_FILE_EXISTS:
+            self._logger.info(
+                "could not move file %s to %s since already exists",
+                source_path,
                 target_path,
-            )
-            if self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
-                self._logger.debug("successfully moved file %s", source_path)
-                return True
-
-            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_FILE_EXISTS:
-                self._logger.info(
-                    "could not move file %s to %s since already exists",
-                    source_path,
-                    target_path,
-                )
-                return False
-
-            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
-                self._logger.info(
-                    "could not move file since either source or target path does not exist",
-                )
-                return False
-
-            self._logger.warning(
-                "an error occurred moving file %s to %s", source_path, target_path
             )
             return False
 
-        self._logger.warning("could not log in as user FILE")
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+            self._logger.info(
+                "could not move file since either source or target path does not exist",
+            )
+            return False
+
+        self._logger.warning(
+            "an error occurred moving file %s to %s", source_path, target_path
+        )
         return False
 
     def send_file(
@@ -1054,15 +1056,15 @@ class LSV2:
                     if self._llcom.last_response in lc.RSP.T_OK:
                         pass
                     else:
-                        if self._llcom.last_response is lc.RSP.T_ER:
-                            self._logger.warning(
-                                "error received, %s '%s'",
+                        if self._llcom.last_response == lc.RSP.T_ER:
+                            self._logger.info(
+                                "control returned error '%s' wich translates to '%s'",
                                 self.last_error,
                                 lt.get_error_text(self.last_error),
                             )
                         else:
                             self._logger.warning(
-                                "could not send data with error %s",
+                                "could not send data, recived unexpected response '%s'",
                                 self._llcom.last_response,
                             )
                         return False
@@ -1070,11 +1072,17 @@ class LSV2:
             # signal that no more data is being sent
             if self._secure_file_send:
                 if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.T_OK):
-                    self._logger.warning("could not send end of file with error")
+                    self._logger.warning(
+                        "could not send end of transmission telegram, got response '%s'",
+                        self._llcom.last_response,
+                    )
                     return False
             else:
                 if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.NONE):
-                    self._logger.warning("could not send end of file with error")
+                    self._logger.warning(
+                        "could not send end of transmission telegram, got response '%s'",
+                        self._llcom.last_response,
+                    )
                     return False
 
         else:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """A pure Python3 implementation of the LSV2 protocol"""
-from .client import LSV2
+from .client import *
 from .const import *
 from .dat_cls import *
 from .table_reader import *
