@@ -166,8 +166,6 @@ These changes where made intentionally to make further development easier. See t
 
  If you have tested it on one of your machines with a different software version, please let us know!
 
- Take a look at [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst) for a more in depth explanation on the details of LSV2.
-
 # Tables
  Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
@@ -208,7 +206,7 @@ These changes where made intentionally to make further development easier. See t
  of [IronPython](https://ironpython.net/) if you install these two modules.
 
 # Resources
+ - [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst)
  - https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
  - https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
  - https://www.yumpu.com/en/document/read/18882603/-f-heidenhain
- - https://github.com/drunsinn/pyLSV2/files/10254868/SDK_Help.zip
