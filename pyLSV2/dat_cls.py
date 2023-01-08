@@ -26,6 +26,9 @@ class VersionInfo:
         self.id_number = ""
         self.release = ""
 
+    def __str__(self) -> str:
+        return "%s / %s" % (self.control, self.nc_sw)
+
     @property
     def control(self) -> str:
         """
@@ -542,6 +545,13 @@ class OverrideState:
         self.rapid = -1.0
         self.spindle = -1.0
 
+    def __str__(self) -> str:
+        return "F:%3.1f%% FMAX:%3.1f%% S:%3.1f%%" % (
+            self.feed,
+            self.rapid,
+            self.spindle,
+        )
+
     @property
     def feed(self) -> float:
         """override value for feed rate"""
@@ -585,7 +595,7 @@ class NCErrorMessage:
         self.e_text = ""
         self.dnc = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Class: %d, Group: %d, Number: %d, DNC?: %s, Text: '%s'" % (
             self.e_class,
             self.e_group,
@@ -648,6 +658,13 @@ class StackState:
         self.line_no = -1
         self.main = ""
         self.current = ""
+
+    def __str__(self) -> str:
+        return "Main '%s' Current '%s' @ Line %d" % (
+            self.main,
+            self.current,
+            self.line_no,
+        )
 
     @property
     def line_no(self) -> int:
