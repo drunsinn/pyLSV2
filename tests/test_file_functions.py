@@ -19,7 +19,7 @@ def test_read_info(address: str, timeout: float):
 
     assert lsv2.change_directory(remote_directory="TNC:\\nc_prog") is True
     assert lsv2.directory_info() is not False
-    assert lsv2.file_info(remote_file_path=mdi_path) is not False
+    assert lsv2.file_info(remote_file_path=mdi_path) is not None
     assert lsv2.directory_content() is not False
     assert lsv2.drive_info() is not False
 
@@ -30,7 +30,7 @@ def test_directory_functions(address: str, timeout: float):
     """test if functions to change, create and delete directories work"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
 
-    test_dir = "TNC:\\nc_prog\\pyLSV2_test\\"
+    test_dir = "TNC:\\nc_prog\\pyLSV2_test_dir_func\\"
 
     lsv2.connect()
     assert lsv2.change_directory("TNC:\\nc_prog") is True
@@ -57,7 +57,7 @@ def test_remote_file_functions(address: str, timeout: float):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    test_dir = "TNC:\\nc_prog\\pyLSV2_test\\"
+    test_dir = "TNC:\\nc_prog\\pyLSV2_test_file_func\\"
 
     if lsv2.versions.is_itnc():
         mdi_dir = "TNC:\\"
@@ -83,22 +83,22 @@ def test_remote_file_functions(address: str, timeout: float):
             lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_dir)
             is True
         )
-        assert lsv2.file_info(test_dir + mdi_name) is not False
+        assert lsv2.file_info(test_dir + mdi_name) is not None
         assert lsv2.delete_file(test_dir + mdi_name) is True
 
     assert (
         lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_file_1)
         is True
     )
-    assert lsv2.file_info(test_file_1) is not False
+    assert lsv2.file_info(test_file_1) is not None
 
     assert lsv2.change_directory(remote_directory=mdi_dir) is True
     assert lsv2.copy_remote_file(source_path=mdi_name, target_path=test_file_2) is True
 
-    assert lsv2.file_info(test_file_2) is not False
+    assert lsv2.file_info(test_file_2) is not None
 
     assert lsv2.move_file(source_path=test_file_2, target_path=test_file_3) is True
-    assert lsv2.file_info(test_file_3) is not False
+    assert lsv2.file_info(test_file_3) is not None
 
     assert lsv2.delete_file(test_file_3) is True
     assert lsv2.file_info(test_file_3) is None
@@ -122,7 +122,7 @@ def test_path_formating(address: str, timeout: float):
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"
 
-    assert lsv2.file_info(mdi_path) is not False
+    assert lsv2.file_info(mdi_path) is not None
 
     lsv2.disconnect()
 
