@@ -99,7 +99,18 @@ class LSV2TCP:
         try:
             self._tcpsock.connect((self._host_ip, self._port))
         except socket.timeout:
-            self._logger.error("could not connect to control")
+            self._logger.error(
+                "could not connect to address '%s' on port %d",
+                self._host_ip,
+                self._port,
+            )
+            raise
+        except ConnectionRefusedError:
+            self._logger.error(
+                "connection to address '%s' on port %d was refused",
+                self._host_ip,
+                self._port,
+            )
             raise
 
         self._is_connected = True
