@@ -488,7 +488,7 @@ class LSV2:
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 info_data.id_number = lm.ba_to_ustr(result)
 
-            if self.versions.is_itnc():
+            if "itnc" in info_data.control.lower():
                 info_data.release = "not supported"
             else:
                 result = self._send_recive(
@@ -893,7 +893,7 @@ class LSV2:
         source_path = source_path.replace("/", lc.PATH_SEP)
         target_path = target_path.replace("/", lc.PATH_SEP)
 
-        if self.login(lc.Login.FILETRANSFER):
+        if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
             return False
 
