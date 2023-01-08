@@ -37,7 +37,7 @@ class LSV2TCP:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
             logging.error(
-                "there was an error geting the IP for the hostname %s", hostname
+                "there was an error getting the IP for the hostname %s", hostname
             )
             raise
 

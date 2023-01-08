@@ -103,7 +103,7 @@ class LSV2:
     ):
         """exit context"""
         self._logger.debug(
-            "close context with exeption type '%s', value '%s' and traceback '%s'",
+            "close context with exception type '%s', value '%s' and traceback '%s'",
             exc_type,
             exc_value,
             exc_tb,
@@ -637,7 +637,7 @@ class LSV2:
 
         :param remote_file_path: path of file on the control
 
-        :raises LSV2ProtocolException: if an error occured during reading of file info
+        :raises LSV2ProtocolException: if an error occurred during reading of file info
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -781,12 +781,12 @@ class LSV2:
             return True
 
         if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_DIR:
-            self._logger.debug("noting to do, direcotry %s didn't exist", dir_path)
+            self._logger.debug("noting to do, directory %s didn't exist", dir_path)
             return True
 
         if self.last_error.e_code == lc.LSV2StatusCode.T_ER_DEL_DIR:
             self._logger.debug(
-                "could not delete direcotry %s since it is not empty", dir_path
+                "could not delete directory %s since it is not empty", dir_path
             )
             return False
 
@@ -1058,13 +1058,13 @@ class LSV2:
                     else:
                         if self._llcom.last_response == lc.RSP.T_ER:
                             self._logger.info(
-                                "control returned error '%s' wich translates to '%s'",
+                                "control returned error '%s' which translates to '%s'",
                                 self.last_error,
                                 lt.get_error_text(self.last_error),
                             )
                         else:
                             self._logger.warning(
-                                "could not send data, recived unexpected response '%s'",
+                                "could not send data, received unexpected response '%s'",
                                 self._llcom.last_response,
                             )
                         return False
