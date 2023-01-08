@@ -36,7 +36,9 @@ class LSV2TCP:
         try:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
-            logging.error("there was an error resolving the host")
+            logging.error(
+                "there was an error geting the IP for the hostname %s", hostname
+            )
             raise
 
         self._port = self.DEFAULT_PORT

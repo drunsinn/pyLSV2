@@ -1028,10 +1028,10 @@ class LSV2:
         payload = lm.ustr_to_ba(remote_directory + lc.PATH_SEP + remote_file_name)
         if binary_mode or lm.is_file_binary(local_path):
             payload.append(lc.MODE_BINARY)
-            self._logger.info("selecting binary transfer mode for this file type")
+            self._logger.debug("selecting binary transfer mode")
         else:
             payload.append(lc.MODE_NON_BIN)
-            self._logger.info("selecting non binary transfer mode")
+            self._logger.debug("selecting non binary transfer mode")
 
         self._llcom.telegram(
             lc.CMD.C_FL,
@@ -1150,10 +1150,10 @@ class LSV2:
 
         if binary_mode or lm.is_file_binary(remote_path):
             payload.append(lc.MODE_BINARY)  # force binary transfer
-            self._logger.info("using binary transfer mode")
+            self._logger.debug("using binary transfer mode")
         else:
             payload.append(lc.MODE_NON_BIN)
-            self._logger.info("using non binary transfer mode")
+            self._logger.debug("using non binary transfer mode")
 
         content = self._llcom.telegram(
             lc.CMD.R_FL,
