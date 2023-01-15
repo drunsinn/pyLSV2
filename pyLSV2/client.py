@@ -666,7 +666,7 @@ class LSV2:
     def directory_content(self) -> List[ld.FileEntry]:
         """
         Query content of current working directory from the control. In some situations it is necessary to
-        fist call get_directory_info() or else the attributes won't be correct.
+        fist call :py:func:`~pyLSV2.LSV2.directory_info` or else the attributes won't be correct.
         Requires access level ``FILETRANSFER`` to work.
         """
 

@@ -169,7 +169,7 @@ These changes where made intentionally to make further development easier. See t
 # Tables
  Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
- See [tyb2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
+ See [tab2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
 
  This script can also be used as a command line tool
 ```
