@@ -5,12 +5,12 @@
 import pyLSV2
 
 
-def test_read_machine_parameter(address, timeout):
+def test_read_machine_parameter(address: str, timeout: float):
     """test to see if reading of machine parameters works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         # old style
         assert lsv2.get_machine_parameter("7230.0") is not False
     else:
@@ -20,24 +20,26 @@ def test_read_machine_parameter(address, timeout):
     lsv2.disconnect()
 
 
-def test_rw_machine_parameter(address, timeout):
+def test_rw_machine_parameter(address: str, timeout: float):
     """test to see if reading and writing of machine parameters works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         # old style
         parameter_name = "7230.0"
     else:
         # new stype
         parameter_name = "CfgDisplayLanguage.ncLanguage"
 
-    lsv2.login(pyLSV2.Login.PLCDEBUG)
+    assert lsv2.login(pyLSV2.Login.PLCDEBUG) is True
+
     current_value = lsv2.get_machine_parameter(parameter_name)
     assert (
         lsv2.set_machine_parameter(parameter_name, current_value, safe_to_disk=False)
         is not False
     )
+
     lsv2.logout(pyLSV2.Login.PLCDEBUG)
 
     lsv2.disconnect()

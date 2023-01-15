@@ -3,15 +3,9 @@
 """Constant values used in LSV2"""
 from enum import Enum, IntEnum
 
-# #: files system attributes
-# FS_ENTRY_IS_HIDDEN = 0x08
-# FS_ENTRY_IS_DRIVE = 0x10
-# FS_ENTRY_IS_DIRECTORY = 0x20
-# FS_ENTRY_IS_PROTCTED = 0x40
-# FS_ENTRY_IS_IN_USE = 0x80
-
-#: enable binary file transfer for C_FL and R_FL
+#: enable/disable binary file transfer for C_FL and R_FL
 MODE_BINARY = 0x01
+MODE_NON_BIN = 0x00
 
 PATH_SEP = "\\"
 
@@ -194,7 +188,7 @@ class MemoryType(IntEnum):
     OUTPUT_WORD = 11
 
 
-class LSV2Err(IntEnum):
+class LSV2StatusCode(IntEnum):
     """Enum for LSV2 protocol error numbers
     range 0 - 19: protocol or transmission errors
     range 20 - 99: telegram errors
@@ -203,7 +197,7 @@ class LSV2Err(IntEnum):
 
     LSV2_OK = 0
 
-    # reciving
+    # receiving
     LSV2_TIMEOUT = 1
     LSV2_NO_ENQ = 2
     LSV2_TIMEOUT2 = 3
@@ -315,6 +309,9 @@ class LSV2Err(IntEnum):
 
     # plain error message (TODO see global var usererrortext)
     T_USER_ERROR = 255
+
+    T_ER_NON = -1
+    """not an valid error code. devault value if no error occurred"""
 
 
 class KeyCode(IntEnum):
@@ -454,7 +451,7 @@ class KeyCode(IntEnum):
     PROG_TOOL_CALL = 0x01D2
     PROG_CYC_DEF = 0x01D3
     PROG_CYC_CALL = 0x01D4
-    PROG_CYC_CAL = PROG_CYC_CALL  # TODO typo
+    # PROG_CYC_CAL = PROG_CYC_CALL
     PROG_LBL = 0x01D5
     PROG_LBL_CALL = 0x01D6
     PROG_L = 0x01D7
@@ -593,7 +590,7 @@ class OldKeyCode(IntEnum):
     AXIS_X = 0x006D
     TOGGEL_POLAR = 0x0043
 
-    PROG_TOUCH_PROBE = 0x004E  # TODO
+    PROG_TOUCH_PROBE = 0x004E
     PROG_RR = 0x0057
     PROG_RL = 0x0056
     PROG_LBL_CALL = 0x005E
@@ -618,8 +615,8 @@ class OldKeyCode(IntEnum):
     PGMMGT = 0x0061
     TOGGEL_INC = 0x0044
 
-    Cl_Pgm = 0x0062  # TODO
-    Pgm_Nr = 0x003B  # TODO
+    CL_PGM = 0x0062
+    PGM_NR = 0x003B
 
     ARROW_LEFT = 0x0059
     ARROW_DOWN = 0x0067
@@ -653,7 +650,7 @@ class CMD(str, Enum):
     requires no login priviliege"""
 
     A_LO = "A_LO"
-    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name. 
+    """A_LO: used to drop access to certain parts of the control, followed by an optional logon name.
     requires any login priviliege"""
 
     C_CC = "C_CC"
@@ -711,7 +708,7 @@ class CMD(str, Enum):
 
     C_MC = "C_MC"
     """C_MC: set machine parameter, followed by flags, name and value
-    """
+    requires PLCDEBUG login privilege"""
 
     # C_OP = 'C_OP' # found via bruteforce test, purpose unknown! -> Timeout
 
@@ -780,7 +777,7 @@ class CMD(str, Enum):
     # R_OI = "R_OI" # found via bruteforce test, purpose unknown!
 
     R_PD = "R_PD"
-    """request palet definiton.
+    """request palet definition.
     requires FILE or MONITOR login priviliege"""
 
     R_PR = "R_PR"
@@ -823,8 +820,11 @@ class CMD(str, Enum):
     requires INSPECT login priviliege"""
 
     R_WD = "R_WD"
-    """request window definiton.
+    """request window definition.
     requires MONITOR login priviliege"""
+
+    NONE = "NONE"
+    """not a valid command but used internally"""
 
 
 class RSP(str, Enum):
@@ -880,6 +880,12 @@ class RSP(str, Enum):
 
     S_VR = "S_VR"
     """S_VR: signals that the command R_VR was accepted, it is followed by more data"""
+
+    NONE = "NONE"
+    """not a valid response but used internally to signal that no response was received or should be sent"""
+
+    UNKNOWN = "UNKN"
+    """not a valid response but used internally to signal an unknown response was received"""
 
 
 class ParCCC(IntEnum):

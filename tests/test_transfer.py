@@ -8,15 +8,15 @@ import hashlib
 import pyLSV2
 
 
-def test_file_recive(address, timeout):
+def test_file_recive(address: str, timeout: float):
     """test if loading a file from the controls works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_path = "TNC:/$MDI.H"
         tool_t_path = "TNC:/TOOL.T"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
         tool_t_path = "TNC:/table/toolturn.htt"
     else:
@@ -43,7 +43,7 @@ def test_file_recive(address, timeout):
         lsv2.disconnect()
 
 
-def test_file_transfer_binary(address, timeout):
+def test_file_transfer_binary(address: str, timeout: float):
     """test if transferring a file in binary mode works"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
@@ -51,9 +51,9 @@ def test_file_transfer_binary(address, timeout):
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
         local_send_path = Path("./data/testdata.bmp")
         local_recive_path = Path(tmp_dir_name).joinpath("test.bmp")
-        remote_path = pyLSV2.DriveName.TNC + "/" + local_send_path.name
+        remote_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + local_send_path.name
 
-        assert lsv2.get_file_info(remote_path) is False
+        assert lsv2.file_info(remote_path) is not True  # is False doesn't work...
 
         assert (
             lsv2.send_file(
@@ -90,14 +90,14 @@ def test_file_transfer_binary(address, timeout):
     lsv2.disconnect()
 
 
-def test_recive_with_path_formating(address, timeout):
-    """test if reading of file information with / instead of \\ as path seperator"""
+def test_recive_with_path_formating(address: str, timeout: float):
+    """test if reading of file information with / instead of \\ as path separator"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
-    if lsv2.is_itnc():
+    if lsv2.versions.is_itnc():
         mdi_path = "TNC:/$MDI.H"
-    elif lsv2.is_pilot():
+    elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"

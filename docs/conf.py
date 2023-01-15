@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.githubpages",
     "myst_parser",
+    "sphinx_autodoc_typehints"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -43,6 +44,8 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+autoclass_content = "both"
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -55,3 +58,13 @@ html_theme = "alabaster"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
+# -- Options for sphinx_autodoc_typehints ------------------------------------
+typehints_fully_qualified = False
+always_document_param_types = True
+typehints_document_rtype = True
+typehints_use_rtype = True
+typehints_defaults = 'comma'
+simplify_optional_unions = True
+typehints_formatter = None

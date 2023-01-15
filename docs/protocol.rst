@@ -103,4 +103,4 @@ Afterwards a regular file copy takes place.
 File transfer
 -------------
 Transfer of files can happen in binary or ASCII mode. To enable binary mode, add 0x01 after the filename. In TNCremo you can find a list of file types for which binary mode is recommended.
-The functions :py:meth:`pyLSV2.LSV2.recive_file` and :py:meth:`pyLSV2.LSV2.send_file` can be configured with the parameter binary_mode.
+The functions :py:meth:`pyLSV2.LSV2.recive_file` and :py:meth:`pyLSV2.LSV2.send_file` can be configured with the parameter `binary_mode`.

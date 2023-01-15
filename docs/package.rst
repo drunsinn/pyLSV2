@@ -14,9 +14,40 @@ pyLSV2 Base
 Table reader
 ------------
 
-.. automodule:: pyLSV2.table_reader
+.. autoclass:: pyLSV2.NCTable
+    :members:
 
-.. autoclass:: pyLSV2.TableReader
+Dataclasses
+-----------
+
+.. autoclass:: pyLSV2.dat_cls.VersionInfo
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.SystemParameters
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.ToolInformation
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.OverrideState
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.NCErrorMessage
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.StackState
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.FileEntry
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.DirectoryEntry
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.DriveEntry
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.LSV2Error
     :members:
 
 Constants
