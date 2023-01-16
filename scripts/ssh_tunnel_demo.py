@@ -13,6 +13,11 @@ import logging
 import pyLSV2
 from sshtunnel import SSHTunnelForwarder
 
+__author__ = "drunsinn"
+__license__ = "MIT"
+__version__ = "1.0"
+__email__ = "dr.unsinn@googlemail.com"
+
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
@@ -44,8 +49,8 @@ if __name__ == "__main__":
     )
     con.connect()
     print(
-        'Connected to "{:s}" with NC Software "{:s}"'.format(
-            con.versions.control_version, con.versions.nc_version
+        "Connected to '{:s}' with NC Software '{:s}'".format(
+            con.versions.control, con.versions.nc_sw
         )
     )
     print("Close Connection")

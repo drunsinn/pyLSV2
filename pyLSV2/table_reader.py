@@ -133,8 +133,7 @@ class NCTable:
         """get value define as default value for column"""
         if "empty_value" in self._column_format[name]:
             return self._column_format[name]["empty_value"]
-        else:
-            return None
+        return None
 
     def set_column_empty_value(self, name, value):
         """set the default value of a column"""
@@ -142,7 +141,8 @@ class NCTable:
             raise Exception("value to long for column")
         self._column_format[name]["empty_value"] = value
 
-    def update_column_format(self, name, parameters):
+    def update_column_format(self, name: str, parameters: dict):
+        """takes a column name and a dictionaly to update the current table configuration"""
         for key, value in parameters.items():
             if key == "unit":
                 self._column_format[name]["unit"] = value
@@ -168,9 +168,8 @@ class NCTable:
     def _get_column_names(self):
         """get list of columns used in this table"""
         raise DeprecationWarning(
-            "Do not use this funtion anymore! Use ```column_names```"
+            "Do not use this function anymore! Use ```column_names```"
         )
-        # return self._columns
 
     def append_row(self, row):
         """add a data entry to the table"""
@@ -284,7 +283,7 @@ class NCTable:
         returns list of lines that contain the search result
 
         :param column_name: name of the table column which should be checked
-        :param search_value: the value to check for, can be string or regular expresssion
+        :param search_value: the value to check for, can be string or regular expression
         """
         search_results = []
         if not column_name in self._columns:
@@ -310,7 +309,7 @@ class NCTable:
 
         :param str or Path table_path: Path to the table file
 
-        :returns: list od dictionaries. key is the column name, value the content of the table cell
+        :returns: list of dictionaries. key is the column name, value the content of the table cell
         :rtype: NCTable
         """
         logger = logging.getLogger("NCTable parser")
@@ -450,21 +449,26 @@ class NCTable:
         return nctable
 
     @staticmethod
-    def parse_table_description(lines):
-        config_data = dict()
-        object_list = list()
+    def parse_table_description(lines: list):
+        """
+        parse the header of a table to get the table configuration
+
+        :param list lines: list of strings cut from the table header
+        """
+        config_data = {}
+        object_list = []
         object_list.append(config_data)
 
         def str_to_typed_value(value_string: str):
             if re.match(r"^\"?[+-]?\d+[.,]\d+\"?$", value_string):
                 return float(value_string.strip('"'))
-            elif re.match(r"^\"?[+-]?\d+\"?$", value_string):
+            if re.match(r"^\"?[+-]?\d+\"?$", value_string):
                 return int(value_string.strip('"'))
             if value_string.startswith('"') and value_string.endswith('"'):
                 return value_string.strip('"')
-            elif value_string.upper() == "TRUE":
+            if value_string.upper() == "TRUE":
                 return True
-            elif value_string.upper() == "FALSE":
+            if value_string.upper() == "FALSE":
                 return False
             return value_string
 
@@ -473,7 +477,7 @@ class NCTable:
 
             if line.endswith("("):
                 last_object = object_list[-1]
-                new_category = dict()
+                new_category = {}
                 name = line.split(" ")[0]
                 if isinstance(last_object, (list,)):
                     last_object.append({name: new_category})
@@ -485,7 +489,7 @@ class NCTable:
 
             elif line.endswith("["):
                 last_object = object_list[-1]
-                new_group = list()
+                new_group = []
                 name = line.split(":=")[0]
                 if isinstance(last_object, (list,)):
                     last_object.append({name: new_group})
@@ -566,6 +570,6 @@ class NCTable:
         str_value = str_value.strip()
         if len(str_value) == 0:
             return None
-        elif str_value == "1":
+        if str_value == "1":
             return True
         return False

@@ -4,7 +4,7 @@
 import struct
 from datetime import datetime
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Dict
 
 from . import dat_cls as ld
 from .const import BIN_FILES, PATH_SEP, ControlType
@@ -26,7 +26,9 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     elif message_length == 124:
         info_list = struct.unpack("!14L8B8L2BH4B2L2HLL", result_set)
     else:
-        raise LSV2DataException("unexpected length %s of message content %s" % (message_length, result_set))
+        raise LSV2DataException(
+            "unexpected length %s of message content %s" % (message_length, result_set)
+        )
     sys_par = ld.SystemParameters()
     sys_par.markers_start_address = info_list[0]
     sys_par.number_of_markers = info_list[1]
@@ -94,7 +96,7 @@ def decode_file_system_info(
         flag_drive = None
         flag_subdir = 0x40
         flag_protected = 0x20
-        # flag_selected = None
+        flag_selected = None
     else:
         # another newer document has
         # flag_display = 0x01
@@ -104,7 +106,7 @@ def decode_file_system_info(
         flag_drive = 0x10
         flag_subdir = 0x20
         flag_protected = 0x40
-        # flag_selected = 0x80
+        flag_selected = 0x80
 
     file_entry = ld.FileEntry()
     file_entry.size = struct.unpack("!L", data_set[:4])[0]
@@ -122,13 +124,16 @@ def decode_file_system_info(
     file_entry.is_protected = (file_entry.attributes & flag_protected) != 0
     file_entry.is_hidden = (file_entry.attributes & flag_hidden) != 0
 
+    if flag_selected is not None:
+        file_entry.is_selected = (file_entry.attributes & flag_selected) != 0
+
     file_entry.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
 
     # print(file_entry.name, file_entry.is_directory, file_entry.attributes)
     return file_entry
 
 
-def decode_drive_info(data_set: bytearray) -> List:
+def decode_drive_info(data_set: bytearray) -> List[ld.DriveEntry]:
     """
     Split and decode result from drive info
 
@@ -136,13 +141,17 @@ def decode_drive_info(data_set: bytearray) -> List:
     """
     offset = 0
     fixed_length = 15
-    drive_entries = list()
+    drive_entries = []
 
     while (offset + fixed_length + 1) < len(data_set):
         drive_entry = ld.DriveEntry()
         drive_entry.unknown_0 = struct.unpack("!L", data_set[offset : offset + 4])[0]
-        drive_entry.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[0]
-        drive_entry.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[0]
+        drive_entry.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[
+            0
+        ]
+        drive_entry.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[
+            0
+        ]
 
         if chr(data_set[offset + fixed_length]) == ":":
             drive_entry.name = ba_to_ustr(data_set[offset + 12 : offset + 17])
@@ -203,18 +212,18 @@ def decode_override_state(data_set: bytearray) -> ld.OverrideState:
     """
     ovr_state = ld.OverrideState()
     ovr_state.feed = struct.unpack("!L", data_set[0:4])[0] / 100
-    ovr_state.spindel = struct.unpack("!L", data_set[4:8])[0] / 100
+    ovr_state.spindle = struct.unpack("!L", data_set[4:8])[0] / 100
     ovr_state.rapid = struct.unpack("!L", data_set[8:12])[0] / 100
     return ovr_state
 
 
-def decode_error_message(data_set: bytearray) -> ld.LSV2ErrorMessage:
+def decode_error_message(data_set: bytearray) -> ld.NCErrorMessage:
     """
     Decode result from reading error messages
 
     :param result_set: bytes returned by the system parameter query command R_RI for first and next error
     """
-    err_msg = ld.LSV2ErrorMessage()
+    err_msg = ld.NCErrorMessage()
     err_msg.e_class = struct.unpack("!H", data_set[0:2])[0]
     err_msg.e_group = struct.unpack("!H", data_set[2:4])[0]
     err_msg.e_number = struct.unpack("!l", data_set[4:8])[0]
@@ -230,13 +239,13 @@ def decode_stack_info(data_set: bytearray) -> ld.StackState:
     :param data_set: bytes returned from query
     """
     stack = ld.StackState()
-    stack.current_line = struct.unpack("!L", data_set[:4])[0]
-    stack.main_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[0])
-    stack.current_pgm = ba_to_ustr(data_set[4:].split(b"\x00")[1])
+    stack.line_no = struct.unpack("!L", data_set[:4])[0]
+    stack.main = ba_to_ustr(data_set[4:].split(b"\x00")[0])
+    stack.current = ba_to_ustr(data_set[4:].split(b"\x00")[1])
     return stack
 
 
-def decode_axis_location(data_set: bytearray) -> dict:
+def decode_axis_location(data_set: bytearray) -> Dict[str, float]:
     """
     Decode result from reading axis position
     Returns dictionary with key = axis name, value = position

@@ -13,7 +13,8 @@ import pathlib
 import re
 import struct
 from datetime import datetime
-from typing import List, Union
+from types import TracebackType
+from typing import List, Union, Optional, Type, Dict
 
 from . import const as lc
 from . import dat_cls as ld
@@ -62,19 +63,15 @@ class LSV2:
     @property
     def versions(self) -> ld.VersionInfo:
         """version information of the connected control"""
-        # if len(self._versions.control_version) < 1:
-        #    self._read_version()
         return self._versions
 
     @property
     def parameters(self) -> ld.SystemParameters:
         """system parameters of the connected control"""
-        # if self._sys_par.lsv2_version < 0:
-        #    self._read_parameters()
         return self._sys_par
 
     @property
-    def last_error(self) -> ld.TransmissionError:
+    def last_error(self) -> ld.LSV2Error:
         """type and code of the last transmission error"""
         return self._llcom.last_error
 
@@ -98,10 +95,20 @@ class LSV2:
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ):
         """exit context"""
+        self._logger.debug(
+            "close context with exception type '%s', value '%s' and traceback '%s'",
+            exc_type,
+            exc_value,
+            exc_tb,
+        )
         self.disconnect()
-        # print(exc_type, exc_value, exc_tb, sep="\n")
 
     def switch_safe_mode(self, enable_safe_mode: bool = True):
         """switch between safe mode and unrestricted mode"""
@@ -145,7 +152,7 @@ class LSV2:
         :param payload: data to send along with the command
         :param expected_response: expected response telegram from the control to signal success
 
-        :raises LSV2ProtocolException: if an unknown/unexpected response was recived
+        :raises LSV2ProtocolException: if an unknown/unexpected response was received
         """
 
         if payload is None:
@@ -177,7 +184,7 @@ class LSV2:
 
         if self._llcom.last_response is lc.RSP.T_ER:
             self._logger.info(
-                "an error was recived after the last transmission, %s '%s'",
+                "an error was received after the last transmission, %s '%s'",
                 self.last_error,
                 lt.get_error_text(self.last_error),
             )
@@ -194,10 +201,11 @@ class LSV2:
 
         if expected_response is lc.RSP.NONE:
             self._logger.debug("no response expected")
-            # TODO: no response expected
             return False
 
-        # TODO: handle unexpected response
+        self._logger.warning(
+            "received unexpected response %s", self._llcom.last_response
+        )
         return False
 
     def _send_recive_block(
@@ -205,7 +213,7 @@ class LSV2:
         command: Union[lc.CMD, lc.RSP],
         payload: bytearray,
         expected_response: lc.RSP = lc.RSP.NONE,
-    ) -> Union[bool, list]:
+    ) -> Union[bool, List[bytearray]]:
         """
         Takes a command and optional payload, sends it to the control and continues reading telegrams until a
         telegram contains the expected response or an error response. If the correct response is received, returns
@@ -279,7 +287,7 @@ class LSV2:
 
         self._logger.debug(
             "setting connection settings for %s and block length %s",
-            self._versions.control_type,
+            self._versions.type,
             self._sys_par.max_block_length,
         )
 
@@ -405,7 +413,7 @@ class LSV2:
     def _read_parameters(self, force: bool = False) -> ld.SystemParameters:
         """
         Read all available system parameter entries. The results are buffered since it is also used internally.
-        This means additinal calls dont cause communication with the control.
+        This means additional calls dont cause communication with the control.
 
         :param force: if ``True`` the information is re-read even if it is already buffered
         """
@@ -427,13 +435,13 @@ class LSV2:
     def _read_version(self, force=False) -> ld.VersionInfo:
         """
         Read all available version information entries. The results are buffered since it is also used internally.
-        This means additinal calls dont cause communication with the control.
+        This means additional calls dont cause communication with the control.
 
         :param force: if ``True`` the information is re-read even if it is already buffered
 
         :raises LSV2DataException: if basic information could not be read from control
         """
-        if len(self._versions.control_version) > 0 and force is False:
+        if len(self._versions.control) > 0 and force is False:
             self._logger.debug("version info already in memory, return previous values")
         else:
             info_data = ld.VersionInfo()
@@ -442,7 +450,7 @@ class LSV2:
                 lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.control_version = lm.ba_to_ustr(result)
+                info_data.control = lm.ba_to_ustr(result)
             else:
                 raise LSV2DataException(
                     "Could not read version information from control"
@@ -454,7 +462,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.nc_version = lm.ba_to_ustr(result)
+                info_data.nc_sw = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -462,7 +470,7 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.plc_version = lm.ba_to_ustr(result)
+                info_data.plc = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -480,8 +488,8 @@ class LSV2:
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 info_data.id_number = lm.ba_to_ustr(result)
 
-            if self.versions.is_itnc():
-                info_data.release_type = "not supported"
+            if "itnc" in info_data.control.lower():
+                info_data.release = "not supported"
             else:
                 result = self._send_recive(
                     lc.CMD.R_VR,
@@ -489,7 +497,7 @@ class LSV2:
                     lc.RSP.S_VR,
                 )
                 if isinstance(result, (bytearray,)) and len(result) > 0:
-                    info_data.release_type = lm.ba_to_ustr(result)
+                    info_data.release = lm.ba_to_ustr(result)
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -497,16 +505,16 @@ class LSV2:
                 lc.RSP.S_VR,
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.splc_version = lm.ba_to_ustr(result)
+                info_data.splc = lm.ba_to_ustr(result)
             else:
-                info_data.splc_version = "not supported"
+                info_data.splc = "not supported"
 
             self._logger.debug("got version info: %s", info_data)
             self._versions = info_data
 
         return self._versions
 
-    def get_program_status(self) -> lc.PgmState:
+    def program_status(self) -> lc.PgmState:
         """
         Ret status code of currently active program.
         Requires access level ``DNC`` to work.
@@ -527,7 +535,7 @@ class LSV2:
         self._logger.warning("an error occurred while querying program state")
         return lc.PgmState.UNDEFINED
 
-    def get_program_stack(self) -> Union[ld.StackState, None]:
+    def program_stack(self) -> Union[ld.StackState, None]:
         """
         Get path of currently active nc program(s) and current line number.
         Requires access level ``DNC`` to work.
@@ -547,7 +555,7 @@ class LSV2:
 
         return None
 
-    def get_execution_status(self) -> lc.ExecState:
+    def execution_state(self) -> lc.ExecState:
         """
         Get status code of program state
         Requires access level ``DNC`` to work.
@@ -568,7 +576,7 @@ class LSV2:
         self._logger.warning("an error occurred while querying execution state")
         return lc.ExecState.UNDEFINED
 
-    def get_directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
+    def directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
         """
         Read information about the currenct working directory on the control.
         Requires access level ``FILETRANSFER`` to work.
@@ -621,13 +629,15 @@ class LSV2:
         self._logger.warning("an error occurred while changing directory")
         return False
 
-    def get_file_info(self, remote_file_path: str) -> Union[ld.FileEntry, None]:
+    def file_info(self, remote_file_path: str) -> Union[ld.FileEntry, None]:
         """
         Query information about a file.
         Requires access level ``FILETRANSFER`` to work.
-        Retuns ``None`` of file dosn't exist or missing access rigths
+        Returns ``None`` of file doesn't exist or missing access rights
 
         :param remote_file_path: path of file on the control
+
+        :raises LSV2ProtocolException: if an error occurred during reading of file info
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -638,19 +648,25 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_FI, payload, lc.RSP.S_FI)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            file_info = lm.decode_file_system_info(result, self._versions.control_type)
+            file_info = lm.decode_file_system_info(result, self._versions.type)
             self._logger.debug("received file information for %s", file_info.name)
             return file_info
-        self._logger.warning(
-            "an error occurred while querying file info this might also indicate that it does not exist %s",
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+            self._logger.debug("file does not exist")
+            return None
+
+        self._logger.error(
+            "an error occurred while querying file info for %s : '%s'",
             remote_file_path,
+            lt.get_error_text(self.last_error),
         )
         return None
 
-    def get_directory_content(self) -> List[ld.FileEntry]:
+    def directory_content(self) -> List[ld.FileEntry]:
         """
         Query content of current working directory from the control. In some situations it is necessary to
-        fist call get_directory_info() or else the attributes won't be correct.
+        fist call :py:func:`~pyLSV2.LSV2.directory_info` or else the attributes won't be correct.
         Requires access level ``FILETRANSFER`` to work.
         """
 
@@ -665,17 +681,20 @@ class LSV2:
         if isinstance(result, (list,)):
             for entry in result:
                 dir_content.append(
-                    lm.decode_file_system_info(entry, self._versions.control_type)
+                    lm.decode_file_system_info(entry, self._versions.type)
                 )
 
             self._logger.debug(
                 "received %d packages for directory content", len(dir_content)
             )
         else:
-            self._logger.warning("an error occurred while directory content info")
+            self._logger.warning(
+                "an error occurred while directory content info: '%s'",
+                lt.get_error_text(self.last_error),
+            )
         return dir_content
 
-    def get_drive_info(self) -> list:
+    def drive_info(self) -> List[ld.DriveEntry]:
         """
         Read info all drives and partitions from the control.
         Requires access level ``FILETRANSFER`` to work.
@@ -698,7 +717,10 @@ class LSV2:
                 drives_list,
             )
         else:
-            self._logger.warning("an error occurred while reading drive info")
+            self._logger.warning(
+                "an error occurred while reading drive info: '%s'",
+                lt.get_error_text(self.last_error),
+            )
         return drives_list
 
     def make_directory(self, dir_path: str) -> bool:
@@ -721,7 +743,7 @@ class LSV2:
         for part in path_parts:
             path_to_check += part + lc.PATH_SEP
             # no file info -> does not exist and has to be created
-            if self.get_file_info(path_to_check) is None:
+            if self.file_info(path_to_check) is None:
                 payload = lm.ustr_to_ba(path_to_check)
 
                 result = self._send_recive(lc.CMD.C_DM, payload, lc.RSP.T_OK)
@@ -729,7 +751,9 @@ class LSV2:
                     self._logger.debug("Directory created successfully")
                 else:
                     self._logger.warning(
-                        "an error occurred while creating directory %s", dir_path
+                        "an error occurred while creating directory %s: '%s'",
+                        dir_path,
+                        lt.get_error_text(self.last_error),
                     )
                     return False
             else:
@@ -755,8 +779,19 @@ class LSV2:
         if isinstance(result, (bool)) and result is True:
             self._logger.debug("successfully deleted directory %s", dir_path)
             return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_DIR:
+            self._logger.debug("noting to do, directory %s didn't exist", dir_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_DEL_DIR:
+            self._logger.debug(
+                "could not delete directory %s since it is not empty", dir_path
+            )
+            return False
+
         self._logger.warning(
-            "an error occurred while deleting directory %s, this might also indicate that it it does not exist",
+            "an error occurred while deleting directory %s",
             dir_path,
         )
         return False
@@ -776,14 +811,23 @@ class LSV2:
         file_path = file_path.replace("/", lc.PATH_SEP)
         payload = lm.ustr_to_ba(file_path)
 
-        if not self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
-            self._logger.warning(
-                "an error occurred while deleting file %s, this might also indicate that it it does not exist",
-                file_path,
-            )
+        if self._send_recive(lc.CMD.C_FD, payload, lc.RSP.T_OK):
+            self._logger.debug("successfully deleted file %s", file_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+            self._logger.debug("noting to do, file %s didn't exist", file_path)
+            return True
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_DELETE:
+            self._logger.info("could not delete file %s since it is in use", file_path)
             return False
-        self._logger.debug("successfully deleted file %s", file_path)
-        return True
+
+        self._logger.warning(
+            "an error occurred while deleting file %s",
+            file_path,
+        )
+        return False
 
     def copy_remote_file(self, source_path: str, target_path: str) -> bool:
         """
@@ -795,7 +839,7 @@ class LSV2:
         :param target_path: path of target location
 
         :raises LSV2StateException: if the selected path could not be found or
-                                    the path is not accesible
+                                    the path is not accessible
         """
         if not self.login(lc.Login.FILETRANSFER):
             self._logger.warning("could not log in as user FILE")
@@ -825,15 +869,16 @@ class LSV2:
             source_directory,
             target_path,
         )
-        if not self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
-            self._logger.warning(
-                "an error occurred copying file %s to %s", source_path, target_path
-            )
-            return False
-        self._logger.debug("successfully copied file %s", source_path)
-        return True
+        if self._send_recive(lc.CMD.C_FC, payload, lc.RSP.T_OK):
+            self._logger.debug("successfully copied file %s", source_path)
+            return True
 
-    def move_local_file(self, source_path: str, target_path: str) -> bool:
+        self._logger.warning(
+            "an error occurred copying file %s to %s", source_path, target_path
+        )
+        return False
+
+    def move_file(self, source_path: str, target_path: str) -> bool:
         """
         Move file on control from one place to another.
         Requires access level ``FILETRANSFER`` to work.
@@ -843,40 +888,57 @@ class LSV2:
         :param target_path: path of target location with or without filename
 
         :raises LSV2StateException: if the selected path could not be found or
-                                    the path is not accesible
+                                    the path is not accessible
         """
         source_path = source_path.replace("/", lc.PATH_SEP)
         target_path = target_path.replace("/", lc.PATH_SEP)
-        if self.login(lc.Login.FILETRANSFER):
-            if lc.PATH_SEP in source_path:
-                source_file_name = source_path.split(lc.PATH_SEP)[-1]
-                source_directory = source_path.rstrip(source_file_name)
-                if not self.change_directory(remote_directory=source_directory):
-                    raise LSV2StateException("could not open the source directory")
-            else:
-                source_file_name = source_path
-                source_directory = "."
 
-            if target_path.endswith(lc.PATH_SEP):
-                target_path += source_file_name
+        if not self.login(lc.Login.FILETRANSFER):
+            self._logger.warning("could not log in as user FILE")
+            return False
 
-            payload = lm.ustr_to_ba(source_file_name)
-            payload.extend(lm.ustr_to_ba(target_path))
+        if lc.PATH_SEP in source_path:
+            source_file_name = source_path.split(lc.PATH_SEP)[-1]
+            source_directory = source_path.rstrip(source_file_name)
+            if not self.change_directory(remote_directory=source_directory):
+                raise LSV2StateException("could not open the source directory")
+        else:
+            source_file_name = source_path
+            source_directory = "."
 
-            self._logger.debug(
-                "prepare to move file %s from %s to %s",
-                source_file_name,
-                source_directory,
-                target_path,
-            )
-            if not self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
-                self._logger.warning(
-                    "an error occurred moving file %s to %s", source_path, target_path
-                )
-                return False
+        if target_path.endswith(lc.PATH_SEP):
+            target_path += source_file_name
+
+        payload = lm.ustr_to_ba(source_file_name)
+        payload.extend(lm.ustr_to_ba(target_path))
+
+        self._logger.debug(
+            "prepare to move file %s from %s to %s",
+            source_file_name,
+            source_directory,
+            target_path,
+        )
+        if self._send_recive(lc.CMD.C_FR, payload, lc.RSP.T_OK):
             self._logger.debug("successfully moved file %s", source_path)
             return True
-        self._logger.warning("could not log in as user FILE")
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_FILE_EXISTS:
+            self._logger.info(
+                "could not move file %s to %s since already exists",
+                source_path,
+                target_path,
+            )
+            return False
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_FILE:
+            self._logger.info(
+                "could not move file since either source or target path does not exist",
+            )
+            return False
+
+        self._logger.warning(
+            "an error occurred moving file %s to %s", source_path, target_path
+        )
         return False
 
     def send_file(
@@ -898,7 +960,7 @@ class LSV2:
                             file name is checked for known binary file type
 
         :raises LSV2StateException: if local file could not be opened,
-                                    destination direcotry could not be accessed or
+                                    destination directory could not be accessed or
                                     destination file could not be deleted
         """
         if not self.login(lc.Login.FILETRANSFER):
@@ -933,16 +995,14 @@ class LSV2:
                     )
         else:
             remote_file_name = remote_path
-            remote_directory = self.get_directory_info().path  # get pwd
+            remote_directory = self.directory_info().path  # get pwd
         remote_directory = remote_directory.rstrip(lc.PATH_SEP)
 
-        if not self.get_directory_info(remote_directory):
+        if not self.directory_info(remote_directory):
             self._logger.debug("remote path does not exist, create directory(s)")
             self.make_directory(remote_directory)
 
-        remote_info = self.get_file_info(
-            remote_directory + lc.PATH_SEP + remote_file_name
-        )
+        remote_info = self.file_info(remote_directory + lc.PATH_SEP + remote_file_name)
 
         if remote_info:
             self._logger.debug("remote path exists and points to file's")
@@ -968,10 +1028,10 @@ class LSV2:
         payload = lm.ustr_to_ba(remote_directory + lc.PATH_SEP + remote_file_name)
         if binary_mode or lm.is_file_binary(local_path):
             payload.append(lc.MODE_BINARY)
-            self._logger.info("selecting binary transfer mode for this file type")
+            self._logger.debug("selecting binary transfer mode")
         else:
             payload.append(lc.MODE_NON_BIN)
-            self._logger.info("selecting non binary transfer mode")
+            self._logger.debug("selecting non binary transfer mode")
 
         self._llcom.telegram(
             lc.CMD.C_FL,
@@ -996,15 +1056,15 @@ class LSV2:
                     if self._llcom.last_response in lc.RSP.T_OK:
                         pass
                     else:
-                        if self._llcom.last_response is lc.RSP.T_ER:
-                            self._logger.warning(
-                                "error received, %s '%s'",
+                        if self._llcom.last_response == lc.RSP.T_ER:
+                            self._logger.info(
+                                "control returned error '%s' which translates to '%s'",
                                 self.last_error,
                                 lt.get_error_text(self.last_error),
                             )
                         else:
                             self._logger.warning(
-                                "could not send data with error %s",
+                                "could not send data, received unexpected response '%s'",
                                 self._llcom.last_response,
                             )
                         return False
@@ -1012,11 +1072,17 @@ class LSV2:
             # signal that no more data is being sent
             if self._secure_file_send:
                 if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.T_OK):
-                    self._logger.warning("could not send end of file with error")
+                    self._logger.warning(
+                        "could not send end of transmission telegram, got response '%s'",
+                        self._llcom.last_response,
+                    )
                     return False
             else:
                 if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.NONE):
-                    self._logger.warning("could not send end of file with error")
+                    self._logger.warning(
+                        "could not send end of transmission telegram, got response '%s'",
+                        self._llcom.last_response,
+                    )
                     return False
 
         else:
@@ -1062,7 +1128,7 @@ class LSV2:
             local_file = local_path
 
         remote_path = remote_path.replace("/", lc.PATH_SEP)
-        remote_file_info = self.get_file_info(remote_path)
+        remote_file_info = self.file_info(remote_path)
         if not remote_file_info:
             self._logger.warning("remote file does not exist: %s", remote_path)
             return False
@@ -1084,10 +1150,10 @@ class LSV2:
 
         if binary_mode or lm.is_file_binary(remote_path):
             payload.append(lc.MODE_BINARY)  # force binary transfer
-            self._logger.info("using binary transfer mode")
+            self._logger.debug("using binary transfer mode")
         else:
             payload.append(lc.MODE_NON_BIN)
-            self._logger.info("using non binary transfer mode")
+            self._logger.debug("using non binary transfer mode")
 
         content = self._llcom.telegram(
             lc.CMD.R_FL,
@@ -1169,8 +1235,8 @@ class LSV2:
         :param mem_type: what datatype to read
         :param number_of_elements: how many elements should be read
 
-        :raises LSV2InputException: if unknows memory type is requested or if the to many elements are requested
-        :raises LSV2DataException: if number of recived values does not match the number of expected
+        :raises LSV2InputException: if unknowns memory type is requested or if the to many elements are requested
+        :raises LSV2DataException: if number of received values does not match the number of expected
         """
 
         if self._sys_par.lsv2_version != -1:
@@ -1259,7 +1325,7 @@ class LSV2:
                 result = self._send_recive(lc.CMD.R_MB, payload, lc.RSP.S_MB)
                 if isinstance(result, (bytearray,)):
                     logging.debug(
-                        "read string %d with lenght %d",
+                        "read string %d with length %d",
                         (first_element + i),
                         len(result),
                     )
@@ -1323,13 +1389,12 @@ class LSV2:
                         "failed to read value from address %d",
                         start_address + first_element,
                     )
-                    return list()
+                    return []
             logging.debug("read a total of %d value(s)", len(plc_values))
         if len(plc_values) != number_of_elements:
             raise LSV2DataException(
-                "number of recived values %d is not equal to number of requested %d" % (
-                len(plc_values),
-                number_of_elements)
+                "number of received values %d is not equal to number of requested %d"
+                % (len(plc_values), number_of_elements)
             )
         return plc_values
 
@@ -1390,7 +1455,9 @@ class LSV2:
         )
         return ""
 
-    def set_machine_parameter(self, name: str, value: str, safe_to_disk=False) -> bool:
+    def set_machine_parameter(
+        self, name: str, value: str, safe_to_disk: bool = False
+    ) -> bool:
         """
         Set machine parameter on control. Writing a parameter takes some time, make sure to set timeout
         sufficiently high!
@@ -1464,7 +1531,7 @@ class LSV2:
         )
         return False
 
-    def get_spindle_tool_status(self) -> Union[ld.ToolInformation, None]:
+    def spindle_tool_status(self) -> Union[ld.ToolInformation, None]:
         """
         Get information about the tool currently in the spindle
         Requires access level ``DNC`` to work.
@@ -1486,7 +1553,7 @@ class LSV2:
         )
         return None
 
-    def get_override_info(self) -> Union[ld.OverrideState, None]:
+    def override_state(self) -> Union[ld.OverrideState, None]:
         """
         Get information about the override info.
         Requires access level ``DNC`` to work.
@@ -1508,7 +1575,7 @@ class LSV2:
         )
         return None
 
-    def get_error_messages(self) -> list:
+    def get_error_messages(self) -> List[ld.NCErrorMessage]:
         """
         Get information about the first or next error displayed on the control
         Requires access level ``DNC`` to work.
@@ -1534,7 +1601,7 @@ class LSV2:
                 messages.append(lm.decode_error_message(result))
                 result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
 
-            if self.last_error is lc.LSV2Err.T_ER_NO_NEXT_ERROR:
+            if self.last_error is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
                 self._logger.debug("successfully read all errors")
             else:
                 self._logger.warning(
@@ -1543,7 +1610,7 @@ class LSV2:
 
             return messages
 
-        if self.last_error is lc.LSV2Err.T_ER_NO_NEXT_ERROR:
+        if self.last_error is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
             self._logger.debug("successfully read first error but no error active")
             return messages
 
@@ -1553,9 +1620,9 @@ class LSV2:
 
         return []
 
-    def _walk_dir(self, descend=True) -> list:
+    def _walk_dir(self, descend: bool = True) -> List[str]:
         """
-        helber function to recursively search in directories for files.
+        helper function to recursively search in directories for files.
         Requires access level ``FILETRANSFER`` to work.
 
         :param descend: control if search should run recursively
@@ -1564,9 +1631,9 @@ class LSV2:
             self._logger.warning("clould not log in as user FILE")
             return []
 
-        current_path = self.get_directory_info().path
+        current_path = self.directory_info().path
         content = []
-        for entry in self.get_directory_content():
+        for entry in self.directory_content():
             if entry.name == "." or entry.name == ".." or entry.name.endswith(":"):
                 continue
             current_fs_element = str(current_path + entry.name).replace(
@@ -1665,7 +1732,7 @@ class LSV2:
                 )
 
             self._logger.info(
-                "successfuly read data path: %s and got value '%s'", path, data_value
+                "successfully read data path: %s and got value '%s'", path, data_value
             )
             return data_value
         self._logger.warning(
@@ -1674,11 +1741,11 @@ class LSV2:
         )
         return None
 
-    def get_axes_location(self) -> Union[dict, None]:
+    def axes_location(self) -> Union[Dict[str, float], None]:
         """
         Read axes location from control. Not fully documented, value of first byte unknown.
         Requires access level ``DNC`` to work.
-        Returns ``None`` if no data was recived or dictionary with key = axis name, value = position
+        Returns ``None`` if no data was received or dictionary with key = axis name, value = position
 
         :raises LSV2DataException: Error during parsing of data values
         """

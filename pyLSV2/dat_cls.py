@@ -1,27 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""data classes for pyLSV2"""
+"""
+data classes for pyLSV2
+
+after migration to python 3.7+ these will be changed to @dataclass!
+"""
 
 from datetime import datetime
 import struct
 
-from .const import ControlType, LSV2Err, ChannelType
+from .const import ControlType, LSV2StatusCode, ChannelType
 
 
 class VersionInfo:
+    """data class for version information"""
+
     def __init__(self):
-        """data class for version information, uses properties instead of dataclass for compatibility"""
-        self.control_version = ""
-        self.control_type = ControlType.UNKNOWN
-        self.nc_version = ""
-        self.plc_version = ""
-        self.splc_version = ""
+        """init with default values"""
+        self.control = ""
+        self.type = ControlType.UNKNOWN
+        self.nc_sw = ""
+        self.plc = ""
+        self.splc = ""
         self.option_bits = ""
         self.id_number = ""
-        self.release_type = ""
+        self.release = ""
+
+    def __str__(self) -> str:
+        return "%s / %s" % (self.control, self.nc_sw)
 
     @property
-    def control_version(self) -> str:
+    def control(self) -> str:
         """
         version identifyer of the control
 
@@ -30,22 +39,30 @@ class VersionInfo:
         """
         return self._control_version
 
-    @control_version.setter
-    def control_version(self, value: str):
-        value = value.replace(" ", "")
+    @control.setter
+    def control(self, value: str):
+        value = value.replace(" ", "").strip()
         self._control_version = value
 
-        if "TNC6" in value or "TNC320" in value or "TNC128" in value:
-            self.control_type = ControlType.MILL_NEW
-        elif "iTNC530" in value or "ITNC530":
-            self.control_type = ControlType.MILL_OLD
-        elif "CNCPILOT640" in value:
-            self.control_type = ControlType.LATHE_NEW
+        value = value.upper()
+
+        if value.startswith("ITNC530"):
+            self.type = ControlType.MILL_OLD
+        elif value.startswith("TNC640"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("TNC620"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("TNC320"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("TNC128"):
+            self.type = ControlType.MILL_NEW
+        elif value.startswith("CNCPILOT640"):
+            self.type = ControlType.LATHE_NEW
         else:
-            self.control_type = ControlType.UNKNOWN
+            self.type = ControlType.UNKNOWN
 
     @property
-    def control_type(self) -> ControlType:
+    def type(self) -> ControlType:
         """
         control type identifyer of the control
 
@@ -54,40 +71,40 @@ class VersionInfo:
         """
         return self._control_type
 
-    @control_type.setter
-    def control_type(self, value: ControlType):
+    @type.setter
+    def type(self, value: ControlType):
         self._control_type = value
 
     @property
-    def nc_version(self) -> str:
+    def nc_sw(self) -> str:
         """version identifier of the nc software"""
         return self._nc_version
 
-    @nc_version.setter
-    def nc_version(self, value: str):
+    @nc_sw.setter
+    def nc_sw(self, value: str):
         self._nc_version = value
 
     @property
-    def plc_version(self) -> str:
+    def plc(self) -> str:
         """version identifier of the plc software"""
         return self._plc_version
 
-    @plc_version.setter
-    def plc_version(self, value: str):
+    @plc.setter
+    def plc(self, value: str):
         self._plc_version = value
 
     @property
-    def splc_version(self) -> str:
+    def splc(self) -> str:
         """version identifier of the splc software"""
         return self._splc_version
 
-    @splc_version.setter
-    def splc_version(self, value: str):
+    @splc.setter
+    def splc(self, value: str):
         self._splc_version = value
 
     @property
     def option_bits(self) -> str:
-        """availible options in the control"""
+        """available options in the control"""
         return self._option_bits
 
     @option_bits.setter
@@ -104,12 +121,12 @@ class VersionInfo:
         self._id_number = value
 
     @property
-    def release_type(self) -> str:
+    def release(self) -> str:
         """release type ???"""
         return self._release_type
 
-    @release_type.setter
-    def release_type(self, value: str):
+    @release.setter
+    def release(self, value: str):
         self._release_type = value
 
     def is_itnc(self) -> bool:
@@ -126,8 +143,10 @@ class VersionInfo:
 
 
 class SystemParameters:
+    """data class for system parameters"""
+
     def __init__(self):
-        """data class for system parameters, uses properties instead o f dataclass for compatibility"""
+        """init with default values"""
         self.inputs_start_address = -1
         self.number_of_inputs = -1
         self.outputs_start_address = -1
@@ -343,7 +362,7 @@ class SystemParameters:
 
     @property
     def lsv2_version(self) -> int:
-        """version of the LSV2 protocoll used"""
+        """version of the LSV2 protocol used"""
         return self._lsv2_version
 
     @lsv2_version.setter
@@ -352,7 +371,7 @@ class SystemParameters:
 
     @property
     def lsv2_version_flags(self) -> int:
-        """feature flages used by this version of LSV2"""
+        """feature flags used by this version of LSV2"""
         return self._lsv2_version_flags
 
     @lsv2_version_flags.setter
@@ -370,7 +389,7 @@ class SystemParameters:
 
     @property
     def max_block_length(self) -> int:
-        """maximal number of bytes that can be sent and recived by the control"""
+        """maximal number of bytes that can be sent and received by the control"""
         return self._max_block_length
 
     @max_block_length.setter
@@ -424,6 +443,7 @@ class SystemParameters:
 
     @property
     def max_trace_line(self) -> int:
+        """maximum number of trace lines??"""
         return self._max_trace_line
 
     @max_trace_line.setter
@@ -450,7 +470,10 @@ class SystemParameters:
 
 
 class ToolInformation:
+    """data class for information about a tool"""
+
     def __init__(self):
+        """init with default values"""
         self.number = -1
         self.index = -1
         self.axis = ""
@@ -487,7 +510,7 @@ class ToolInformation:
 
     @property
     def length(self) -> float:
-        """tool lenght"""
+        """tool length"""
         return self._length
 
     @length.setter
@@ -514,10 +537,20 @@ class ToolInformation:
 
 
 class OverrideState:
+    """data class for the override states"""
+
     def __init__(self):
+        """init with default values"""
         self.feed = -1.0
         self.rapid = -1.0
-        self.spindel = -1.0
+        self.spindle = -1.0
+
+    def __str__(self) -> str:
+        return "F:%3.1f%% FMAX:%3.1f%% S:%3.1f%%" % (
+            self.feed,
+            self.rapid,
+            self.spindle,
+        )
 
     @property
     def feed(self) -> float:
@@ -538,25 +571,31 @@ class OverrideState:
         self._rapid = value
 
     @property
-    def spindel(self) -> float:
+    def spindle(self) -> float:
         """override value for spindle speed"""
         return self._spindel
 
-    @spindel.setter
-    def spindel(self, value: float):
+    @spindle.setter
+    def spindle(self, value: float):
         self._spindel = value
 
 
-class LSV2ErrorMessage:
+class NCErrorMessage:
+    """data class for nc error messages
+    LSV2 error messages are handled with"""
+
     def __init__(self):
-        """names were chosen so not to interfere with existing names"""
+        """
+        init with default values,
+        names were chosen so not to interfere with existing names
+        """
         self.e_class = -1
         self.e_group = -1
         self.e_number = -1
         self.e_text = ""
         self.dnc = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Class: %d, Group: %d, Number: %d, DNC?: %s, Text: '%s'" % (
             self.e_class,
             self.e_group,
@@ -612,41 +651,54 @@ class LSV2ErrorMessage:
 
 
 class StackState:
+    """data class for the current execution stack"""
+
     def __init__(self):
-        self.current_line = -1
-        self.main_pgm = ""
-        self.current_pgm = ""
+        """init with default values"""
+        self.line_no = -1
+        self.main = ""
+        self.current = ""
+
+    def __str__(self) -> str:
+        return "Main '%s' Current '%s' @ Line %d" % (
+            self.main,
+            self.current,
+            self.line_no,
+        )
 
     @property
-    def current_line(self) -> int:
-        """line number being executed"""
+    def line_no(self) -> int:
+        """current line number being executed"""
         return self._current_line
 
-    @current_line.setter
-    def current_line(self, value: int):
+    @line_no.setter
+    def line_no(self, value: int):
         self._current_line = value
 
     @property
-    def main_pgm(self) -> str:
+    def main(self) -> str:
         """name of the current main program"""
         return self._main_pgm
 
-    @main_pgm.setter
-    def main_pgm(self, value: str):
+    @main.setter
+    def main(self, value: str):
         self._main_pgm = value
 
     @property
-    def current_pgm(self) -> str:
+    def current(self) -> str:
         """name of the current program being executed"""
         return self._current_pgm
 
-    @current_pgm.setter
-    def current_pgm(self, value: str):
+    @current.setter
+    def current(self, value: str):
         self._current_pgm = value
 
 
 class FileEntry:
+    """data class for file information"""
+
     def __init__(self):
+        """init with default values"""
         self.size = -1
         self.timestamp = datetime.fromtimestamp(0)
         self.attributes = bytearray()
@@ -656,6 +708,7 @@ class FileEntry:
         self.is_directory = False
         self.is_protected = False
         self.is_hidden = False
+        self.is_selected = False
 
         self.name = ""
 
@@ -723,6 +776,15 @@ class FileEntry:
         self._is_hidden = value
 
     @property
+    def is_selected(self) -> bool:
+        """if True, object is selected for execution"""
+        return self._is_selected
+
+    @is_selected.setter
+    def is_selected(self, value: bool):
+        self._is_selected = value
+
+    @property
     def name(self) -> str:
         """name of the file system object"""
         return self._name
@@ -733,7 +795,10 @@ class FileEntry:
 
 
 class DirectoryEntry:
+    """data class for directory information"""
+
     def __init__(self):
+        """init with default values"""
         self.free_size = -1
         self.dir_attributes = []
         self.attributes = bytearray()
@@ -750,7 +815,7 @@ class DirectoryEntry:
 
     @property
     def dir_attributes(self) -> list:
-        """attriutes of this directoy"""
+        """attriutes of this directory"""
         return self._dir_attributes
 
     @dir_attributes.setter
@@ -777,7 +842,10 @@ class DirectoryEntry:
 
 
 class DriveEntry:
+    """data class for drive information"""
+
     def __init__(self):
+        """init with default values"""
         self.unknown_0 = -1
         self.unknown_1 = ""
         self.unknown_2 = -1
@@ -785,6 +853,7 @@ class DriveEntry:
 
     @property
     def unknown_0(self) -> int:
+        """unknown numerical value"""
         return self._unknown_0
 
     @unknown_0.setter
@@ -793,6 +862,7 @@ class DriveEntry:
 
     @property
     def unknown_1(self) -> str:
+        """unknown string value"""
         return self._unknown_1
 
     @unknown_1.setter
@@ -801,6 +871,7 @@ class DriveEntry:
 
     @property
     def unknown_2(self) -> int:
+        """unknown numerical value"""
         return self._unknown_2
 
     @unknown_2.setter
@@ -809,6 +880,7 @@ class DriveEntry:
 
     @property
     def name(self) -> str:
+        """name of the drive"""
         return self._name
 
     @name.setter
@@ -816,34 +888,39 @@ class DriveEntry:
         self._name = value
 
 
-class TransmissionError:
+class LSV2Error:
+    """data class for LSV2 errors"""
+
     def __init__(self):
-        self.e_code = LSV2Err.T_ER_NON
+        """init with default values"""
         self.e_type = -1
+        self.e_code = LSV2StatusCode.T_ER_NON
 
     def __str__(self):
         return "Error Type: %d, Error Code: %d" % (self.e_type, self.e_code)
 
     @property
-    def e_type(self):
+    def e_type(self) -> int:
+        """error type"""
         return self._error_type
 
     @e_type.setter
-    def e_type(self, value):
+    def e_type(self, value: int):
         self._error_type = value
 
     @property
-    def e_code(self):
+    def e_code(self) -> LSV2StatusCode:
+        """error code"""
         return self._error_code
 
     @e_code.setter
-    def e_code(self, value):
+    def e_code(self, value: LSV2StatusCode):
         self._error_code = value
 
     @staticmethod
     def from_ba(err_bytes: bytearray):
-        """convert byte array to erro object"""
-        err = TransmissionError()
+        """convert byte array to error object"""
+        err = LSV2Error()
         err.e_type = struct.unpack("!BB", err_bytes)[0]
         err.e_code = struct.unpack("!BB", err_bytes)[1]
         return err

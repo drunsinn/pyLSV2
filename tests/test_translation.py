@@ -7,8 +7,8 @@ import pyLSV2
 
 def test_translation():
     """simple test if the content of error strings changes between languages"""
-    test_error = pyLSV2.TransmissionError()
-    test_error.e_code = pyLSV2.LSV2Err.T_BD_NO_NEW_FILE
+    test_error = pyLSV2.LSV2Error()
+    test_error.e_code = pyLSV2.LSV2StatusCode.T_BD_NO_NEW_FILE
     test_error.e_type = 1
     text_en = pyLSV2.get_error_text(test_error, language="en")
 

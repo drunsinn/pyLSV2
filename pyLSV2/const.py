@@ -3,13 +3,6 @@
 """Constant values used in LSV2"""
 from enum import Enum, IntEnum
 
-# #: files system attributes
-# FS_ENTRY_IS_HIDDEN = 0x08
-# FS_ENTRY_IS_DRIVE = 0x10
-# FS_ENTRY_IS_DIRECTORY = 0x20
-# FS_ENTRY_IS_PROTCTED = 0x40
-# FS_ENTRY_IS_IN_USE = 0x80
-
 #: enable/disable binary file transfer for C_FL and R_FL
 MODE_BINARY = 0x01
 MODE_NON_BIN = 0x00
@@ -195,7 +188,7 @@ class MemoryType(IntEnum):
     OUTPUT_WORD = 11
 
 
-class LSV2Err(IntEnum):
+class LSV2StatusCode(IntEnum):
     """Enum for LSV2 protocol error numbers
     range 0 - 19: protocol or transmission errors
     range 20 - 99: telegram errors
@@ -458,7 +451,7 @@ class KeyCode(IntEnum):
     PROG_TOOL_CALL = 0x01D2
     PROG_CYC_DEF = 0x01D3
     PROG_CYC_CALL = 0x01D4
-    PROG_CYC_CAL = PROG_CYC_CALL  # TODO typo
+    # PROG_CYC_CAL = PROG_CYC_CALL
     PROG_LBL = 0x01D5
     PROG_LBL_CALL = 0x01D6
     PROG_L = 0x01D7
@@ -597,7 +590,7 @@ class OldKeyCode(IntEnum):
     AXIS_X = 0x006D
     TOGGEL_POLAR = 0x0043
 
-    PROG_TOUCH_PROBE = 0x004E  # TODO
+    PROG_TOUCH_PROBE = 0x004E
     PROG_RR = 0x0057
     PROG_RL = 0x0056
     PROG_LBL_CALL = 0x005E
@@ -622,8 +615,8 @@ class OldKeyCode(IntEnum):
     PGMMGT = 0x0061
     TOGGEL_INC = 0x0044
 
-    Cl_Pgm = 0x0062  # TODO
-    Pgm_Nr = 0x003B  # TODO
+    CL_PGM = 0x0062
+    PGM_NR = 0x003B
 
     ARROW_LEFT = 0x0059
     ARROW_DOWN = 0x0067

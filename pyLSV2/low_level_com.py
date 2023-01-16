@@ -7,7 +7,7 @@ import struct
 from typing import Union
 
 from .const import CMD, RSP
-from .dat_cls import TransmissionError
+from .dat_cls import LSV2Error
 from .err import LSV2StateException, LSV2ProtocolException
 
 
@@ -36,7 +36,9 @@ class LSV2TCP:
         try:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
-            logging.error("there was an error resolving the host")
+            logging.error(
+                "there was an error getting the IP for the hostname %s", hostname
+            )
             raise
 
         self._port = self.DEFAULT_PORT
@@ -55,7 +57,7 @@ class LSV2TCP:
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
         self._logger.debug(
             "Socket successfully created, host %s was resolved to IP %s",
@@ -65,14 +67,18 @@ class LSV2TCP:
 
     @property
     def last_response(self) -> RSP:
+        """get the response to the last telegram"""
         return self._last_lsv2_response
 
     @property
-    def last_error(self) -> TransmissionError:
+    def last_error(self) -> LSV2Error:
+        """get the error if the last telegram failed"""
         return self._last_error
 
     @property
     def buffer_size(self) -> int:
+        """size of the buffer used for sending and receiving data.
+        has to be negotiated with the control"""
         return self._buffer_size
 
     @buffer_size.setter
@@ -95,12 +101,23 @@ class LSV2TCP:
         try:
             self._tcpsock.connect((self._host_ip, self._port))
         except socket.timeout:
-            self._logger.error("could not connect to control")
+            self._logger.error(
+                "could not connect to address '%s' on port %d",
+                self._host_ip,
+                self._port,
+            )
+            raise
+        except ConnectionRefusedError:
+            self._logger.error(
+                "connection to address '%s' on port %d was refused",
+                self._host_ip,
+                self._port,
+            )
             raise
 
         self._is_connected = True
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
         self._logger.debug("Connected to host %s at port %s", self._host_ip, self._port)
 
@@ -119,7 +136,7 @@ class LSV2TCP:
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
 
         self._logger.debug("Connection to %s closed", self._host_ip)
 
@@ -217,7 +234,7 @@ class LSV2TCP:
                     )
                 except Exception:
                     self._logger.error(
-                        "something went wrong while waiting for more data to arrive. expected %d, recived %d, content so far: %s",
+                        "something went wrong while waiting for more data to arrive. expected %d, received %d, content so far: %s",
                         response_length,
                         len(data_recived),
                         data_recived,
@@ -227,42 +244,44 @@ class LSV2TCP:
             response_content = bytearray()
 
         if self._last_lsv2_response is RSP.T_ER:
-            self._last_error = TransmissionError.from_ba(response_content)
+            self._last_error = LSV2Error.from_ba(response_content)
         else:
-            self._last_error = TransmissionError()
+            self._last_error = LSV2Error()
 
         return response_content
 
 
 class LSV2RS232:
-    """Implementation of the low level communication functions for sending and
+    """placeholder implementation of the low level communication functions for sending and
     receiving LSV2 telegrams via RS232"""
 
     DEFAULT_BUFFER_SIZE = 256
     # Default size of send and receive buffer
 
     def __init__(self, port: str, speed: int, timeout: float = 15.0):
-        raise NotImplementedError()
-        import serial
-
         self._logger = logging.getLogger("LSV2 RS232")
-
         self.buffer_size = LSV2RS232.DEFAULT_BUFFER_SIZE
 
         self._is_connected = False
         self._last_lsv2_response = RSP.NONE
-        self._last_error = TransmissionError()
+        self._last_error = LSV2Error()
+        raise NotImplementedError()
+        import serial
 
     @property
     def last_response(self) -> RSP:
+        """get the response to the last telegram"""
         return self._last_lsv2_response
 
     @property
-    def last_error(self) -> TransmissionError:
+    def last_error(self) -> LSV2Error:
+        """get the error if the last telegram failed"""
         return self._last_error
 
     @property
     def buffer_size(self) -> int:
+        """size of the buffer used for sending and receiving data.
+        has to be negotiated with the control"""
         return self._buffer_size
 
     @buffer_size.setter
@@ -281,12 +300,14 @@ class LSV2RS232:
         Establish connection to control
         """
         raise NotImplementedError()
+        pass
 
     def disconnect(self):
         """
         Close connection
         """
         raise NotImplementedError()
+        pass
 
     def telegram(
         self,

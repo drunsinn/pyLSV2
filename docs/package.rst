@@ -10,17 +10,12 @@ pyLSV2 Base
 
 .. autoclass:: pyLSV2.LSV2
     :members:
-    :private-members: _send_recive
 
 Table reader
 ------------
 
 .. autoclass:: pyLSV2.NCTable
     :members:
-
-.. autoclass:: pyLSV2.TableReader
-    :members:
-
 
 Dataclasses
 -----------
@@ -37,7 +32,7 @@ Dataclasses
 .. autoclass:: pyLSV2.dat_cls.OverrideState
     :members:
 
-.. autoclass:: pyLSV2.dat_cls.LSV2ErrorMessage
+.. autoclass:: pyLSV2.dat_cls.NCErrorMessage
     :members:
 
 .. autoclass:: pyLSV2.dat_cls.StackState
@@ -47,6 +42,12 @@ Dataclasses
     :members:
 
 .. autoclass:: pyLSV2.dat_cls.DirectoryEntry
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.DriveEntry
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.LSV2Error
     :members:
 
 Constants

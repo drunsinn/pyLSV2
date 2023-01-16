@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""script to convert tabel files to csv"""
+"""script to convert table files to csv"""
 import argparse
 import logging
 import pathlib
 import sys
 
 from pyLSV2 import NCTable
+
+__author__ = "drunsinn"
+__license__ = "MIT"
+__version__ = "1.0"
+__email__ = "dr.unsinn@googlemail.com"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
