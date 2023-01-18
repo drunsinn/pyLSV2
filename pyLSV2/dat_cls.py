@@ -925,75 +925,133 @@ class LSV2Error:
         err.e_code = struct.unpack("!BB", err_bytes)[1]
         return err
 
-class ScopeChannel():
+
+class ScopeSignal:
     def __init__(self):
-        self._name = ""
-        self._number = -1
-        self._type = ChannelType.UNKNOWN
-        self._suffix = ""
-        self._signals = list()
+        self._channel_name = ""
+        self._channel = -1
+        # self._channel_suffix = ""
+
+        self._signale_name = ""
+        self._signal = -1
+        # self._signale_suffix = ""
+
+        self._signal_type = ChannelType.UNKNOWN
+
         self._min_interval = -1
-        self._unknown = dict()
-    
+        # self._unknown = bytearray()
+
+        self._signal_parameter = -1
+
+    def __str__(self):
+        return "Channel/Signal: {:02d}/{:02d} '{:s} {:s}' Type {:02d} Interval {:d}us Optional Parameter {:d}".format(
+            self.channel,
+            self.signal,
+            self.channel_name,
+            self.signal_name,
+            self.channel_type,
+            self.min_interval,
+            self.signal_parameter,
+        )
+
     @property
-    def name(self) -> str:
+    def channel_name(self) -> str:
         """name of the scope channel"""
-        return self._name
-    
-    @name.setter
-    def name(self, value:str):
-        self._name = value
-    
+        return self._channel_name
+
+    @channel_name.setter
+    def channel_name(self, value: str):
+        self._channel_name = value
+
     @property
-    def number(self) -> int:
+    def signal_name(self) -> str:
+        """name of the signal"""
+        return self._signale_name
+
+    @signal_name.setter
+    def signal_name(self, value: str):
+        self._signale_name = value
+
+    @property
+    def channel(self) -> int:
         """number of channel"""
-        return self._number
-    
-    @number.setter
-    def number(self, value:int):
-        self._number = value
+        return self._channel
+
+    @channel.setter
+    def channel(self, value: int):
+        self._channel = value
 
     @property
-    def type(self) -> ChannelType:
+    def signal(self) -> int:
+        """number of signal"""
+        return self._signal
+
+    @signal.setter
+    def signal(self, value: int):
+        self._signal = value
+
+    @property
+    def channel_type(self) -> ChannelType:
         """type of channel"""
-        return self._type
-    
-    @type.setter
-    def type(self, value:ChannelType):
-        self._type = value
+        return self._channel_type
 
-    @property
-    def suffix(self) -> str:
-        """name suffix of the scope channel"""
-        return self._suffix
-    
-    @suffix.setter
-    def suffix(self, value:str):
-        self._suffix = value
+    @channel_type.setter
+    def channel_type(self, value: ChannelType):
+        self._channel_type = value
 
-    @property
-    def signals(self) -> list:
-        """name of the scope channel"""
-        return self._signals
-    
-    @signals.setter
-    def signals(self, signals:list):
-        self._signals = signals
-    
+    # @property
+    # def signal_suffix(self) -> str:
+    #    """name suffix of the scope signal"""
+    #    return self._signal_suffix
+
+    # @signal_suffix.setter
+    # def signal_suffix(self, value:str):
+    #    self._signal_suffix = value
+
     @property
     def min_interval(self) -> int:
         """minimum signal interval in us"""
         return self._min_interval
-    
+
     @min_interval.setter
-    def min_interval(self, value:int):
+    def min_interval(self, value: int):
         self._min_interval = value
 
     @property
-    def unknown(self) -> dict:
-        """dict of values where it's unsure if the are correct"""
-        return self._unknown
-    
-    @unknown.setter
-    def unknown(self, value:dict):
-        self._unknown = value
+    def signal_parameter(self) -> int:
+        """parameter necessary to read signal"""
+        return self._signal_parameter
+
+    @signal_parameter.setter
+    def signal_parameter(self, value: int):
+        self._signal_parameter = value
+
+    def needs_parameter(self) -> bool:
+        """check if signal need an additional parameter"""
+        if self.channel_type in [ChannelType.TYPE2, ChannelType.TYPE5]:
+            return True
+        return False
+
+    # @property
+    # def unknown(self) -> bytearray:
+    #    """dict of values where it's unsure if the are correct"""
+    #    return self._unknown
+
+    # @unknown.setter
+    # def unknown(self, value:bytearray):
+    #    self._unknown = value
+
+    def to_ba(self):
+        signal_data = bytearray()
+        signal_data.extend(struct.pack("!H", self.channel))  # <- channel number
+        if self.channel_type in [ChannelType.TYPE1, ChannelType.TYPE4]:
+            signal_data.extend(struct.pack("!H", self.signal))  # <- signal number
+            signal_data.extend(bytearray(b"\xff\xff\xff\xff"))  # <- ??
+        elif self.channel_type in [ChannelType.TYPE2, ChannelType.TYPE5]:
+            signal_data.extend(
+                struct.pack("!H", self.signal)
+            )  # <- PLC memory type: 0=M, 1=T, 2=C, 3=I, 4=O, 5=B, 6=W, 7=D, 8=IB, 9=IW, 10=ID, 11=OB, 12=OW, 12=OD
+            signal_data.extend(struct.pack("!L", self.signal_parameter))
+        else:
+            signal_data.extend(bytearray(b"\xff\xff\xff\xff\xff\xff"))  # <- ??
+        return signal_data

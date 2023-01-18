@@ -883,11 +883,11 @@ class RSP(str, Enum):
     """S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data"""
 
     S_OC = "S_OC"
-    """S_OC: TODO singal that has something to do with the scope"""
+    """S_OC: TODO signal that has something to do with the scope"""
     S_OD = "S_OD"
     """S_OP: TODO: read something to do with scope"""
     S_OP = "S_OP"
-    """S_OP: TODO singal that has something to do with the scope"""
+    """S_OP: TODO signal that has something to do with the scope"""
 
     S_PR = "S_PR"
     """S_PR: signals that the command R_PR and the parameter was accepted, it is followed by more data"""
@@ -977,10 +977,18 @@ class ParRDR(IntEnum):
     DRIVES = 0x02
     """mode switch to read drive information"""
 
+
 class ChannelType(IntEnum):
     """Enum of scope channel types"""
 
     UNKNOWN = -1
-    AXES = 1
-    PLC = 2
-    SINGLE = 3
+    TYPE0 = 0
+    TYPE1 = 1
+    TYPE2 = 2
+    TYPE3 = 3
+    TYPE4 = 4
+    TYPE5 = 10
+
+    @classmethod
+    def has_value(cls, value):
+        return value in set(item.value for item in ChannelType)

@@ -1807,15 +1807,23 @@ class LSV2:
         self._logger.debug("successfully received screen dump")
         return True
 
-
     @staticmethod
-    def tst_decode_signal_description(data_set: bytearray) -> ld.ScopeChannel:
+    def tst_decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
         """decode the data returned from R_OC / S_OC"""
-        #print(data_set)
+        # print(data_set)
+        # data_set[  0:  2] : channel number
+        # data_set[  2:  4] : 1. copy of interval value
+        # data_set[  4:  6] : channel/signal type
+        # data_set[  6:  8] : ? always 0x0000
+        # data_set[  8: 10] : 2. copy of interval value
+        # data_set[ 46: ??] : name of the channel
 
-        channel_desc = ld.ScopeChannel()
+        # type 1, 2, 4, 5:
+        # data_set[ 59:   ] : signal names
 
-        channel_desc.number = struct.unpack("!H", data_set[0:2])[0]
+        signals = list()
+
+        channel_number = struct.unpack("!H", data_set[0:2])[0]
 
         name_start = 46
         name_end = 46
@@ -1826,55 +1834,110 @@ class LSV2:
             else:
                 name_end += 1
 
-        channel_desc.name = lm.ba_to_ustr(data_set[name_start : name_end])
+        channel_name = lm.ba_to_ustr(data_set[name_start:name_end])
+
+        if data_set[10:46] != bytearray(
+            b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        ):
+            raise Exception(
+                "unexpected data in channel description in bytes 10 to 45: %s",
+                data_set[10:46],
+            )
 
         interval_value_1 = struct.unpack("!H", data_set[2:4])[0]
-        interval_value_2 = struct.unpack("!L", data_set[6:10])[0]
-
+        interval_value_2 = struct.unpack("!H", data_set[8:10])[0]
         if interval_value_1 != interval_value_2:
-            raise Exception("error in decoding of channel description data: %s" % data_set)
+            raise Exception(
+                "error in decoding of channel description data: %s" % data_set
+            )
+        min_interval = interval_value_1
 
-        channel_desc.min_interval = interval_value_1
-        channel_desc.suffix = struct.unpack("!H", data_set[4:6])[0]
-        
-        channel_desc.unknown["dataset"] = data_set
-        channel_desc.unknown["num1"] = struct.unpack("!H", data_set[4:6])[0]
+        type_num = struct.unpack("!H", data_set[4:6])[0]
+        if not lc.ChannelType.has_value(type_num):
+            raise Exception("unexpected numerical value for type %d" % type_num)
+        channel_type = lc.ChannelType(type_num)
 
-        if len(data_set) == 106:
-            channel_desc.type = lc.ChannelType.AXES
-            
+        if not data_set[6:8] == bytearray(b"\x00\x00"):
+            raise Exception("unexpected values in bytes 6 and 7: %s" % data_set[6:8])
+
+        if channel_type in [lc.ChannelType.TYPE1, lc.ChannelType.TYPE4]:
+            if len(data_set) != 106:
+                raise Exception()
             axes_start = 59
             axes_end = 105
+            for i, signal_label in enumerate(
+                lm.ba_to_ustr(data_set[axes_start:axes_end]).split(chr(0x00))
+            ):
+                if signal_label == "-":
+                    continue
+                sig_desc = ld.ScopeSignal()
+                sig_desc.channel_name = channel_name
+                sig_desc.channel = channel_number
+                sig_desc.min_interval = min_interval
+                sig_desc.channel_type = channel_type
+                sig_desc.signal_name = signal_label
+                sig_desc.signal = i
 
-            channel_desc.signals = lm.ba_to_ustr(data_set[axes_start:axes_end]).split(chr(0x00))
-            channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : axes_start])
-        elif len(data_set) == 59:
-            channel_desc.type = lc.ChannelType.SINGLE
+                # sig_desc.channel_suffix = channel_suffix
+                # sig_desc.signal_suffix = lm.ba_to_ustr(data_set[name_end : axes_start])
+                # sig_desc.unknown = data_set
 
-            channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : ])
-        elif len(data_set) == 94:
-            channel_desc.type = lc.ChannelType.PLC
-            
+                signals.append(sig_desc)
+
+            # channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : axes_start])
+        elif channel_type in [
+            lc.ChannelType.TYPE0,
+        ]:
+            if len(data_set) != 59:
+                raise Exception()
+            sig_desc = ld.ScopeSignal()
+            sig_desc.channel_name = channel_name
+            sig_desc.channel = channel_number
+            sig_desc.min_interval = min_interval
+            sig_desc.channel_type = channel_type
+
+            # sig_desc.channel_suffix = channel_suffix
+            # sig_desc.signal_suffix = lm.ba_to_ustr(data_set[name_end : ])
+            # sig_desc.unknown = data_set
+
+            signals.append(sig_desc)
+
+        else:  # channel_type in [lc.ChannelType.TYPE2, lc.ChannelType.TYPE5]:
+            if len(data_set) != 94:
+                raise Exception()
             type_start = 59
             type_end = 93
 
-            channel_desc.signals = lm.ba_to_ustr(data_set[type_start:type_end]).split(chr(0x00))
-            channel_desc.suffix = lm.ba_to_ustr(data_set[name_end : type_start])
-        else:
-            raise Exception("unknown size for channel description")
+            for i, signal_label in enumerate(
+                lm.ba_to_ustr(data_set[type_start:type_end]).split(chr(0x00))
+            ):
+                if signal_label == "-":
+                    continue
+                sig_desc = ld.ScopeSignal()
+                sig_desc.channel_name = channel_name
+                sig_desc.channel = channel_number
+                sig_desc.min_interval = min_interval
+                sig_desc.channel_type = channel_type
+                sig_desc.signal_name = signal_label
+                sig_desc.signal = i
 
-        return channel_desc
+                # sig_desc.channel_suffix = channel_suffix
+                # sig_desc.signal_suffix = lm.ba_to_ustr(data_set[name_end : type_start])
+                # sig_desc.unknown = data_set
+
+                signals.append(sig_desc)
+
+        return signals
 
     @staticmethod
-    def tst_decode_S_CI(data_set:bytearray):
-        """"decode data reurned by R_CI / S_CI"""
+    def tst_decode_S_CI(data_set: bytearray):
+        """ "decode data reurned by R_CI / S_CI"""
         print("step 1: R_CI result is %d bytes of %s" % (len(data_set), data_set))
 
-
         # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
-        # -> is independent of channel, axes, intervall or samples
+        # -> is independent of channel, axes, interval or samples
 
-        # maybe the last four bytes are the actual intervall? 0x00 00 0b b8 = 3000
+        # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
 
         if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
             print(" # unexpected return pattern for R_CI!")
@@ -1883,103 +1946,110 @@ class LSV2:
         return data_set
 
     @staticmethod
-    def tst_decode_S_OP(data_set:bytearray):
-        """"decode data reurned by R_OP / S_OP"""
+    def tst_decode_S_OP(signal_list: List[ld.ScopeSignal], data_set: bytearray):
+        """ "decode data reurned by R_OP / S_OP"""
         print("step 2: R_OP result is %d bytes" % (len(data_set)))
         # contains further description of the channel?
 
         def split_dataset(ds):
             for i in range(0, len(ds), 22):
-                yield ds[i:i + 22]
+                yield ds[i : i + 22]
 
         if (len(data_set) % 22) == 0:
-            print("R_OP dataset has expected length")
+            # print("R_OP dataset has expected length")
             for i, ds in enumerate(split_dataset(data_set)):
-                print("R_OP section %d: %s" % (i, ds))
+                print("R_OP section %d: %s %s" % (i, ds, signal_list[i]))
                 # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
-            
+
         else:
-            print("R_OP dataset has unexpected length %d of %s" % (len(data_set),data_set))
+            print(
+                "R_OP dataset has unexpected length %d of %s"
+                % (len(data_set), data_set)
+            )
 
         return data_set
 
     @staticmethod
-    def decode_timestamp(data_set:bytearray) -> datetime:
-        """"decode data reurned by R_DT -> Date and Time on the control"""
+    def decode_timestamp(data_set: bytearray) -> datetime:
+        """ "decode data reurned by R_DT -> Date and Time on the control"""
         timestamp = struct.unpack("!L", data_set[0:4])[0]
         return datetime.fromtimestamp(timestamp)
 
     @staticmethod
-    def tst_decode_scope_reading(data_set:bytearray):
+    def tst_decode_scope_reading(
+        signal_list: List[ld.ScopeSignal],
+        data_set: bytearray,
+    ):
         """decode data reurned by R_OD / S_OD"""
-        print("step 4/5: R_OD result is %d bytes" % (len(data_set), ))
+        print("step 4/5: R_OD result is %d bytes" % (len(data_set),))
 
         reading = dict()
         # first 4 bytes seem to contain a counter
-        # -> sequence number indicats the number of the first value?
-        reading["number"] = struct.unpack("!L", data_set[0:4])[0]
-        print("reading has sequenc number %d" % reading["number"] )
-        header_data = data_set[4:56]
-        reading_section = data_set[56:]
-        print("reading header: %s" % header_data)
-        print("length of reading section: %d" % len(reading_section))
-        
-        """
-        # length
-        one channel one axes = 138
-        one channel two axes = 274
-        one channel tree axes = 406
-        one channel four axes = 540
+        # -> sequence number indicates the number of the first value?
+        reading["seqence_number"] = struct.unpack("!L", data_set[0:4])[0]
 
-        recored data for :
-        X = +17
-        Y = 0
-        Z = -6.9
+        reading["all"] = data_set[4:]
 
-        "
-        header with length 56
-        \x02\x00\x00\x00\x45\x00\x01\xc6\x8c\x02\x40\x00\x80\x06\x00\x00\x7f\x00\x00\x01\x7f\x00\x00\x01\x4a\x38\xe8\xf0\x34\xde\xd3\x05\xec\x11\x67\x11\x50\x18\x27\xf6\x8c\xb1\x00\x00\x00\x00\x01\x96\x53\x5f\x4f\x44\x00\x00\x06\x00
-        
-        
-        \x00\x20\xff\xff\xff\xff <- 0x0020 = 32 = number of data values; 0xff ff ff ff = ??
-        \x00\x02\x98\x10 \x00\x02\x98\x10 \x00\x02\x98\x10 <- 32 * 0x00 02 98 10 = 32 * readings for signal 1
-        
-        \x00\x20\xff\xff\xff\xff
-        \x00\x00\x00\x00 \x00\x00\x00\x00 \x00\x00\x00\x00 <- 32 * 0x00 00 00 00 = 32 * readings for signal 2
-        
-        \x00\x20\xff\xff\xff\xff
-        \x00\x4b\x3d\xb8 \x00\x4b\x3d\xb8 \x00\x4b\x3d\xb8 <- 32 * 0x00 4b 3d b8 = 32 * readings for signal 3
-         
+        sig_data_lenth = 134
 
-        TODO: how to decode 0x00 02 98 10 to 17,0???
-        """
+        if int((len(data_set) - 4) / len(signal_list)) != sig_data_lenth:
+            raise Exception()
 
+        reading["signals"] = list()
+
+        sig_data_start = 4
+        sig_data_end = sig_data_start + sig_data_lenth
+        for signal in signal_list:
+            sig_data = dict()
+
+            sig_data["header"] = data_set[sig_data_start : sig_data_start + 6]
+            if sig_data["header"] != bytearray(b"\x00\x20\xff\xff\xff\xff"):
+                raise Exception("unknown header format")
+
+            # if signal.channel_type in []:
+            unpack_string = "!32l"
+
+            value_start = sig_data_start + 6
+            sig_data["data"] = struct.unpack(
+                unpack_string, data_set[value_start:sig_data_end]
+            )  # data_set[start + 6:end]
+
+            reading["signals"].append(sig_data)
+            sig_data_start += sig_data_lenth
+            sig_data_end += sig_data_lenth
+
+        # reading["header"] = data_set[4:56]
+        # reading["data"] = data_set[56:]
+
+        # print("reading has sequenc number %d" % reading["number"] )
+        # print("reading header: %s" % reading["header"])
+        # print("length of reading section: %d" % len(reading["data"]))
 
         return reading
 
     def tst_read_scope_channels(self) -> list:
-        """read availible scope channels"""
+        """read available scope channels"""
         if not self.versions.is_itnc():
             self._logger.warning("only works for itnc??")
             return list()
 
         if not self.login(lc.Login.SCOPE):
-            self._logger.warning("clould not log in as user for scope funktion")
+            self._logger.warning("clould not log in as user for scope function")
             return list()
 
         channel_list = list()
 
         content = self._llcom.telegram(lc.CMD.R_OC)
         if self._llcom.last_response in lc.RSP.S_OC:
-            #print("recived bytes %s" % content)
-            channel_list.append(self.tst_decode_signal_description(content))
+            # print("received bytes %s" % content)
+            channel_list.extend(self.tst_decode_signal_description(content))
 
             while True:
                 content = self._llcom.telegram(lc.RSP.T_OK)
 
                 if self._llcom.last_response in lc.RSP.S_OC:
-                    #print("recived bytes %s" % content)
-                    channel_list.append(self.tst_decode_signal_description(content))
+                    # print("received bytes %s" % content)
+                    channel_list.extend(self.tst_decode_signal_description(content))
                 elif self._llcom.last_response in lc.RSP.T_FD:
                     self._logger.info("finished loading data")
                     break
@@ -1988,13 +2058,19 @@ class LSV2:
 
         return channel_list
 
-    def tst_record_data(self, num_readings:int, intervall_us:int):
+    def tst_record_data(
+        self, signal_list: List[ld.ScopeSignal], num_readings: int, intervall_us: int
+    ):
         """record data from scope channels"""
 
-        self._logger.debug("start recoding %d readings with intervall of %d µs" % (num_readings, intervall_us))
+        self._logger.debug(
+            "start recoding %d readings with interval of %d µs",
+            num_readings,
+            intervall_us,
+        )
 
         # step 1: usage unknown, is always 0x000000003
-        # is independent of channel, axes, intervall or samples
+        # is independent of channel, axes, interval or samples
         """
         In 0x00 00 00 00 -> Out Error Wrong Parameter
         In 0x00 00 00 01 -> Out 0x00 00 00 01 00 00 00 00
@@ -2004,10 +2080,10 @@ class LSV2:
         """
         payload = bytearray()
         payload.extend(struct.pack("!L", 3))
-        #payload.append(0x00)
-        #payload.append(0x00)
-        #payload.append(0x00)
-        #payload.append(0x03)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x03)
 
         result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
 
@@ -2017,87 +2093,31 @@ class LSV2:
             raise Exception()
 
         # step 2
-
-        """
-        capture 1: one channel tree axes
-        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x02\x00\x01\xff\xff\xff\xff \x00\x02\x00\x02\xff\xff\xff\xff"
-
-        capture 2: two channels 1 axes
-        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
-
-
-        capture 3: two channels 1 axes 16 k buffer
-        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
-
-
-        capture 4: two channels 1 axes 6k us intervall
-        "\x00\x00\x17\x70 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
-
-
-        "\x00\x4c\x43\x70 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x03\x00\x00\xff\xff\xff\xff"
-
-        
-        ######
-        
-        "\x00\x00\x0b\xb8 \x00\x02\x00\x00\xff\xff\xff\xff \x00\x02\x00\x01\xff\xff\xff\xff \x00\x08\xff\xff\xff\xff\xff\xff \x00\x0f\x00\x00\x00\x00\x03\xe8"
-
-
-        """
-
         payload = bytearray()
 
-        # intervall package
+        # interval package
         payload.extend(struct.pack("!L", intervall_us))
-        #payload.append(0x00)
-        #payload.append(0x00)
-        #payload.append(0x0b) # -> 0B
-        #payload.append(0xb8) # -> B8
 
-        #### channel packages - one for each channel
-        # channel 2 axes 0
-        payload.extend(struct.pack("!H", 2)) # <- channel number
-        #payload.append(0x00)
-        #payload.append(0x02) # <- channel number
-        payload.extend(struct.pack("!H", 0)) # <- signal number
-        #payload.append(0x00)
-        #payload.append(0x00) # <- channel axes
-        payload.extend(bytearray(b"\xff\xff\xff\xff"))
-        #payload.append(0xff)
-        #payload.append(0xff)
-        #payload.append(0xff)
-        #payload.append(0xff)
+        for signal in signal_list:
+            if signal.min_interval > intervall_us:
+                self._logger.warning(
+                    "the selected interval is to small for signal %s %s %dus",
+                    signal.channel_name,
+                    signal.signal_name,
+                    signal.min_interval,
+                )
+                raise Exception("the selected interval is to small")
 
-        # # channel 8 - feedrate
-        payload.extend(struct.pack("!H", 8))
-        payload.extend(bytearray(b"\xff\xff\xff\xff\xff\xff"))
-
-        # # channel 15 PLC value M1000
-        payload.extend(struct.pack("!H", 8))
-        payload.extend(struct.pack("!H", 0)) # <- PLC memory type: 0=M, 1=T, 2=C, 3=I, 4=O, 5=B, 6=W, 7=D, 8=IB, 9=IW, 10=ID, 11=OB, 12=OW, 12=OD
-        payload.extend(struct.pack("!L", 1000))
-
-        # payload.extend(struct.pack("!H", 3))
-        # payload.extend(struct.pack("!H", 0))
-        # payload.append(0xff)
-        # payload.append(0xff)
-        # payload.append(0xff)
-        # payload.append(0xff)
-
-        # # channel 3 axes 0
-        # payload.extend(struct.pack("!H", 3))
-        # payload.extend(struct.pack("!H", 1))
-        # payload.append(0xff)
-        # payload.append(0xff)
-        # payload.append(0xff)
-        # payload.append(0xff)
+            payload.extend(signal.to_ba())
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            self.tst_decode_S_OP(result)
+            self.tst_decode_S_OP(signal_list, result)
         else:
+            if self.last_error.e_code == 85:
+                self._logger.warning("to many signals selected: %d", len(signal_list))
+                raise Exception("too many signals selected???")
             raise Exception()
-
-        return list()
 
         # step 3
         result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
@@ -2107,22 +2127,21 @@ class LSV2:
         else:
             raise Exception()
 
-
         # step 4
 
         """
-        capture 1: one channel tree axes 3k us intervall
+        capture 1: one channel tree axes 3k us interval
         "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
 
 
-        capture 2: two channels 1 axes 3k us intervall
+        capture 2: two channels 1 axes 3k us interval
         "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
 
 
-        capture 3: two channels 1 axes 3k us intervall 16 k buffer
+        capture 3: two channels 1 axes 3k us interval 16 k buffer
         "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
        
-        capture 4: two channels 1 axes 6k us intervall
+        capture 4: two channels 1 axes 6k us interval
         "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x17\x70"
 
 
@@ -2131,8 +2150,8 @@ class LSV2:
         payload = bytearray()
         payload.append(0x00)
         payload.append(0x06)
-        payload.append(0xff)
-        payload.append(0xff)
+        payload.append(0xFF)
+        payload.append(0xFF)
         payload.append(0x00)
         payload.append(0x00)
         payload.append(0x00)
@@ -2142,25 +2161,27 @@ class LSV2:
         payload.append(0x00)
         payload.append(0x00)
 
-        # intervall again?
+        # interval again?
         payload.extend(struct.pack("!L", intervall_us))
-        #payload.append(0x00)
-        #payload.append(0x00)
-        #payload.append(0x0b) # -> 0B
-        #payload.append(0xb8) # -> B8
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x0b) # -> 0B
+        # payload.append(0xb8) # -> B8
 
         recorded_data = list()
         content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
 
         if isinstance(content, (bytearray,)) and len(content) > 0:
-            recorded_data.append(self.tst_decode_scope_reading(content))
+            recorded_data.append(self.tst_decode_scope_reading(signal_list, content))
 
             count = num_readings - 1
             while count > 0:
                 content = self._llcom.telegram(lc.RSP.T_OK)
 
                 if self._llcom.last_response in lc.RSP.S_OD:
-                    recorded_data.append(self.tst_decode_scope_reading(content))
+                    recorded_data.append(
+                        self.tst_decode_scope_reading(signal_list, content)
+                    )
                 else:
                     self._logger.warning("something went wrong")
                     break
@@ -2169,10 +2190,10 @@ class LSV2:
             raise Exception()
 
         # step 6 - stop recording data
-        #payload = bytearray()
-        #payload.append(0x01) <- - not necessary?
-        #payload.append(0x6f) <- - not necessary?
-        #result = self._send_recive(lc.RSP.T_BD, payload, None)
+        # payload = bytearray()
+        # payload.append(0x01) <- - not necessary?
+        # payload.append(0x6f) <- - not necessary?
+        # result = self._send_recive(lc.RSP.T_BD, payload, None)
         content = self._llcom.telegram(lc.RSP.T_BD)
 
         return recorded_data
