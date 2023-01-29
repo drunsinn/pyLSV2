@@ -2210,7 +2210,7 @@ In this function for now we read (positions-velocity-acceleration-jerk-I nominal
     def tst_real_time_data(
         self, signal_list: List[ld.ScopeSignal], num_readings: int, intervall_us: int
     ):
-        """record data from scope channels"""
+        """read data from scope channels"""
 
         self._logger.debug(
             "start recoding %d readings with interval of %d µs",
