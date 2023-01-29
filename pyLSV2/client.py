@@ -2197,3 +2197,166 @@ class LSV2:
         content = self._llcom.telegram(lc.RSP.T_BD)
 
         return recorded_data
+
+    
+    
+
+    """TODO: Add a function to read the scope channel in real time;
+In this function for now we read (positions-velocity-acceleration-jerk-I nominal-I actual-*torque_to be searched_)
+"""
+    def real_time_readings(self, signal_list: List[ld.ScopeSignal], num_readings: int, intervall_us: int):
+        self.tst_real_time_data(signal_list, num_readings, intervall_us)
+
+    def tst_real_time_data(
+        self, signal_list: List[ld.ScopeSignal], num_readings: int, intervall_us: int
+    ):
+        """record data from scope channels"""
+
+        self._logger.debug(
+            "start recoding %d readings with interval of %d µs",
+            #num_readings,
+            intervall_us,
+        )
+
+        # step 1: usage unknown, is always 0x000000003
+        # is independent of channel, axes, interval or samples
+        """
+        In 0x00 00 00 00 -> Out Error Wrong Parameter
+        In 0x00 00 00 01 -> Out 0x00 00 00 01 00 00 00 00
+        In 0x00 00 00 02 -> Out 0x00 00 00 01 00 00 00 01
+        In 0x00 00 00 03 -> Out 0x00 00 00 02 00 00 0b b8
+        In 0x00 00 00 04 -> Out Error Wrong Parameter
+        """
+        payload = bytearray()
+        payload.extend(struct.pack("!L", 3))
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x03)
+
+        result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
+
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            self.tst_decode_S_CI(result)
+        else:
+            raise Exception()
+
+        # step 2
+        payload = bytearray()
+
+        # interval package
+        payload.extend(struct.pack("!L", intervall_us))
+
+        for signal in signal_list:
+            if signal.min_interval > intervall_us:
+                self._logger.warning(
+                    "the selected interval is to small for signal %s %s %dus",
+                    signal.channel_name,
+                    signal.signal_name,
+                    signal.min_interval,
+                )
+                raise Exception("the selected interval is to small")
+
+            payload.extend(signal.to_ba())
+
+        result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            self.tst_decode_S_OP(signal_list, result)
+        else:
+            if self.last_error.e_code == 85:
+                self._logger.warning("to many signals selected: %d", len(signal_list))
+                raise Exception("too many signals selected???")
+            raise Exception()
+
+        # step 3
+        result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            ts = self.decode_timestamp(result)
+            self._logger.debug("Time on Control is %s", ts.isoformat())
+        else:
+            raise Exception()
+
+        # step 4
+
+        """
+        capture 1: one channel tree axes 3k us interval
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
+
+
+        capture 2: two channels 1 axes 3k us interval
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
+
+
+        capture 3: two channels 1 axes 3k us interval 16 k buffer
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
+       
+        capture 4: two channels 1 axes 6k us interval
+        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x17\x70"
+
+
+        # bytes 12 - 15 are a repeat of the interval value? 3000 and 6000
+        """
+        payload = bytearray()
+        payload.append(0x00)
+        payload.append(0x06)
+        payload.append(0xFF)
+        payload.append(0xFF)
+        for num in range(8):
+            payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x00)
+
+        # interval again?
+        payload.extend(struct.pack("!L", intervall_us))
+        # payload.append(0x00)
+        # payload.append(0x00)
+        # payload.append(0x0b) # -> 0B
+        # payload.append(0xb8) # -> B8
+        global recorded_data
+        recorded_data = list()
+        content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
+
+        if isinstance(content, (bytearray,)) and len(content) > 0:
+            recorded_data.append(self.tst_decode_scope_reading(signal_list, content))
+
+            global TCP_package_num
+            count = num_readings ; TCP_package_num = 0
+            while count > 0:
+                content = self._llcom.telegram(lc.RSP.T_OK)
+                if self._llcom.last_response in lc.RSP.S_OD:
+                    recorded_data.append(
+                        self.tst_decode_scope_reading(signal_list, content)
+                    )
+
+                    """
+Note: recorded_data[TCP_package_num]["signals"]   is a list, its (n)th element is the (n)th appended "availible_signals" in the main code.
+    for one_smaple in range(32):
+        Signal_type = recorded_data[TCP_package_num]["signals"][# appending rank]["data"][one_smaple]
+where:
+    Position is /10000    (to be in mm)
+    Velocity is /10   (to be in mm/min)
+    Acceleration is *(0.5299145299)    (to be in mm/s^2)
+"""
+#########################################################################################################
+# Here we can write our codes and functions:
+                    for one_smaple in range(32):
+                        Position_X = recorded_data[TCP_package_num]["signals"][0]["data"][one_smaple]/10000
+                        Position_Y = recorded_data[TCP_package_num]["signals"][1]["data"][one_smaple]/10000
+                        Position_Z = recorded_data[TCP_package_num]["signals"][2]["data"][one_smaple]/10000
+                        Velocity_X = recorded_data[TCP_package_num]["signals"][3]["data"][one_smaple]/10
+                        Accelera_X = recorded_data[TCP_package_num]["signals"][4]["data"][one_smaple]*0.52991453
+
+                        print(f"Pozisyon X = {Position_X} mm , Pozisyon Y = {Position_Y} , Pozisyon Z = {Position_Z} , Hız X = {Velocity_X} mm/min, İvme = {Accelera_X} mm/s^2")
+#########################################################################################################
+                else:
+                    self._logger.warning("something went wrong"); break
+
+                count -= 1 ; TCP_package_num += 1
+
+        else:
+            raise Exception()
