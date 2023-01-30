@@ -2339,7 +2339,7 @@ Note: recorded_data[TCP_package_num]["signals"]   is a list, its (n)th element i
         Signal_type = recorded_data[TCP_package_num]["signals"][# appending rank]["data"][one_smaple]
 where:
     Position is /10000    (to be in mm)
-    Velocity is /10   (to be in mm/min)
+    Velocity is *(0.0953652489)   (to be in mm/min)
     Acceleration is *(0.5299145299)    (to be in mm/s^2)
 """
 #########################################################################################################
@@ -2348,7 +2348,7 @@ where:
                         Position_X = recorded_data[TCP_package_num]["signals"][0]["data"][one_smaple]/10000
                         Position_Y = recorded_data[TCP_package_num]["signals"][1]["data"][one_smaple]/10000
                         Position_Z = recorded_data[TCP_package_num]["signals"][2]["data"][one_smaple]/10000
-                        Velocity_X = recorded_data[TCP_package_num]["signals"][3]["data"][one_smaple]/10
+                        Velocity_X = recorded_data[TCP_package_num]["signals"][3]["data"][one_smaple]0.0953652489
                         Accelera_X = recorded_data[TCP_package_num]["signals"][4]["data"][one_smaple]*0.52991453
 
                         print(f"Pozisyon X = {Position_X} mm , Pozisyon Y = {Position_Y} , Pozisyon Z = {Position_Z} , Hız X = {Velocity_X} mm/min, İvme = {Accelera_X} mm/s^2")
