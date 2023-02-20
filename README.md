@@ -154,6 +154,7 @@ These changes where made intentionally to make further development easier. See t
 | iTNC530     | 606425 04 SP20 |
 | iTNC530     | 340494 08 SP2  |
 | CNCpilot640 | 1230521 03 SP1 |
+| TNC7        | 817625 17      |
 
 ### Machines
 | Control     | Software       |

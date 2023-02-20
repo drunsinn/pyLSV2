@@ -92,6 +92,9 @@ class ControlType(Enum):
     UNKNOWN = -1
     """unknown control type"""
 
+    TNC7 = 5
+    """the TNC7 is the new control that behaves just a bit different again so we need a special case for it"""
+
 
 class Login(str, Enum):
     """Enum for the different login roles"""
