@@ -8,9 +8,9 @@ import pyLSV2
 from pyLSV2.const import MemoryType
 import struct
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
-with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as con:
+with pyLSV2.LSV2("192.168.56.101", port=19000, timeout=5, safe_mode=False) as con:
     print(
         "# Connected to a '{:s}' running software version '{:s}'".format(
             con.versions.control, con.versions.nc_sw
@@ -19,6 +19,10 @@ with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as co
 
     print("number of scope channels %d" % con.parameters.number_of_scope_channels)
     print("max number of trace lines %d" % con.parameters.max_trace_line)
+
+    print("encryption key %s" % con.parameters.password_encryption_key)
+    exit()
+
 
     availible_signals = con.tst_read_scope_channels()
 
@@ -60,11 +64,11 @@ with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as co
     selected_signals.append(new_sig)
 
     # # select plc channel which needs an additional parameter
-    new_sig = availible_signals[135]
-    new_sig.signal_parameter = 12
-    selected_signals.append(new_sig)
+    #new_sig = availible_signals[135]
+    #new_sig.signal_parameter = 12
+    #selected_signals.append(new_sig)
 
-    selected_signals.append(availible_signals[235])
+    #selected_signals.append(availible_signals[235])
 
     print("selected signals:")
     for sig in selected_signals:

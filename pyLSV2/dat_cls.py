@@ -943,14 +943,17 @@ class ScopeSignal:
 
         self._signal_parameter = -1
 
+        self._unit_string = ""
+
     def __str__(self):
-        return "Channel/Signal: {:02d}/{:02d} '{:s} {:s}' Type {:02d} Interval {:d}us Optional Parameter {:d}".format(
+        return "Channel/Signal: {:02d}/{:02d} '{:s} - {:s}' Type {:02d} Interval {:d}us Unit '{:s}' Optional Parameter {:d}".format(
             self.channel,
             self.signal,
             self.channel_name,
             self.signal_name,
             self.channel_type,
             self.min_interval,
+            self.unit,
             self.signal_parameter,
         )
 
@@ -1031,6 +1034,15 @@ class ScopeSignal:
         if self.channel_type in [ChannelType.TYPE2, ChannelType.TYPE5]:
             return True
         return False
+
+    @property
+    def unit(self) -> str:
+        """unit of the value"""
+        return self._unit_string
+
+    @unit.setter
+    def unit(self, value:str):
+        self._unit_string = value
 
     # @property
     # def unknown(self) -> bytearray:
