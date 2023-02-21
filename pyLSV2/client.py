@@ -1946,19 +1946,29 @@ class LSV2:
         return data_set
 
     @staticmethod
-    def tst_decode_S_OP(signal_list: List[ld.ScopeSignal], data_set: bytearray):
+    def tst_decode_signal_details(signal_list: List[ld.ScopeSignal], data_set: bytearray) -> List[ld.ScopeSignal]:
         """ "decode data reurned by R_OP / S_OP"""
         print("step 2: R_OP result is %d bytes" % (len(data_set)))
         # contains further description of the channel?
+        # list with signals is updated place!
 
-        def split_dataset(ds):
-            for i in range(0, len(ds), 22):
-                yield ds[i : i + 22]
+        def split_dataset(data):
+            for i in range(0, len(data), 22):
+                yield data[i : i + 22]
 
         if (len(data_set) % 22) == 0:
             # print("R_OP dataset has expected length")
-            for i, ds in enumerate(split_dataset(data_set)):
-                print("R_OP section %d: %s %s" % (i, ds, signal_list[i]))
+            for i, data_sub_set in enumerate(split_dataset(data_set)):
+                if data_sub_set[17:] != bytearray(b'?\x00\x00\x00\x00'):
+                    raise Exception("unexpected data in signal details at position 17 %s" % data_sub_set[17:])
+                
+                
+                signal_list[i].unit = lm.ba_to_ustr(data_sub_set[0:10])
+
+                temp = "".join('{:02x}'.format(x) for x in data_sub_set[10:])
+
+                print("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
+
                 # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
 
         else:
@@ -1967,7 +1977,7 @@ class LSV2:
                 % (len(data_set), data_set)
             )
 
-        return data_set
+        return signal_list
 
     @staticmethod
     def decode_timestamp(data_set: bytearray) -> datetime:
@@ -2075,7 +2085,7 @@ class LSV2:
         In 0x00 00 00 00 -> Out Error Wrong Parameter
         In 0x00 00 00 01 -> Out 0x00 00 00 01 00 00 00 00
         In 0x00 00 00 02 -> Out 0x00 00 00 01 00 00 00 01
-        In 0x00 00 00 03 -> Out 0x00 00 00 02 00 00 0b b8
+        In 0x00 00 00 03 -> Out 0x00 00 00 02 00 00 0b b8 <- intervall
         In 0x00 00 00 04 -> Out Error Wrong Parameter
         """
         payload = bytearray()
@@ -2112,12 +2122,18 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            self.tst_decode_S_OP(signal_list, result)
+            self.tst_decode_signal_details(signal_list, result)
         else:
             if self.last_error.e_code == 85:
                 self._logger.warning("to many signals selected: %d", len(signal_list))
                 raise Exception("too many signals selected???")
+            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_OSZI_CHSEL:
+                self._logger.warning("Error setting up the channels")
+                raise Exception("Error setting up the channels")
             raise Exception()
+        
+        for i in signal_list:
+            print(i)
 
         # step 3
         result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
