@@ -992,4 +992,3 @@ class ChannelType(IntEnum):
     @classmethod
     def has_value(cls, value):
         return value in set(item.value for item in ChannelType)
-
