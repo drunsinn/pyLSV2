@@ -45,6 +45,6 @@ Note: recorded_data[TCP_package_num]["signals"] (that is the yielded value i.e. 
                 Velocity_X = round(package[3]["data"][one_smaple]*0.0953652489,3)
                 Accelera_X = round(package[4]["data"][one_smaple]*0.5299145299,3)
 
-                print(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
+                # print(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
                 fp.write(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
                 fp.write("\n")
