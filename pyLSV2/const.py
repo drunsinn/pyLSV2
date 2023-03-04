@@ -993,7 +993,6 @@ class ChannelType(IntEnum):
     def has_value(cls, value):
         return value in set(item.value for item in ChannelType)
 
-
 class ChannelSignal():
     s_actual_X = 0
     s_actual_Y = 1
@@ -1461,5 +1460,3 @@ class ChannelSignal():
     REF_9 = 463
     REF_S = 464
 
-    
-    
