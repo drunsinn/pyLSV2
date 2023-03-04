@@ -1958,7 +1958,7 @@ class LSV2:
                 yield data[i : i + 22]
 
         if (len(data_set) % 22) == 0:
-            print("R_OP dataset has expected length")
+            # print("R_OP dataset has expected length")
             for i, data_sub_set in enumerate(split_dataset(data_set)):
                 if data_sub_set[17:] != bytearray(b'?\x00\x00\x00\x00'):
                     raise Exception("unexpected data in signal details at position 17 %s" % data_sub_set[17:])
