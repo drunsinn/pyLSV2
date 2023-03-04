@@ -2341,7 +2341,6 @@ class LSV2:
         if isinstance(content, (bytearray,)) and len(content) > 0:
             recorded_data.append(self.tst_decode_scope_reading(signal_list, content))
 
-            global TCP_package_num
             end = time.time() ; timer = end - start ; TCP_package_num = 0
             while timer < time_readings:
                 content = self._llcom.telegram(lc.RSP.T_OK)
