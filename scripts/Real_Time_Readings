@@ -33,17 +33,16 @@ Note: recorded_data[TCP_package_num]["signals"] (that is the yielded value i.e. 
     Acceleration is *(0.5299145299)    (to be in mm/s^2)
     TODO: Finding the factores of the other channels readings.
 """
-    for sample in con.real_time_readings(
+    for package in con.real_time_readings(
         signal_list=selected_signals, time_readings=30 , intervall_us=3000
     ):
         for one_smaple in range(32): 
             # Signal_type = sample[# appending rank]["data"][one_smaple]
-            Position_X = round(sample[0]["data"][one_smaple]/10000,3)
-            Position_Y = round(sample[1]["data"][one_smaple]/10000,3)
-            Position_Z = round(sample[2]["data"][one_smaple]/10000,3)
-            Velocity_X = round(sample[3]["data"][one_smaple]*0.0953652489,3)
-            Accelera_X = round(sample[4]["data"][one_smaple]*0.5299145299,3)
+            Position_X = round(package[0]["data"][one_smaple]/10000,3)
+            Position_Y = round(package[1]["data"][one_smaple]/10000,3)
+            Position_Z = round(package[2]["data"][one_smaple]/10000,3)
+            Velocity_X = round(package[3]["data"][one_smaple]*0.0953652489,3)
+            Accelera_X = round(package[4]["data"][one_smaple]*0.5299145299,3)
             
 
             print(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
-
