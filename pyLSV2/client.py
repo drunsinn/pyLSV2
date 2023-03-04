@@ -1973,12 +1973,10 @@ class LSV2:
                 # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
 
         else:
-            #print(
-            #    "R_OP dataset has unexpected length %d of %s"
-            #    % (len(data_set), data_set)
-            #)
-            pass
-
+            print(
+                "R_OP dataset has unexpected length %d of %s"
+                % (len(data_set), data_set)
+            )
 
         return signal_list
 
@@ -2135,8 +2133,8 @@ class LSV2:
                 raise Exception("Error setting up the channels")
             raise Exception()
         
-        #for i in signal_list:
-        #    print(i)
+        for i in signal_list:
+            print(i)
 
         # step 3
         result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
@@ -2282,9 +2280,6 @@ class LSV2:
                 self._logger.warning("Error setting up the channels")
                 raise Exception("Error setting up the channels")
             raise Exception()
-        
-        # for i in signal_list:
-        #     print(i)
 
         # step 3
         result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
@@ -2341,19 +2336,24 @@ class LSV2:
         if isinstance(content, (bytearray,)) and len(content) > 0:
             recorded_data.append(self.tst_decode_scope_reading(signal_list, content))
 
-            end = time.time() ; timer = end - start ; TCP_package_num = 0
+            end = time.time()
+            timer = end - start
+
             while timer < time_readings:
                 content = self._llcom.telegram(lc.RSP.T_OK)
                 if self._llcom.last_response in lc.RSP.S_OD:
                     recorded_data.append(
                         self.tst_decode_scope_reading(signal_list, content)
                     )
-                    yield recorded_data[TCP_package_num]["signals"]
+                    yield recorded_data[0]["signals"]
 
                 else:
-                    self._logger.warning("something went wrong"); break
+                    self._logger.warning("something went wrong")
+                    break
 
-                end = time.time() ; timer = end - start ; TCP_package_num += 1
+                end = time.time()
+                timer = end - start
+                recorded_data = list()
 
         else:
             raise Exception()
