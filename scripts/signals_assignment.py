@@ -1,4 +1,4 @@
-#Note: Run this file only once before using the library for the first time. 
+# Note: Run this file to dynamically assign the signal numbers to (pyLSV2/pyLSV2/channel_signals.py).
 
 import logging
 import pyLSV2
