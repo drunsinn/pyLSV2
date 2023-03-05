@@ -3,19 +3,20 @@
 
 import logging
 import pyLSV2
-from pyLSV2.const import MemoryType, ChannelSignal
+from pyLSV2.const import channel_signal
 
 logging.basicConfig(level=logging.INFO)
 
 with pyLSV2.LSV2("192.168.56.103", port=19000, timeout=5, safe_mode=False) as con:
     availible_signals = con.tst_read_scope_channels()
+
     # build list with selected signals
     selected_signals = list()
-    selected_signals.append(availible_signals[0])
-    selected_signals.append(availible_signals[1])
-    selected_signals.append(availible_signals[2])
-    selected_signals.append(availible_signals[44])
-    selected_signals.append(availible_signals[180])
+    selected_signals.append(availible_signals[channel_signal.s_actual_X])
+    selected_signals.append(availible_signals[channel_signal.s_actual_Y])
+    selected_signals.append(availible_signals[channel_signal.s_actual_Z])
+    selected_signals.append(availible_signals[channel_signal.v_actual_X])
+    selected_signals.append(availible_signals[channel_signal.a_actual_X])
     
     print("selected signals:")
     for sig in selected_signals:
@@ -45,6 +46,6 @@ Note: recorded_data[TCP_package_num]["signals"] (that is the yielded value i.e. 
                 Velocity_X = round(package[3]["data"][one_smaple]*0.0953652489,3)
                 Accelera_X = round(package[4]["data"][one_smaple]*0.5299145299,3)
 
-                # print(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
+                #print(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
                 fp.write(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
                 fp.write("\n")
