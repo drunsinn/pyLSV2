@@ -1050,7 +1050,6 @@ class ScopeSignal:
     def unit(self, value:str):
         self._unit_string = value
     
-
     @property
     def offset(self) -> int:
         """signal offset"""
@@ -1078,7 +1077,8 @@ class ScopeSignal:
     # def unknown(self, value:bytearray):
     #    self._unknown = value
 
-    def to_ba(self):
+    def to_ba(self) -> bytearray:
+        """create byte array necessary for enabling signal on control"""
         signal_data = bytearray()
         signal_data.extend(struct.pack("!H", self.channel))  # <- channel number
         if self.channel_type in [ChannelType.TYPE1, ChannelType.TYPE4]:
@@ -1092,3 +1092,22 @@ class ScopeSignal:
         else:
             signal_data.extend(bytearray(b"\xff\xff\xff\xff\xff\xff"))  # <- ??
         return signal_data
+    
+    def normalized_name(self) -> str:
+        """combine signal and channel name into a normalised form"""
+        c_name = self.channel_name.lower()
+        c_name = c_name.replace(" ", "_")
+        c_name = c_name.replace(".", "_")
+        c_name = c_name.replace(":", "_")
+        c_name = c_name.replace("(", "_")
+        c_name = c_name.replace(")", "")
+        c_name = c_name.replace("-", "_")
+        c_name = c_name.replace("__", "_")
+        c_name = c_name.strip("_")
+
+        s_name = self.signal_name.lower().strip()
+
+        if len(s_name) > 0:
+            return s_name + "_" + c_name
+        return c_name
+        
