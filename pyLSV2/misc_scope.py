@@ -116,7 +116,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
 
 def decode_system_information(data_set: bytearray):
     """decode data reurned by R_CI / S_CI"""
-    # print("step 1: R_CI result is %d bytes of %s" % (len(data_set), data_set))
+    logger.debug("R_CI result is %d bytes of %s" % (len(data_set), data_set))
     # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
     # -> is independent of channel, axes, interval or samples
     # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
@@ -131,7 +131,7 @@ def decode_signal_details(
     signal_list: List[ld.ScopeSignal], data_set: bytearray
 ) -> List[ld.ScopeSignal]:
     """ "decode data reurned by R_OP / S_OP"""
-    # print("step 2: R_OP result is %d bytes" % (len(data_set)))
+    logger.debug("step 2: R_OP result is %d bytes" % (len(data_set)))
     # contains further description of the channel?
     # list with signals is updated place!
     def split_dataset(data):
@@ -139,7 +139,7 @@ def decode_signal_details(
             yield data[i : i + 22]
 
     if (len(data_set) % 22) == 0:
-        # print("R_OP dataset has expected length")
+        logger.debug("R_OP dataset has expected length")
         for i, data_sub_set in enumerate(split_dataset(data_set)):
             if data_sub_set[17:] != bytearray(b"?\x00\x00\x00\x00"):
                 raise Exception(
@@ -149,7 +149,7 @@ def decode_signal_details(
 
             signal_list[i].unit = lm.ba_to_ustr(data_sub_set[0:10])
             temp = "".join("{:02x}".format(x) for x in data_sub_set[10:])
-            # print("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
+            logger.debug("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
             # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
 
             # char NameDim[LSV2MAXLSV2DIMNAME];     /* Nullterminiert  z.B. "mm/s" */
@@ -167,7 +167,7 @@ def decode_scope_reading(
     data_set: bytearray,
 ):
     """decode data reurned by R_OD / S_OD"""
-    # print("step 4/5: R_OD result is %d bytes" % (len(data_set),))
+    logger.debug("step 4/5: R_OD result is %d bytes" % (len(data_set),))
     reading = dict()
     # first 4 bytes seem to contain a counter
     # -> sequence number indicates the number of the first value?
