@@ -1841,16 +1841,15 @@ class LSV2:
         return channel_list
 
     def real_time_readings(
-        self, signal_list: List[ld.ScopeSignal], time_readings: int, intervall_us: int
+        self, signal_list: List[ld.ScopeSignal], duration: int, intervall_us: int
     ):
         """Read real-time data from scope channels.
         -) time_readings: duration for data collection in seconds.
         """
 
-        start = time.time()
         self._logger.debug(
             "start recoding %d readings with interval of %d µs",
-            time_readings,
+            duration,
             intervall_us,
         )
         # step 1: usage unknown, is always 0x000000003
@@ -1954,6 +1953,9 @@ class LSV2:
         # payload.append(0x0b) # -> 0B
         # payload.append(0xb8) # -> B8
 
+
+        start = time.time() # start timer
+        
         recorded_data = list()
         content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
 
@@ -1963,7 +1965,7 @@ class LSV2:
             end = time.time()
             timer = end - start
 
-            while timer < time_readings:
+            while timer < duration:
                 content = self._llcom.telegram(lc.RSP.T_OK)
                 if self._llcom.last_response in lc.RSP.S_OD:
                     recorded_data.append(lms.decode_scope_reading(signal_list, content))
