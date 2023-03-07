@@ -15,6 +15,7 @@ import struct
 from datetime import datetime
 from types import TracebackType
 from typing import List, Union, Optional, Type, Dict
+import time
 
 from . import const as lc
 from . import dat_cls as ld
@@ -1932,7 +1933,7 @@ class LSV2:
     @staticmethod
     def tst_decode_S_CI(data_set: bytearray):
         """ "decode data reurned by R_CI / S_CI"""
-        print("step 1: R_CI result is %d bytes of %s" % (len(data_set), data_set))
+        # print("step 1: R_CI result is %d bytes of %s" % (len(data_set), data_set))
 
         # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
         # -> is independent of channel, axes, interval or samples
@@ -1948,7 +1949,7 @@ class LSV2:
     @staticmethod
     def tst_decode_signal_details(signal_list: List[ld.ScopeSignal], data_set: bytearray) -> List[ld.ScopeSignal]:
         """ "decode data reurned by R_OP / S_OP"""
-        print("step 2: R_OP result is %d bytes" % (len(data_set)))
+        # print("step 2: R_OP result is %d bytes" % (len(data_set)))
         # contains further description of the channel?
         # list with signals is updated place!
 
@@ -1967,7 +1968,7 @@ class LSV2:
 
                 temp = "".join('{:02x}'.format(x) for x in data_sub_set[10:])
 
-                print("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
+                # print("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
 
                 # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
 
@@ -1991,7 +1992,7 @@ class LSV2:
         data_set: bytearray,
     ):
         """decode data reurned by R_OD / S_OD"""
-        print("step 4/5: R_OD result is %d bytes" % (len(data_set),))
+        # print("step 4/5: R_OD result is %d bytes" % (len(data_set),))
 
         reading = dict()
         # first 4 bytes seem to contain a counter
@@ -2067,18 +2068,20 @@ class LSV2:
                     self._logger.warning("something went wrong")
 
         return channel_list
-
-    def tst_record_data(
-        self, signal_list: List[ld.ScopeSignal], num_readings: int, intervall_us: int
+        
+    def real_time_readings(
+        self, signal_list: List[ld.ScopeSignal], time_readings: int, intervall_us: int
     ):
-        """record data from scope channels"""
-
+        """ Read real-time data from scope channels.
+        -) time_readings: duration for data collection in seconds.
+        """
+        
+        start = time.time()
         self._logger.debug(
             "start recoding %d readings with interval of %d µs",
-            num_readings,
+            time_readings,
             intervall_us,
         )
-
         # step 1: usage unknown, is always 0x000000003
         # is independent of channel, axes, interval or samples
         """
@@ -2125,15 +2128,12 @@ class LSV2:
             self.tst_decode_signal_details(signal_list, result)
         else:
             if self.last_error.e_code == 85:
-                self._logger.warning("to many signals selected: %d", len(signal_list))
+                self._logger.warning("too many signals selected: %d", len(signal_list))
                 raise Exception("too many signals selected???")
             if self.last_error.e_code == lc.LSV2StatusCode.T_ER_OSZI_CHSEL:
                 self._logger.warning("Error setting up the channels")
                 raise Exception("Error setting up the channels")
             raise Exception()
-        
-        for i in signal_list:
-            print(i)
 
         # step 3
         result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
@@ -2190,26 +2190,24 @@ class LSV2:
         if isinstance(content, (bytearray,)) and len(content) > 0:
             recorded_data.append(self.tst_decode_scope_reading(signal_list, content))
 
-            count = num_readings - 1
-            while count > 0:
-                content = self._llcom.telegram(lc.RSP.T_OK)
+            end = time.time()
+            timer = end - start
 
+            while timer < time_readings:
+                content = self._llcom.telegram(lc.RSP.T_OK)
                 if self._llcom.last_response in lc.RSP.S_OD:
                     recorded_data.append(
                         self.tst_decode_scope_reading(signal_list, content)
                     )
+                    yield recorded_data[0]["signals"]
+
                 else:
                     self._logger.warning("something went wrong")
                     break
-                count -= 1
+
+                end = time.time()
+                timer = end - start
+                recorded_data = list()
+
         else:
             raise Exception()
-
-        # step 6 - stop recording data
-        # payload = bytearray()
-        # payload.append(0x01) <- - not necessary?
-        # payload.append(0x6f) <- - not necessary?
-        # result = self._send_recive(lc.RSP.T_BD, payload, None)
-        content = self._llcom.telegram(lc.RSP.T_BD)
-
-        return recorded_data
