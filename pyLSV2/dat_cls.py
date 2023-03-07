@@ -945,8 +945,12 @@ class ScopeSignal:
 
         self._unit_string = ""
 
+        self._offset = 0
+
+        self._factor = 0.0
+
     def __str__(self):
-        return "Channel/Signal: {:02d}/{:02d} '{:s} - {:s}' Type {:02d} Interval {:d}us Unit '{:s}' Optional Parameter {:d}".format(
+        return "Channel/Signal: {:02d}/{:02d} '{:s} - {:s}' Type {:02d} Interval {:d}us Unit '{:s}' offset {:d} factor {:f} Optional Parameter {:d}".format(
             self.channel,
             self.signal,
             self.channel_name,
@@ -954,6 +958,8 @@ class ScopeSignal:
             self.channel_type,
             self.min_interval,
             self.unit,
+            self.offset,
+            self.factor,
             self.signal_parameter,
         )
 
@@ -1043,6 +1049,25 @@ class ScopeSignal:
     @unit.setter
     def unit(self, value:str):
         self._unit_string = value
+    
+
+    @property
+    def offset(self) -> int:
+        """signal offset"""
+        return self._offset
+    
+    @offset.setter
+    def offset(self, value:int):
+        self._offset = value
+    
+    @property
+    def factor(self) -> float:
+        """signal scaling factor"""
+        return self._factor
+    
+    @factor.setter
+    def factor(self, value:float):
+        self._factor = value
 
     # @property
     # def unknown(self) -> bytearray:

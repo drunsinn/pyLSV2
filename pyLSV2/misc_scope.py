@@ -131,7 +131,7 @@ def decode_signal_details(
     signal_list: List[ld.ScopeSignal], data_set: bytearray
 ) -> List[ld.ScopeSignal]:
     """ "decode data reurned by R_OP / S_OP"""
-    logger.debug("step 2: R_OP result is %d bytes" % (len(data_set)))
+    logger.debug("step 2: R_OP result is %d bytes", len(data_set))
     # contains further description of the channel?
     # list with signals is updated place!
     def split_dataset(data):
@@ -148,17 +148,11 @@ def decode_signal_details(
                 )
 
             signal_list[i].unit = lm.ba_to_ustr(data_sub_set[0:10])
-            temp = "".join("{:02x}".format(x) for x in data_sub_set[10:])
-            logger.debug("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
-            # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
-
-            # char NameDim[LSV2MAXLSV2DIMNAME];     /* Nullterminiert  z.B. "mm/s" */
-            # double NormFaktor;
-            # long NormOffset;
+            signal_list[i].factor = struct.unpack("<d", data_sub_set[10:18])[0]
+            signal_list[i].offset = struct.unpack("!l", data_sub_set[18:])[0]
+            logger.debug("updated signal %s / %s with unit %s, factor %f and offset %d", signal_list[i].channel_name, signal_list[i].signal_name, signal_list[i].unit, signal_list[i].factor, signal_list[i].offset)
     else:
-        logger.error(
-            "R_OP dataset has unexpected length %d of %s" % (len(data_set), data_set)
-        )
+        logger.error("R_OP dataset has unexpected length %d of %s" ,len(data_set), data_set)
     return signal_list
 
 

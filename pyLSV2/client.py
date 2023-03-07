@@ -1895,7 +1895,7 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            lms.decode_signal_details(signal_list, result)
+            signal_list = lms.decode_signal_details(signal_list, result)
         else:
             if self.last_error.e_code == 85:
                 self._logger.warning("too many signals selected: %d", len(signal_list))
