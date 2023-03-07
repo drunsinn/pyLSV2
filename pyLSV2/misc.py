@@ -307,3 +307,14 @@ def ustr_to_ba(str_to_convert: str) -> bytearray:
     str_bytes = bytearray(map(ord, str(str_to_convert)))
     str_bytes.append(0x00)
     return str_bytes
+
+
+def decode_timestamp(data_set: bytearray) -> datetime:
+    """
+    Decode result from reading the time and date with R_DT
+    Returns datetime
+
+    :param data_set: bytes returned from query
+    """
+    timestamp = struct.unpack("!L", data_set[0:4])[0]
+    return datetime.fromtimestamp(timestamp)
