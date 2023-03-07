@@ -1809,7 +1809,7 @@ class LSV2:
         self._logger.debug("successfully received screen dump")
         return True
 
-    def tst_read_scope_channels(self) -> list:
+    def tst_read_scope_channels(self) -> List[ld.ScopeSignal]:
         """read available scope channels"""
         if not self.versions.is_itnc():
             self._logger.warning("only works for itnc??")

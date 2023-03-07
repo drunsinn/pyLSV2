@@ -161,7 +161,7 @@ def decode_scope_reading(
     data_set: bytearray,
 ):
     """decode data reurned by R_OD / S_OD"""
-    logger.debug("step 4/5: R_OD result is %d bytes" % (len(data_set),))
+    logger.debug("step 4/5: R_OD result is %d bytes" % len(data_set))
     reading = dict()
     # first 4 bytes seem to contain a counter
     # -> sequence number indicates the number of the first value?
@@ -195,3 +195,8 @@ def decode_scope_reading(
     # print("reading header: %s" % reading["header"])
     # print("length of reading section: %d" % len(reading["data"]))
     return reading
+
+def dump_signal_description(signal_mapping, output_path):
+    """dump list of ScopeSignal to json file"""
+    pass
+
