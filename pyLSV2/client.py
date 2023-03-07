@@ -1824,14 +1824,14 @@ class LSV2:
         content = self._llcom.telegram(lc.CMD.R_OC)
         if self._llcom.last_response in lc.RSP.S_OC:
             # print("received bytes %s" % content)
-            channel_list.extend(lms.tst_decode_signal_description(content))
+            channel_list.extend(lms.decode_signal_description(content))
 
             while True:
                 content = self._llcom.telegram(lc.RSP.T_OK)
 
                 if self._llcom.last_response in lc.RSP.S_OC:
                     # print("received bytes %s" % content)
-                    channel_list.extend(lms.tst_decode_signal_description(content))
+                    channel_list.extend(lms.decode_signal_description(content))
                 elif self._llcom.last_response in lc.RSP.T_FD:
                     self._logger.info("finished loading data")
                     break
@@ -1864,15 +1864,14 @@ class LSV2:
         """
         payload = bytearray()
         payload.extend(struct.pack("!L", 3))
-        # payload.append(0x00)
-        # payload.append(0x00)
-        # payload.append(0x00)
-        # payload.append(0x03)
+        # 1 : turbo mode active
+        # 2 : dnc mode allowed
+        # 3 : axes sampling rate
 
         result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
 
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            lms.tst_decode_S_CI(result)
+            lms.decode_system_information(result)
         else:
             raise Exception()
 
@@ -1896,7 +1895,7 @@ class LSV2:
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
         if isinstance(result, (bytearray,)) and len(result) > 0:
-            lms.tst_decode_signal_details(signal_list, result)
+            lms.decode_signal_details(signal_list, result)
         else:
             if self.last_error.e_code == 85:
                 self._logger.warning("too many signals selected: %d", len(signal_list))
@@ -1959,7 +1958,7 @@ class LSV2:
         content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
 
         if isinstance(content, (bytearray,)) and len(content) > 0:
-            recorded_data.append(lms.tst_decode_scope_reading(signal_list, content))
+            recorded_data.append(lms.decode_scope_reading(signal_list, content))
 
             end = time.time()
             timer = end - start
@@ -1967,9 +1966,7 @@ class LSV2:
             while timer < time_readings:
                 content = self._llcom.telegram(lc.RSP.T_OK)
                 if self._llcom.last_response in lc.RSP.S_OD:
-                    recorded_data.append(
-                        lms.tst_decode_scope_reading(signal_list, content)
-                    )
+                    recorded_data.append(lms.decode_scope_reading(signal_list, content))
                     yield recorded_data[0]["signals"]
 
                 else:

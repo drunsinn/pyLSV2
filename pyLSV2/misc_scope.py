@@ -4,13 +4,14 @@
 import struct
 from datetime import datetime
 from typing import List
+import logging
 
 from . import const as lc
 from . import misc as lm
 from . import dat_cls as ld
 
 
-def tst_decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
+def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     """decode the data returned from R_OC / S_OC"""
     # print(data_set)
     # data_set[  0:  2] : channel number
@@ -110,19 +111,20 @@ def tst_decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     return signals
 
 
-def tst_decode_S_CI(data_set: bytearray):
+def decode_system_information(data_set: bytearray):
     """decode data reurned by R_CI / S_CI"""
     # print("step 1: R_CI result is %d bytes of %s" % (len(data_set), data_set))
     # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
     # -> is independent of channel, axes, interval or samples
     # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
+    # documentation hints
     if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
         print(" # unexpected return pattern for R_CI!")
         raise Exception("unknown data for S_CI result")
     return data_set
 
 
-def tst_decode_signal_details(
+def decode_signal_details(
     signal_list: List[ld.ScopeSignal], data_set: bytearray
 ) -> List[ld.ScopeSignal]:
     """ "decode data reurned by R_OP / S_OP"""
@@ -146,12 +148,16 @@ def tst_decode_signal_details(
             temp = "".join("{:02x}".format(x) for x in data_sub_set[10:])
             # print("R_OP section %d: %s %s" % (i, temp, signal_list[i]))
             # TODO: starts with a string containing the unit of this signal. eg mm or mm/min ...
+
+            # char NameDim[LSV2MAXLSV2DIMNAME];     /* Nullterminiert  z.B. "mm/s" */
+            # double NormFaktor;
+            # long NormOffset;
     else:
         print("R_OP dataset has unexpected length %d of %s" % (len(data_set), data_set))
     return signal_list
 
 
-def tst_decode_scope_reading(
+def decode_scope_reading(
     signal_list: List[ld.ScopeSignal],
     data_set: bytearray,
 ):
