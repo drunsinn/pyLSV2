@@ -1,5 +1,5 @@
-# Note: Run this file to dynamically assign the signal numbers to (pyLSV2/pyLSV2/channel_signals.py).
-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import json
 import logging
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with pyLSV2.LSV2(args.address, port=19000, timeout=5, safe_mode=False) as con:
-        availible_signals = con.tst_read_scope_channels()
+        availible_signals = con.read_scope_signals()
 
         # create signal configuration from signal list
         sc = SignalConfig.from_signals(availible_signals)

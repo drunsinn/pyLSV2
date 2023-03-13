@@ -1049,21 +1049,21 @@ class ScopeSignal:
     @unit.setter
     def unit(self, value:str):
         self._unit_string = value
-    
+
     @property
     def offset(self) -> int:
         """signal offset"""
         return self._offset
-    
+
     @offset.setter
     def offset(self, value:int):
         self._offset = value
-    
+
     @property
     def factor(self) -> float:
         """signal scaling factor"""
         return self._factor
-    
+
     @factor.setter
     def factor(self, value:float):
         self._factor = value
@@ -1092,7 +1092,7 @@ class ScopeSignal:
         else:
             signal_data.extend(bytearray(b"\xff\xff\xff\xff\xff\xff"))  # <- ??
         return signal_data
-    
+
     def normalized_name(self) -> str:
         """combine signal and channel name into a normalised form"""
         c_name = self.channel_name.lower()
@@ -1110,4 +1110,65 @@ class ScopeSignal:
         if len(s_name) > 0:
             return s_name + "_" + c_name
         return c_name
+
+class ScopeSignalData:
+    def __init__(self, channel:int, signal:int, offset:int, factor:float, unit:str):
+        self._channel = channel
+        self._signal = signal
+        self._offset = offset
+        self._factor = factor
+        self._unit = unit
         
+        #self._header = bytearray()
+        self.data = list()
+
+    @property
+    def channel(self) -> int:
+        """number of channel"""
+        return self._channel
+
+    @property
+    def signal(self) -> int:
+        """number of signal"""
+        return self._signal
+
+    @property
+    def offset(self) -> int:
+        """data offset"""
+        return self._offset
+
+    @property
+    def factor(self) -> float:
+        """data factor"""
+        return self._factor
+
+    @property
+    def unit(self) -> str:
+        """data unit"""
+        return self._unit
+
+    #@property
+    #def header(self) -> bytearray:
+    #    """signal header"""
+    #    return self._header
+
+    #@header.setter
+    #def header(self, value:bytearray):
+    #    self._header = value
+
+
+class ScopeReading:
+    def __init__(self, sequence_number:int):
+        self._seqence_nr = sequence_number
+        #self._full_data = bytearray()
+        self._signal_data = list()
+
+    def seqence_nr(self) -> int:
+        """sequence number of consecuetive readings"""
+        return self._seqence_nr
+
+    def add_dataset(self, signal_data:ScopeSignalData):
+        self._signal_data.append(signal_data)
+
+    def get_data(self):
+        return self._signal_data

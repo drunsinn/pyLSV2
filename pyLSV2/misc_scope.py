@@ -150,53 +150,70 @@ def decode_signal_details(
             signal_list[i].unit = lm.ba_to_ustr(data_sub_set[0:10])
             signal_list[i].factor = struct.unpack("<d", data_sub_set[10:18])[0]
             signal_list[i].offset = struct.unpack("!l", data_sub_set[18:])[0]
-            logger.debug("updated signal %s / %s with unit %s, factor %f and offset %d", signal_list[i].channel_name, signal_list[i].signal_name, signal_list[i].unit, signal_list[i].factor, signal_list[i].offset)
+            logger.debug(
+                "updated signal %s / %s with unit %s, factor %f and offset %d",
+                signal_list[i].channel_name,
+                signal_list[i].signal_name,
+                signal_list[i].unit,
+                signal_list[i].factor,
+                signal_list[i].offset,
+            )
     else:
-        logger.error("R_OP dataset has unexpected length %d of %s" ,len(data_set), data_set)
+        logger.error(
+            "R_OP dataset has unexpected length %d of %s", len(data_set), data_set
+        )
     return signal_list
 
 
 def decode_scope_reading(
     signal_list: List[ld.ScopeSignal],
     data_set: bytearray,
-):
-    """decode data reurned by R_OD / S_OD"""
-    logger.debug("step 4/5: R_OD result is %d bytes" % len(data_set))
-    reading = dict()
-    # first 4 bytes seem to contain a counter
-    # -> sequence number indicates the number of the first value?
-    reading["seqence_number"] = struct.unpack("!L", data_set[0:4])[0]
-    reading["all"] = data_set[4:]
+) -> ld.ScopeReading:
+    """
+    convert bytearray returned by R_OD / S_OD into signals
+
+    :param signal_list: list of the requested signals
+    :param data_set: bytes to decode
+    """
+    logger.debug("step 4/5: R_OD result is %d bytes", len(data_set))
+    reading = ld.ScopeReading(int(struct.unpack("!L", data_set[0:4])[0]))
+
     sig_data_lenth = 134
     if int((len(data_set) - 4) / len(signal_list)) != sig_data_lenth:
         raise LSV2ProtocolException("unexpected legth of signal package")
 
-    reading["signals"] = list()
     sig_data_start = 4
     sig_data_end = sig_data_start + sig_data_lenth
 
-    for _ in signal_list:
-        sig_data = dict()
-        sig_data["header"] = data_set[sig_data_start : sig_data_start + 6]
-        if sig_data["header"] != bytearray(b"\x00\x20\xff\xff\xff\xff"):
+    for signal in signal_list:
+        logger.debug(
+            "decode data for channel %d signal %d", signal.channel, signal.signal
+        )
+        sig_data = ld.ScopeSignalData(channel=signal.channel, signal=signal.signal, offset=signal.offset, factor=signal.factor, unit=signal.unit)
+
+        header = data_set[sig_data_start : sig_data_start + 6]
+        if header != bytearray(b"\x00\x20\xff\xff\xff\xff"):
             raise LSV2ProtocolException("unknown signal header format")
-        # if signal.channel_type in []:
+
         unpack_string = "!32l"
         value_start = sig_data_start + 6
-        sig_data["data"] = struct.unpack(
-            unpack_string, data_set[value_start:sig_data_end]
-        )  # data_set[start + 6:end]
-        reading["signals"].append(sig_data)
+        sig_data.data.extend(
+            struct.unpack(unpack_string, data_set[value_start:sig_data_end])
+        )
+
+        reading.add_dataset((sig_data))
+
         sig_data_start += sig_data_lenth
         sig_data_end += sig_data_lenth
+
     # reading["header"] = data_set[4:56]
     # reading["data"] = data_set[56:]
     # print("reading has sequenc number %d" % reading["number"] )
     # print("reading header: %s" % reading["header"])
     # print("length of reading section: %d" % len(reading["data"]))
+    logger.debug("finished decoding data for %s signals", len(signal_list))
     return reading
 
 def dump_signal_description(signal_mapping, output_path):
     """dump list of ScopeSignal to json file"""
     pass
-

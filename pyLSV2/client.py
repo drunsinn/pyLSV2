@@ -1809,10 +1809,14 @@ class LSV2:
         self._logger.debug("successfully received screen dump")
         return True
 
-    def tst_read_scope_channels(self) -> List[ld.ScopeSignal]:
-        """read available scope channels"""
+    def read_scope_signals(self) -> List[ld.ScopeSignal]:
+        """
+        Read available scope channels and signals. Only works for iTNC 530.
+        Requires access level ``SCOPE`` to work.
+        returns list of :py:class:`~pyLSV2.LSV2.ScopeSignal` for each signal
+        """
         if not self.versions.is_itnc():
-            self._logger.warning("only works for itnc??")
+            self._logger.warning("only works for iTNC530")
             return list()
 
         if not self.login(lc.Login.SCOPE):
@@ -1823,65 +1827,73 @@ class LSV2:
 
         content = self._llcom.telegram(lc.CMD.R_OC)
         if self._llcom.last_response in lc.RSP.S_OC:
-            # print("received bytes %s" % content)
             channel_list.extend(lms.decode_signal_description(content))
 
             while True:
                 content = self._llcom.telegram(lc.RSP.T_OK)
 
                 if self._llcom.last_response in lc.RSP.S_OC:
-                    # print("received bytes %s" % content)
                     channel_list.extend(lms.decode_signal_description(content))
                 elif self._llcom.last_response in lc.RSP.T_FD:
-                    self._logger.info("finished loading data")
+                    self._logger.info(
+                        "finished loading and parsing data for all scope signals"
+                    )
                     break
                 else:
-                    self._logger.warning("something went wrong")
+                    self._logger.error(
+                        "something went wrong while reading scope signal"
+                    )
+                    raise LSV2ProtocolException(
+                        "did not received expected response while reading data for scope signals"
+                    )
 
         return channel_list
 
     def real_time_readings(
-        self, signal_list: List[ld.ScopeSignal], duration: int, intervall_us: int
+        self, signal_list: List[ld.ScopeSignal], duration: int, interval: int
     ):
-        """Read real-time data from scope channels.
-        -) time_readings: duration for data collection in seconds.
         """
+        Read signal readings from control in real time. Only works for iTNC 530.
+        Before reading data, the signal description is updated with information regardinf offset and factor.
+        Requires access level ``SCOPE`` to work.
+
+        :param signal_list: list of :py:class:`~pyLSV2.LSV2.ScopeSignal` which should be read from control
+        :param duration: number of seconds for which data should be read
+        :param interval: interval in µs between readings
+
+        :raises LSV2ProtocolException:
+        """
+        if not self.versions.is_itnc():
+            self._logger.warning("only works for iTNC530")
+            return list()
+
+        if not self.login(lc.Login.SCOPE):
+            self._logger.warning("clould not log in as user for scope function")
+            return list()
 
         self._logger.debug(
             "start recoding %d readings with interval of %d µs",
             duration,
-            intervall_us,
+            interval,
         )
-        # step 1: usage unknown, is always 0x000000003
-        # is independent of channel, axes, interval or samples
-        """
-        In 0x00 00 00 00 -> Out Error Wrong Parameter
-        In 0x00 00 00 01 -> Out 0x00 00 00 01 00 00 00 00
-        In 0x00 00 00 02 -> Out 0x00 00 00 01 00 00 00 01
-        In 0x00 00 00 03 -> Out 0x00 00 00 02 00 00 0b b8 <- intervall
-        In 0x00 00 00 04 -> Out Error Wrong Parameter
-        """
-        payload = bytearray()
-        payload.extend(struct.pack("!L", 3))
+
+        # TODO: not necessary here, read system information during init and save in version info
+        # payload = bytearray()
+        # payload.extend(struct.pack("!L", 3))
         # 1 : turbo mode active
         # 2 : dnc mode allowed
         # 3 : axes sampling rate
+        # result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
+        # if isinstance(result, (bytearray,)) and len(result) > 0:
+        #    lms.decode_system_information(result)
+        # else:
+        #    raise Exception()
 
-        result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
-
-        if isinstance(result, (bytearray,)) and len(result) > 0:
-            lms.decode_system_information(result)
-        else:
-            raise Exception()
-
-        # step 2
+        # set interval and select signals
         payload = bytearray()
-
-        # interval package
-        payload.extend(struct.pack("!L", intervall_us))
-
+        payload.extend(struct.pack("!L", interval))
         for signal in signal_list:
-            if signal.min_interval > intervall_us:
+            if signal.min_interval > interval:
                 self._logger.warning(
                     "the selected interval is to small for signal %s %s %dus",
                     signal.channel_name,
@@ -1889,7 +1901,6 @@ class LSV2:
                     signal.min_interval,
                 )
                 raise Exception("the selected interval is to small")
-
             payload.extend(signal.to_ba())
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
@@ -1904,34 +1915,16 @@ class LSV2:
                 raise Exception("Error setting up the channels")
             raise Exception()
 
-        # step 3
-        result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
-        if isinstance(result, (bytearray,)) and len(result) > 0:
-            ts = lm.decode_timestamp(result)
-            self._logger.debug("Time on Control is %s", ts.isoformat())
-        else:
-            raise Exception()
+        # TODO: not ncessary here, add separate function to read datetime
+        # result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
+        # if isinstance(result, (bytearray,)) and len(result) > 0:
+        #    ts = lm.decode_timestamp(result)
+        #    self._logger.debug("Time on Control is %s", ts.isoformat())
+        # else:
+        #    raise Exception()
 
-        # step 4
+        # read data from control
 
-        """
-        capture 1: one channel tree axes 3k us interval
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
-
-
-        capture 2: two channels 1 axes 3k us interval
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
-
-
-        capture 3: two channels 1 axes 3k us interval 16 k buffer
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x0b\xb8"
-       
-        capture 4: two channels 1 axes 6k us interval
-        "\x00\x06\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x00\x17\x70"
-
-
-        # bytes 12 - 15 are a repeat of the interval value? 3000 and 6000
-        """
         payload = bytearray()
         payload.append(0x00)
         payload.append(0x06)
@@ -1945,39 +1938,31 @@ class LSV2:
         payload.append(0x00)
         payload.append(0x00)
         payload.append(0x00)
+        payload.extend(struct.pack("!L", interval))
 
-        # interval again?
-        payload.extend(struct.pack("!L", intervall_us))
-        # payload.append(0x00)
-        # payload.append(0x00)
-        # payload.append(0x0b) # -> 0B
-        # payload.append(0xb8) # -> B8
-
-
-        start = time.time() # start timer
-        
+        start = time.time()  # start timer
         recorded_data = list()
         content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
 
-        if isinstance(content, (bytearray,)) and len(content) > 0:
-            recorded_data.append(lms.decode_scope_reading(signal_list, content))
+        if not isinstance(content, (bytearray,)) or len(content) <= 0:
+            self._logger.error(
+                "something went wrong while reading first data package for signals"
+            )
+            raise LSV2ProtocolException("something went wrong while reading scope data")
 
+        recorded_data.append(lms.decode_scope_reading(signal_list, content))
+        end = time.time()
+        timer = end - start
+        while timer < duration:
+            content = self._llcom.telegram(lc.RSP.T_OK)
+            if self._llcom.last_response in lc.RSP.S_OD:
+                recorded_data.append(lms.decode_scope_reading(signal_list, content))
+                yield recorded_data[0]
+            else:
+                self._logger.warning("something went wrong during periodically reading scope data, abort reading")
+                break
             end = time.time()
             timer = end - start
-
-            while timer < duration:
-                content = self._llcom.telegram(lc.RSP.T_OK)
-                if self._llcom.last_response in lc.RSP.S_OD:
-                    recorded_data.append(lms.decode_scope_reading(signal_list, content))
-                    yield recorded_data[0]["signals"]
-
-                else:
-                    self._logger.warning("something went wrong")
-                    break
-
-                end = time.time()
-                timer = end - start
-                recorded_data = list()
-
-        else:
-            raise Exception()
+            recorded_data = list()
+        
+        self._logger.debug("finished reading scope data")
