@@ -1845,6 +1845,24 @@ class LSV2:
         self._logger.debug("successfully received screen dump")
         return True
 
+    def get_time(self) -> datetime:
+        """
+        Read current time and date from control
+        """
+        if not self.login(lc.Login.DIAG):
+            self._logger.warning("clould not log in as user for DIAGNOSTICS function")
+            return datetime.fromtimestamp(0)
+
+        result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
+        if isinstance(result, (bytearray,)) and len(result) > 0:
+            ts = lm.decode_timestamp(result)
+            self._logger.debug("Time on Control is %s", ts.isoformat())
+        else:
+            raise LSV2ProtocolException(
+                "something went wrong while reading current time and date"
+            )
+        return ts
+
     def read_scope_signals(self) -> List[ld.ScopeSignal]:
         """
         Read available scope channels and signals. Only works for iTNC 530.
@@ -1938,14 +1956,6 @@ class LSV2:
                 self._logger.warning("Error setting up the channels")
                 raise Exception("Error setting up the channels")
             raise Exception()
-
-        # TODO: not ncessary here, add separate function to read datetime
-        # result = self._send_recive(lc.CMD.R_DT, None, lc.RSP.S_DT)
-        # if isinstance(result, (bytearray,)) and len(result) > 0:
-        #    ts = lm.decode_timestamp(result)
-        #    self._logger.debug("Time on Control is %s", ts.isoformat())
-        # else:
-        #    raise Exception()
 
         # read data from control
 

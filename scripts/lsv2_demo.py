@@ -60,6 +60,8 @@ if __name__ == "__main__":
             )
         )
 
+        print("# Time and date: {:}".format(con.get_time()))
+
         # read error messages via LSV2, works only on iTNC controls
         print("# read error messages, only available on iTNC530")
         if con.versions.is_itnc():
