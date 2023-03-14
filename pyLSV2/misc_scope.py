@@ -110,25 +110,6 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     return signals
 
 
-def decode_system_information(data_set: bytearray):
-    """
-    Decode the result system information query
-
-    :param result_set: bytes returned by the signal description query command R_OC
-
-    :raises LSV2DataException: Error during parsing of data values
-    """
-    """decode data reurned by R_CI / S_CI"""
-    # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
-    # -> is independent of channel, axes, interval or samples
-    # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
-    # documentation hints
-    if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
-        print(" # unexpected return pattern for R_CI!")
-        raise Exception("unknown data for S_CI result")
-    return data_set
-
-
 def decode_signal_details(
     signal_list: List[ld.ScopeSignal], data_set: bytearray
 ) -> List[ld.ScopeSignal]:

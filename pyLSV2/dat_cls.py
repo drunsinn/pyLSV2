@@ -189,6 +189,10 @@ class SystemParameters:
 
         self.password_encryption_key = -1
 
+        self.turbo_mode_active = False
+        self.dnc_mode_allowed = False
+        self.axes_sampling_rate = -1
+
     @property
     def markers_start_address(self) -> int:
         """memory start address for markers"""
@@ -467,6 +471,34 @@ class SystemParameters:
     @password_encryption_key.setter
     def password_encryption_key(self, value: int):
         self._password_encryption_key = value
+
+    @property
+    def turbo_mode_active(self) -> bool:
+        """is turbo mode active?"""
+        return self._turbo_mode_active
+
+    @turbo_mode_active.setter
+    def turbo_mode_active(self, value: bool):
+        self._turbo_mode_active = value
+
+    @property
+    def dnc_mode_allowed(self) -> bool:
+        """is dnc mode allowed?"""
+        return self._dnc_mode_allowed
+
+    @dnc_mode_allowed.setter
+    def dnc_mode_allowed(self, value: bool):
+        self._dnc_mode_allowed = value
+
+    @property
+    def axes_sampling_rate(self) -> int:
+        """axes sampling rate"""
+        return self._axes_sampling_rate
+
+    @axes_sampling_rate.setter
+    def axes_sampling_rate(self, value: int):
+        self._axes_sampling_rate = value
+
 
 
 class ToolInformation:

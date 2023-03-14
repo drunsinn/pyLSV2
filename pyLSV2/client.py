@@ -432,6 +432,42 @@ class LSV2:
                 self._logger.warning(
                     "an error occurred while querying system parameters"
                 )
+
+            payload = struct.pack("!L", 1)
+            result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
+            if isinstance(result, (bytearray,)) and len(result) > 0:
+                data = lm.decode_system_information(result)
+                if not isinstance(data, bool):
+                    raise LSV2DataException("expected boolean")
+                self._sys_par.turbo_mode_active = data
+            else:
+                self._logger.warning(
+                    "an error occurred while querying system infromation on turbo mode"
+                )
+
+            payload = struct.pack("!L", 2)
+            result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
+            if isinstance(result, (bytearray,)) and len(result) > 0:
+                data = lm.decode_system_information(result)
+                if not isinstance(data, bool):
+                    raise LSV2DataException("expected boolean")
+                self._sys_par.dnc_mode_allowed = data
+            else:
+                self._logger.warning(
+                    "an error occurred while querying system infromation on dnc mode"
+                )
+
+            payload = struct.pack("!L", 3)
+            result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
+            if isinstance(result, (bytearray,)) and len(result) > 0:
+                data = lm.decode_system_information(result)
+                if not isinstance(data, int):
+                    raise LSV2DataException("expected int")
+                self._sys_par.axes_sampling_rate = data
+            else:
+                self._logger.warning(
+                    "an error occurred while querying system information on axes samling rate"
+                )
         return self._sys_par
 
     def _read_version(self, force=False) -> ld.VersionInfo:
@@ -1877,18 +1913,6 @@ class LSV2:
             interval,
         )
 
-        # TODO: not necessary here, read system information during init and save in version info
-        # payload = bytearray()
-        # payload.extend(struct.pack("!L", 3))
-        # 1 : turbo mode active
-        # 2 : dnc mode allowed
-        # 3 : axes sampling rate
-        # result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
-        # if isinstance(result, (bytearray,)) and len(result) > 0:
-        #    lms.decode_system_information(result)
-        # else:
-        #    raise Exception()
-
         # set interval and select signals
         payload = bytearray()
         payload.extend(struct.pack("!L", interval))
@@ -1959,10 +1983,12 @@ class LSV2:
                 recorded_data.append(lms.decode_scope_reading(signal_list, content))
                 yield recorded_data[0]
             else:
-                self._logger.warning("something went wrong during periodically reading scope data, abort reading")
+                self._logger.warning(
+                    "something went wrong during periodically reading scope data, abort reading"
+                )
                 break
             end = time.time()
             timer = end - start
             recorded_data = list()
-        
+
         self._logger.debug("finished reading scope data")
