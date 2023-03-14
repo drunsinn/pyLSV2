@@ -32,7 +32,7 @@ class SignalConfig:
         signal_config = SignalConfig()
 
         for i, signal in enumerate(signal_list):
-            setattr(signal_config, signal.normalised_name(), i)
+            setattr(signal_config, signal.normalized_name(), i)
 
         return signal_config
 
