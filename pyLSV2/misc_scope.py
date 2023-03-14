@@ -60,24 +60,21 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
             "unexpected values in bytes 6 and 7: %s" % data_set[6:8]
         )
     if channel_type in [lc.ChannelType.TYPE1, lc.ChannelType.TYPE4]:
-        if len(data_set) != 106:
+        if len(data_set) not in [98, 106]:
             raise LSV2ProtocolException(
                 "unexpected length of data for chennel type 1 or 4"
             )
 
-        axes_start = 59
-        axes_end = 105
-        for i, signal_label in enumerate(
-            lm.ba_to_ustr(data_set[axes_start:axes_end]).split(chr(0x00))
-        ):
-            if signal_label == "-":
+        signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))
+        for i, sig_label in enumerate(signal_labels):
+            if sig_label == "-":
                 continue
             sig_desc = ld.ScopeSignal()
             sig_desc.channel_name = channel_name
             sig_desc.channel = channel_number
             sig_desc.min_interval = min_interval
             sig_desc.channel_type = channel_type
-            sig_desc.signal_name = signal_label
+            sig_desc.signal_name = sig_label
             sig_desc.signal = i
             signals.append(sig_desc)
     elif channel_type == lc.ChannelType.TYPE0:
@@ -96,19 +93,16 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
                 "unexpected length of data for chennel type 2 or 5"
             )
 
-        type_start = 59
-        type_end = 93
-        for i, signal_label in enumerate(
-            lm.ba_to_ustr(data_set[type_start:type_end]).split(chr(0x00))
-        ):
-            if signal_label == "-":
+        signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))
+        for i, sig_label in enumerate(signal_labels):
+            if sig_label == "-":
                 continue
             sig_desc = ld.ScopeSignal()
             sig_desc.channel_name = channel_name
             sig_desc.channel = channel_number
             sig_desc.min_interval = min_interval
             sig_desc.channel_type = channel_type
-            sig_desc.signal_name = signal_label
+            sig_desc.signal_name = sig_label
             sig_desc.signal = i
             signals.append(sig_desc)
     return signals
@@ -189,7 +183,13 @@ def decode_scope_reading(
         logger.debug(
             "decode data for channel %d signal %d", signal.channel, signal.signal
         )
-        sig_data = ld.ScopeSignalData(channel=signal.channel, signal=signal.signal, offset=signal.offset, factor=signal.factor, unit=signal.unit)
+        sig_data = ld.ScopeSignalData(
+            channel=signal.channel,
+            signal=signal.signal,
+            offset=signal.offset,
+            factor=signal.factor,
+            unit=signal.unit,
+        )
 
         header = data_set[sig_data_start : sig_data_start + 6]
         if header != bytearray(b"\x00\x20\xff\xff\xff\xff"):
@@ -213,6 +213,7 @@ def decode_scope_reading(
     # print("length of reading section: %d" % len(reading["data"]))
     logger.debug("finished decoding data for %s signals", len(signal_list))
     return reading
+
 
 def dump_signal_description(signal_mapping, output_path):
     """dump list of ScopeSignal to json file"""
