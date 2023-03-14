@@ -9,14 +9,20 @@ import logging
 from . import const as lc
 from . import misc as lm
 from . import dat_cls as ld
-from .err import LSV2ProtocolException
+from .err import LSV2DataException
 
 
 logger = logging.getLogger("LSV2 Client Scope")
 
 
 def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
-    """decode the data returned from R_OC / S_OC"""
+    """
+    Decode the result signal description query
+
+    :param result_set: bytes returned by the signal description query command R_OC
+
+    :raises LSV2DataException: Error during parsing of data values
+    """
     # print(data_set)
     # data_set[  0:  2] : channel number
     # data_set[  2:  4] : 1. copy of interval value
@@ -38,32 +44,30 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
             name_end += 1
     channel_name = lm.ba_to_ustr(data_set[name_start:name_end])
     if data_set[10:46] != bytearray(b"\x00" * 36):
-        raise LSV2ProtocolException(
+        raise LSV2DataException(
             "unexpected data in channel description in bytes 10 to 45: %s",
             data_set[10:46],
         )
     interval_value_1 = struct.unpack("!H", data_set[2:4])[0]
     interval_value_2 = struct.unpack("!H", data_set[8:10])[0]
     if interval_value_1 != interval_value_2:
-        raise LSV2ProtocolException(
+        raise LSV2DataException(
             "error in decoding of channel description data: %s" % data_set
         )
 
     min_interval = interval_value_1
     type_num = struct.unpack("!H", data_set[4:6])[0]
     if not lc.ChannelType.has_value(type_num):
-        raise LSV2ProtocolException("unexpected numerical value for type %d" % type_num)
+        raise LSV2DataException("unexpected numerical value for type %d" % type_num)
 
     channel_type = lc.ChannelType(type_num)
     if not data_set[6:8] == bytearray(b"\x00\x00"):
-        raise LSV2ProtocolException(
+        raise LSV2DataException(
             "unexpected values in bytes 6 and 7: %s" % data_set[6:8]
         )
     if channel_type in [lc.ChannelType.TYPE1, lc.ChannelType.TYPE4]:
         if len(data_set) not in [98, 106]:
-            raise LSV2ProtocolException(
-                "unexpected length of data for chennel type 1 or 4"
-            )
+            raise LSV2DataException("unexpected length of data for chennel type 1 or 4")
 
         signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))
         for i, sig_label in enumerate(signal_labels):
@@ -79,7 +83,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
             signals.append(sig_desc)
     elif channel_type == lc.ChannelType.TYPE0:
         if len(data_set) != 59:
-            raise LSV2ProtocolException("unexpected length of data for chennel type 0")
+            raise LSV2DataException("unexpected length of data for chennel type 0")
 
         sig_desc = ld.ScopeSignal()
         sig_desc.channel_name = channel_name
@@ -89,9 +93,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
         signals.append(sig_desc)
     else:
         if len(data_set) != 94:
-            raise LSV2ProtocolException(
-                "unexpected length of data for chennel type 2 or 5"
-            )
+            raise LSV2DataException("unexpected length of data for chennel type 2 or 5")
 
         signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))
         for i, sig_label in enumerate(signal_labels):
@@ -109,8 +111,14 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
 
 
 def decode_system_information(data_set: bytearray):
+    """
+    Decode the result system information query
+
+    :param result_set: bytes returned by the signal description query command R_OC
+
+    :raises LSV2DataException: Error during parsing of data values
+    """
     """decode data reurned by R_CI / S_CI"""
-    logger.debug("R_CI result is %d bytes of %s" % (len(data_set), data_set))
     # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
     # -> is independent of channel, axes, interval or samples
     # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
@@ -124,8 +132,14 @@ def decode_system_information(data_set: bytearray):
 def decode_signal_details(
     signal_list: List[ld.ScopeSignal], data_set: bytearray
 ) -> List[ld.ScopeSignal]:
-    """ "decode data reurned by R_OP / S_OP"""
-    logger.debug("step 2: R_OP result is %d bytes", len(data_set))
+    """
+    Decode the detailed description of a signal after selecting them
+
+    :param signal_list: list of :py:class:`~pyLSV2.LSV2.ScopeSignal` which have been selected
+    :param result_set: bytes returned by the signal description query command R_OP
+
+    :raises LSV2DataException: Error during parsing of data values
+    """
     # contains further description of the channel?
     # list with signals is updated place!
     def split_dataset(data):
@@ -174,7 +188,7 @@ def decode_scope_reading(
 
     sig_data_lenth = 134
     if int((len(data_set) - 4) / len(signal_list)) != sig_data_lenth:
-        raise LSV2ProtocolException("unexpected legth of signal package")
+        raise LSV2DataException("unexpected legth of signal package")
 
     sig_data_start = 4
     sig_data_end = sig_data_start + sig_data_lenth
@@ -193,7 +207,7 @@ def decode_scope_reading(
 
         header = data_set[sig_data_start : sig_data_start + 6]
         if header != bytearray(b"\x00\x20\xff\xff\xff\xff"):
-            raise LSV2ProtocolException("unknown signal header format")
+            raise LSV2DataException("unknown signal header format")
 
         unpack_string = "!32l"
         value_start = sig_data_start + 6
@@ -213,8 +227,3 @@ def decode_scope_reading(
     # print("length of reading section: %d" % len(reading["data"]))
     logger.debug("finished decoding data for %s signals", len(signal_list))
     return reading
-
-
-def dump_signal_description(signal_mapping, output_path):
-    """dump list of ScopeSignal to json file"""
-    pass
