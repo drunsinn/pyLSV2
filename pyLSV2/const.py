@@ -982,12 +982,12 @@ class ChannelType(IntEnum):
     """Enum of scope channel types"""
 
     UNKNOWN = -1
-    TYPE0 = 0
-    TYPE1 = 1
-    TYPE2 = 2
+    TYPE0 = 0  # channel without parameter
+    TYPE1 = 1  # channel with axis parameter
+    TYPE2 = 2  # channel with plc parameter
     TYPE3 = 3
     TYPE4 = 4
-    TYPE5 = 10
+    TYPE5 = 10  # channel with plc parameter
 
     @classmethod
     def has_value(cls, value):

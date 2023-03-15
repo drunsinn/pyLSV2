@@ -74,5 +74,5 @@ Scope specific classes and functions
 .. autoclass:: pyLSV2.dat_cls.ScopeReading
     :members:
 
-.. automodule:: pyLSV2.scope_misc
+.. automodule:: pyLSV2.misc_scope
     :members:
