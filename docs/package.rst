@@ -61,4 +61,18 @@ Additions
     
 .. automodule:: pyLSV2.misc
     :members:
-    
+
+
+Scope specific classes and functions
+------------------------------------
+.. autoclass:: pyLSV2.dat_cls.ScopeSignal
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.ScopeSignalData
+    :members:
+
+.. autoclass:: pyLSV2.dat_cls.ScopeReading
+    :members:
+
+.. automodule:: pyLSV2.scope_misc
+    :members:

@@ -104,3 +104,16 @@ File transfer
 -------------
 Transfer of files can happen in binary or ASCII mode. To enable binary mode, add 0x01 after the filename. In TNCremo you can find a list of file types for which binary mode is recommended.
 The functions :py:meth:`pyLSV2.LSV2.recive_file` and :py:meth:`pyLSV2.LSV2.send_file` can be configured with the parameter `binary_mode`.
+
+
+Read live data - Scope functions
+--------------------------------
+For all scope functions it is necessary to log in as user ``SCOPE``.
+On conrols with TNC640 the login password is sent encrypted. It is therefore not possible to use the scope functions.
+
+The available channels on the control can be read by sending R_OC. Each package contains one or more signal descriptions.
+
+General sequence of setting up and starting real time recording of data:
+1. select reading interval and signals with R_OP
+2. set trigger and interval (again?) with R_OD
+3. repeatedly read new data with T_OK until no more data is received
