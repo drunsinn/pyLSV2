@@ -121,6 +121,7 @@ def decode_signal_details(
 
     :raises LSV2DataException: Error during parsing of data values
     """
+
     def split_dataset(data):
         for i in range(0, len(data), 22):
             yield data[i : i + 22]
@@ -162,7 +163,7 @@ def decode_scope_reading(
     :param signal_list: list of the requested signals
     :param data_set: bytes to decode
     """
-    #logger.debug("step 4/5: R_OD result is %d bytes", len(data_set))
+    # logger.debug("step 4/5: R_OD result is %d bytes", len(data_set))
     reading = ld.ScopeReading(int(struct.unpack("!L", data_set[0:4])[0]))
 
     sig_data_lenth = 134

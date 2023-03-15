@@ -113,6 +113,19 @@ def decode_file_system_info(
 
     :param result_set: bytes returned by the system parameter query command R_FI or CR_DR
     """
+
+    # from documentation (lsv2_def.h)
+    # flag_display = 0x01 # attribute should be displayed
+    # flag_changable = 0x02 # attribute can be changed
+    # flag_run = 0x04 # file is selected for run, only on TNC 406
+    # flag_highlited = 0x04 # file name should be highlited in colour
+    # flag_hidden = 0x08 # file is hidden
+    # flag_dir = 0x10 # identiier for directory / drive name
+    # flag_protected = 0x20 # identifier for write protetion
+    # flag_subdir = 0x40 # identidier for subdirectory / drive name
+    # flag_selected = 0x80 # file is selected (M-flag)
+    # flag_drive_protected = 0x20 # if flag_dir is set, drive is write protected
+
     if control_type in (ControlType.MILL_OLD, ControlType.LATHE_OLD):
         # print("select old")
         # according to documentation an LSV version 1 this should be:

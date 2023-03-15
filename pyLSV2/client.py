@@ -433,7 +433,7 @@ class LSV2:
                     "an error occurred while querying system parameters"
                 )
 
-            payload = struct.pack("!L", 1)
+            payload = struct.pack("!L", lc.ParRCI.TURBO_MODE)
             result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 data = lm.decode_system_information(result)
@@ -445,7 +445,7 @@ class LSV2:
                     "an error occurred while querying system information on turbo mode"
                 )
 
-            payload = struct.pack("!L", 2)
+            payload = struct.pack("!L", lc.ParRCI.DNC_ALLOWED)
             result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 data = lm.decode_system_information(result)
@@ -457,7 +457,7 @@ class LSV2:
                     "an error occurred while querying system information on dnc mode"
                 )
 
-            payload = struct.pack("!L", 3)
+            payload = struct.pack("!L", lc.ParRCI.AXES_SAMPLING_RATE)
             result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 data = lm.decode_system_information(result)
@@ -1960,10 +1960,10 @@ class LSV2:
 
         # setup trigger and read data from control
         payload = bytearray()
-        payload.extend(struct.pack("!H", 6)) # trigger channel?
-        payload.extend(struct.pack("!H", 65535)) # trigger mode?
-        payload.extend(struct.pack("!L", 0)) # trigger level?
-        payload.extend(struct.pack("!L", 0)) # pre trigger?
+        payload.extend(struct.pack("!H", 6))  # trigger channel?
+        payload.extend(struct.pack("!H", 65535))  # trigger mode?
+        payload.extend(struct.pack("!L", 0))  # trigger level?
+        payload.extend(struct.pack("!L", 0))  # pre trigger?
         payload.extend(struct.pack("!L", interval))
 
         start = time.time()  # start timer

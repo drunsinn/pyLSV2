@@ -133,7 +133,7 @@ class Login(str, Enum):
     """enables file system access to log drive, requires password"""
 
     DATA = "DATA"
-    """??? used for R_DP ???"""
+    """enables Data Access, required for R_DP"""
 
 
 class ExecState(IntEnum):
@@ -233,13 +233,13 @@ class LSV2StatusCode(IntEnum):
     T_ER_UNKNOWN_TELE = 22
     T_ER_NO_PRIV = 23
     T_ER_WRONG_PARA = 24
-    T_ER_BREAK = 25
+    T_ER_BREAK = 25  # aborted by user
     T_ER_BAD_KEY = 30
     T_ER_BAD_FNAME = 31
     T_ER_NO_FILE = 32
     T_ER_OPEN_FILE = 33
     T_ER_FILE_EXISTS = 34
-    T_ER_BAD_FILE = 35
+    T_ER_BAD_FILE = 35  # file type not allowed, possible reasons: program name == user cycle name, file type not known, file type is locked
     T_ER_NO_DELETE = 36
     T_ER_NO_NEW_FILE = 37
     T_ER_NO_CHANGE_ATT = 38
@@ -823,7 +823,7 @@ class CMD(str, Enum):
     requires MONITOR login priviliege"""
 
     R_VR = "R_VR"
-    """R_VR: read general info about the control itself.
+    """R_VR: read general info about the control itself. recive version.
     requires INSPECT login priviliege"""
 
     R_WD = "R_WD"
@@ -943,7 +943,7 @@ class ParCCC(IntEnum):
 class ParRVR(IntEnum):
     """enum of parameters used with command R_VR"""
 
-    CONTROL = 1
+    CONTROL = 1  # TNC model version
     NC_VERSION = 2
     PLC_VERSION = 3
     OPTIONS = 4
@@ -992,3 +992,11 @@ class ChannelType(IntEnum):
     @classmethod
     def has_value(cls, value):
         return value in set(item.value for item in ChannelType)
+
+
+class ParRCI(IntEnum):
+    """enum of parameters used with command R_CI, system information response type"""
+
+    TURBO_MODE = 0x01
+    DNC_ALLOWED = 0x02
+    AXES_SAMPLING_RATE = 0x03

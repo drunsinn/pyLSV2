@@ -37,15 +37,30 @@ with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as co
     for package in con.real_time_readings(selected_signals, duration, interval):
         signal_readings = package.get_data()
         readings_per_signal = len(signal_readings[0].data)
-        print("successfully read %d signals with %d values each" % (len(signal_readings), readings_per_signal))
+        print(
+            "successfully read %d signals with %d values each"
+            % (len(signal_readings), readings_per_signal)
+        )
 
         for i in range(readings_per_signal):
-            position_X = signal_readings[0].data[i] * signal_readings[0].factor + signal_readings[0].offset
-            position_Y = signal_readings[1].data[i] * signal_readings[1].factor + signal_readings[1].offset
-            position_Z = signal_readings[2].data[i] * signal_readings[2].factor + signal_readings[2].offset
+            position_X = (
+                signal_readings[0].data[i] * signal_readings[0].factor
+                + signal_readings[0].offset
+            )
+            position_Y = (
+                signal_readings[1].data[i] * signal_readings[1].factor
+                + signal_readings[1].offset
+            )
+            position_Z = (
+                signal_readings[2].data[i] * signal_readings[2].factor
+                + signal_readings[2].offset
+            )
             readings_counter += 1
 
-            print("Count: %d Position X = %.3f mm, Position Y = %.3f, Position Z = %.3f" % (readings_counter, position_X, position_Y, position_Z))
+            print(
+                "Count: %d Position X = %.3f mm, Position Y = %.3f, Position Z = %.3f"
+                % (readings_counter, position_X, position_Y, position_Z)
+            )
 
     print("# a total of %d readings were taken" % readings_counter)
 
