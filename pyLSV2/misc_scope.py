@@ -45,8 +45,8 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     channel_name = lm.ba_to_ustr(data_set[name_start:name_end])
     if data_set[10:46] != bytearray(b"\x00" * 36):
         raise LSV2DataException(
-            "unexpected data in channel description in bytes 10 to 45: %s",
-            data_set[10:46],
+            "unexpected data in channel description in bytes 10 to 45: %s"
+            % data_set[10:46]
         )
     interval_value_1 = struct.unpack("!H", data_set[2:4])[0]
     interval_value_2 = struct.unpack("!H", data_set[8:10])[0]
@@ -67,7 +67,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
         )
     if channel_type in [lc.ChannelType.TYPE1, lc.ChannelType.TYPE4]:
         if len(data_set) not in [98, 106]:
-            raise LSV2DataException("unexpected length of data for chennel type 1 or 4")
+            raise LSV2DataException("unexpected length of data for channel type 1 or 4")
 
         signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))
         for i, sig_label in enumerate(signal_labels):
@@ -83,7 +83,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
             signals.append(sig_desc)
     elif channel_type == lc.ChannelType.TYPE0:
         if len(data_set) != 59:
-            raise LSV2DataException("unexpected length of data for chennel type 0")
+            raise LSV2DataException("unexpected length of data for channel type 0")
 
         sig_desc = ld.ScopeSignal()
         sig_desc.channel_name = channel_name
@@ -93,7 +93,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
         signals.append(sig_desc)
     else:
         if len(data_set) != 94:
-            raise LSV2DataException("unexpected length of data for chennel type 2 or 5")
+            raise LSV2DataException("unexpected length of data for channel type 2 or 5")
 
         signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))
         for i, sig_label in enumerate(signal_labels):
@@ -121,8 +121,6 @@ def decode_signal_details(
 
     :raises LSV2DataException: Error during parsing of data values
     """
-    # contains further description of the channel?
-    # list with signals is updated place!
     def split_dataset(data):
         for i in range(0, len(data), 22):
             yield data[i : i + 22]
@@ -164,12 +162,12 @@ def decode_scope_reading(
     :param signal_list: list of the requested signals
     :param data_set: bytes to decode
     """
-    logger.debug("step 4/5: R_OD result is %d bytes", len(data_set))
+    #logger.debug("step 4/5: R_OD result is %d bytes", len(data_set))
     reading = ld.ScopeReading(int(struct.unpack("!L", data_set[0:4])[0]))
 
     sig_data_lenth = 134
     if int((len(data_set) - 4) / len(signal_list)) != sig_data_lenth:
-        raise LSV2DataException("unexpected legth of signal package")
+        raise LSV2DataException("unexpected length of signal package")
 
     sig_data_start = 4
     sig_data_end = sig_data_start + sig_data_lenth
@@ -201,10 +199,5 @@ def decode_scope_reading(
         sig_data_start += sig_data_lenth
         sig_data_end += sig_data_lenth
 
-    # reading["header"] = data_set[4:56]
-    # reading["data"] = data_set[56:]
-    # print("reading has sequenc number %d" % reading["number"] )
-    # print("reading header: %s" % reading["header"])
-    # print("length of reading section: %d" % len(reading["data"]))
     logger.debug("finished decoding data for %s signals", len(signal_list))
     return reading

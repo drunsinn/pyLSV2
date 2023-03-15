@@ -60,7 +60,7 @@ if __name__ == "__main__":
         # create signal configuration from signal list
         sc = SignalConfig.from_signals(availible_signals)
 
-        # store signal configruation to json file
+        # store signal configuration to json file
         sc.to_json(args.destination)
 
         # restore signal configuration from json file

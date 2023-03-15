@@ -442,7 +442,7 @@ class LSV2:
                 self._sys_par.turbo_mode_active = data
             else:
                 self._logger.warning(
-                    "an error occurred while querying system infromation on turbo mode"
+                    "an error occurred while querying system information on turbo mode"
                 )
 
             payload = struct.pack("!L", 2)
@@ -454,7 +454,7 @@ class LSV2:
                 self._sys_par.dnc_mode_allowed = data
             else:
                 self._logger.warning(
-                    "an error occurred while querying system infromation on dnc mode"
+                    "an error occurred while querying system information on dnc mode"
                 )
 
             payload = struct.pack("!L", 3)
@@ -1942,7 +1942,7 @@ class LSV2:
                     signal.signal_name,
                     signal.min_interval,
                 )
-                raise Exception("the selected interval is to small")
+                raise LSV2ProtocolException("the selected interval is to small")
             payload.extend(signal.to_ba())
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
@@ -1951,27 +1951,19 @@ class LSV2:
         else:
             if self.last_error.e_code == 85:
                 self._logger.warning("too many signals selected: %d", len(signal_list))
-                raise Exception("too many signals selected???")
+                raise LSV2ProtocolException("too many signals selected???")
             if self.last_error.e_code == lc.LSV2StatusCode.T_ER_OSZI_CHSEL:
                 self._logger.warning("Error setting up the channels")
-                raise Exception("Error setting up the channels")
-            raise Exception()
+                raise LSV2ProtocolException("Error setting up the channels")
+            self._logger.warning("Error while configuring interval and signals")
+            raise LSV2ProtocolException("Error while configuring interval and signals")
 
-        # read data from control
-
+        # setup trigger and read data from control
         payload = bytearray()
-        payload.append(0x00)
-        payload.append(0x06)
-        payload.append(0xFF)
-        payload.append(0xFF)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
-        payload.append(0x00)
+        payload.extend(struct.pack("!H", 6)) # trigger channel?
+        payload.extend(struct.pack("!H", 65535)) # trigger mode?
+        payload.extend(struct.pack("!L", 0)) # trigger level?
+        payload.extend(struct.pack("!L", 0)) # pre trigger?
         payload.extend(struct.pack("!L", interval))
 
         start = time.time()  # start timer
