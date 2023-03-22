@@ -1845,7 +1845,7 @@ class LSV2:
         self._logger.debug("successfully received screen dump")
         return True
 
-    def get_time(self) -> datetime:
+    def get_remote_datetime(self) -> datetime:
         """
         Read current time and date from control
         """
