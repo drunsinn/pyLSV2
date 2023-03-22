@@ -9,7 +9,7 @@ after migration to python 3.7+ these will be changed to @dataclass!
 from datetime import datetime
 import struct
 
-from .const import ControlType, LSV2StatusCode
+from .const import ControlType, LSV2StatusCode, ChannelType
 
 
 class VersionInfo:
@@ -194,6 +194,10 @@ class SystemParameters:
         self.number_of_scope_channels = -1
 
         self.password_encryption_key = -1
+
+        self.turbo_mode_active = False
+        self.dnc_mode_allowed = False
+        self.axes_sampling_rate = -1
 
     @property
     def markers_start_address(self) -> int:
@@ -473,6 +477,33 @@ class SystemParameters:
     @password_encryption_key.setter
     def password_encryption_key(self, value: int):
         self._password_encryption_key = value
+
+    @property
+    def turbo_mode_active(self) -> bool:
+        """is turbo mode active?"""
+        return self._turbo_mode_active
+
+    @turbo_mode_active.setter
+    def turbo_mode_active(self, value: bool):
+        self._turbo_mode_active = value
+
+    @property
+    def dnc_mode_allowed(self) -> bool:
+        """is dnc mode allowed?"""
+        return self._dnc_mode_allowed
+
+    @dnc_mode_allowed.setter
+    def dnc_mode_allowed(self, value: bool):
+        self._dnc_mode_allowed = value
+
+    @property
+    def axes_sampling_rate(self) -> int:
+        """axes sampling rate"""
+        return self._axes_sampling_rate
+
+    @axes_sampling_rate.setter
+    def axes_sampling_rate(self, value: int):
+        self._axes_sampling_rate = value
 
 
 class ToolInformation:
@@ -930,3 +961,254 @@ class LSV2Error:
         err.e_type = struct.unpack("!BB", err_bytes)[0]
         err.e_code = struct.unpack("!BB", err_bytes)[1]
         return err
+
+
+class ScopeSignal:
+    def __init__(self):
+        self._channel_name = ""
+        self._channel = -1
+        # self._channel_suffix = ""
+
+        self._signale_name = ""
+        self._signal = -1
+        # self._signale_suffix = ""
+
+        self._signal_type = ChannelType.UNKNOWN
+
+        self._min_interval = -1
+        # self._unknown = bytearray()
+
+        self._signal_parameter = -1
+
+        self._unit_string = ""
+
+        self._offset = 0
+
+        self._factor = 0.0
+
+    def __str__(self):
+        return "Channel/Signal: {:02d}/{:02d} '{:s} - {:s}' Type {:02d} Interval {:d}us Unit '{:s}' offset {:d} factor {:f} Optional Parameter {:d}".format(
+            self.channel,
+            self.signal,
+            self.channel_name,
+            self.signal_name,
+            self.channel_type,
+            self.min_interval,
+            self.unit,
+            self.offset,
+            self.factor,
+            self.signal_parameter,
+        )
+
+    @property
+    def channel_name(self) -> str:
+        """name of the scope channel"""
+        return self._channel_name
+
+    @channel_name.setter
+    def channel_name(self, value: str):
+        self._channel_name = value
+
+    @property
+    def signal_name(self) -> str:
+        """name of the signal"""
+        return self._signale_name
+
+    @signal_name.setter
+    def signal_name(self, value: str):
+        self._signale_name = value
+
+    @property
+    def channel(self) -> int:
+        """number of channel"""
+        return self._channel
+
+    @channel.setter
+    def channel(self, value: int):
+        self._channel = value
+
+    @property
+    def signal(self) -> int:
+        """number of signal"""
+        return self._signal
+
+    @signal.setter
+    def signal(self, value: int):
+        self._signal = value
+
+    @property
+    def channel_type(self) -> ChannelType:
+        """type of channel"""
+        return self._channel_type
+
+    @channel_type.setter
+    def channel_type(self, value: ChannelType):
+        self._channel_type = value
+
+    # @property
+    # def signal_suffix(self) -> str:
+    #    """name suffix of the scope signal"""
+    #    return self._signal_suffix
+
+    # @signal_suffix.setter
+    # def signal_suffix(self, value:str):
+    #    self._signal_suffix = value
+
+    @property
+    def min_interval(self) -> int:
+        """minimum signal interval in us"""
+        return self._min_interval
+
+    @min_interval.setter
+    def min_interval(self, value: int):
+        self._min_interval = value
+
+    @property
+    def signal_parameter(self) -> int:
+        """parameter necessary to read signal"""
+        return self._signal_parameter
+
+    @signal_parameter.setter
+    def signal_parameter(self, value: int):
+        self._signal_parameter = value
+
+    def needs_parameter(self) -> bool:
+        """check if signal need an additional parameter"""
+        if self.channel_type in [ChannelType.TYPE2, ChannelType.TYPE5]:
+            return True
+        return False
+
+    @property
+    def unit(self) -> str:
+        """unit of the value"""
+        return self._unit_string
+
+    @unit.setter
+    def unit(self, value: str):
+        self._unit_string = value
+
+    @property
+    def offset(self) -> int:
+        """signal offset"""
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: int):
+        self._offset = value
+
+    @property
+    def factor(self) -> float:
+        """signal scaling factor"""
+        return self._factor
+
+    @factor.setter
+    def factor(self, value: float):
+        self._factor = value
+
+    # @property
+    # def unknown(self) -> bytearray:
+    #    """dict of values where it's unsure if the are correct"""
+    #    return self._unknown
+
+    # @unknown.setter
+    # def unknown(self, value:bytearray):
+    #    self._unknown = value
+
+    def to_ba(self) -> bytearray:
+        """create byte array necessary for enabling signal on control"""
+        signal_data = bytearray()
+        signal_data.extend(struct.pack("!H", self.channel))  # <- channel number
+        if self.channel_type in [ChannelType.TYPE1, ChannelType.TYPE4]:
+            signal_data.extend(struct.pack("!H", self.signal))  # <- signal number
+            signal_data.extend(bytearray(b"\xff\xff\xff\xff"))  # <- ??
+        elif self.channel_type in [ChannelType.TYPE2, ChannelType.TYPE5]:
+            signal_data.extend(
+                struct.pack("!H", self.signal)
+            )  # <- PLC memory type: 0=M, 1=T, 2=C, 3=I, 4=O, 5=B, 6=W, 7=D, 8=IB, 9=IW, 10=ID, 11=OB, 12=OW, 12=OD
+            signal_data.extend(struct.pack("!L", self.signal_parameter))
+        else:
+            signal_data.extend(bytearray(b"\xff\xff\xff\xff\xff\xff"))  # <- ??
+        return signal_data
+
+    def normalized_name(self) -> str:
+        """combine signal and channel name into a normalised form"""
+        c_name = self.channel_name.lower()
+        c_name = c_name.replace(" ", "_")
+        c_name = c_name.replace(".", "_")
+        c_name = c_name.replace(":", "_")
+        c_name = c_name.replace("(", "_")
+        c_name = c_name.replace(")", "")
+        c_name = c_name.replace("-", "_")
+        c_name = c_name.replace("__", "_")
+        c_name = c_name.strip("_")
+
+        s_name = self.signal_name.lower().strip()
+
+        if len(s_name) > 0:
+            return s_name + "_" + c_name
+        return c_name
+
+
+class ScopeSignalData:
+    def __init__(
+        self, channel: int, signal: int, offset: int, factor: float, unit: str
+    ):
+        self._channel = channel
+        self._signal = signal
+        self._offset = offset
+        self._factor = factor
+        self._unit = unit
+
+        # self._header = bytearray()
+        self.data = list()
+
+    @property
+    def channel(self) -> int:
+        """number of channel"""
+        return self._channel
+
+    @property
+    def signal(self) -> int:
+        """number of signal"""
+        return self._signal
+
+    @property
+    def offset(self) -> int:
+        """data offset"""
+        return self._offset
+
+    @property
+    def factor(self) -> float:
+        """data factor"""
+        return self._factor
+
+    @property
+    def unit(self) -> str:
+        """data unit"""
+        return self._unit
+
+    # @property
+    # def header(self) -> bytearray:
+    #    """signal header"""
+    #    return self._header
+
+    # @header.setter
+    # def header(self, value:bytearray):
+    #    self._header = value
+
+
+class ScopeReading:
+    def __init__(self, sequence_number: int):
+        self._seqence_nr = sequence_number
+        # self._full_data = bytearray()
+        self._signal_data = list()
+
+    def seqence_nr(self) -> int:
+        """sequence number of consecuetive readings"""
+        return self._seqence_nr
+
+    def add_dataset(self, signal_data: ScopeSignalData):
+        self._signal_data.append(signal_data)
+
+    def get_data(self):
+        return self._signal_data

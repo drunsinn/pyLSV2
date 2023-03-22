@@ -34,7 +34,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.githubpages",
     "myst_parser",
-    "sphinx_autodoc_typehints"
+    "sphinx_autodoc_typehints",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -65,6 +65,6 @@ typehints_fully_qualified = False
 always_document_param_types = True
 typehints_document_rtype = True
 typehints_use_rtype = True
-typehints_defaults = 'comma'
+typehints_defaults = "comma"
 simplify_optional_unions = True
 typehints_formatter = None

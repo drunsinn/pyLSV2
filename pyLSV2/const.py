@@ -136,7 +136,7 @@ class Login(str, Enum):
     """enables file system access to log drive, requires password"""
 
     DATA = "DATA"
-    """??? used for R_DP ???"""
+    """enables Data Access, required for R_DP"""
 
 
 class ExecState(IntEnum):
@@ -236,13 +236,13 @@ class LSV2StatusCode(IntEnum):
     T_ER_UNKNOWN_TELE = 22
     T_ER_NO_PRIV = 23
     T_ER_WRONG_PARA = 24
-    T_ER_BREAK = 25
+    T_ER_BREAK = 25  # aborted by user
     T_ER_BAD_KEY = 30
     T_ER_BAD_FNAME = 31
     T_ER_NO_FILE = 32
     T_ER_OPEN_FILE = 33
     T_ER_FILE_EXISTS = 34
-    T_ER_BAD_FILE = 35
+    T_ER_BAD_FILE = 35  # file type not allowed, possible reasons: program name == user cycle name, file type not known, file type is locked
     T_ER_NO_DELETE = 36
     T_ER_NO_NEW_FILE = 37
     T_ER_NO_CHANGE_ATT = 38
@@ -725,7 +725,8 @@ class CMD(str, Enum):
     """request character set.
     requires MONITOR login priviliege"""
 
-    # R_CI = "R_CI"  # found via bruteforce test, purpose unknown!
+    R_CI = "R_CI"
+    """R_CI: TODO something to do with scope"""
 
     R_DI = "R_DI"
     """R_DI: directory info - read info about the selected directory.
@@ -774,7 +775,13 @@ class CMD(str, Enum):
     """R_MP: read machine parameter.
     requires INSPECT login priviliege"""
 
-    # R_OC = "R_OC" # found via bruteforce test, purpose unknown!
+    R_OC = "R_OC"
+    """R_OC: TODO: read something to do with scope"""
+    R_OD = "R_OD"
+    """R_OD: TODO: read something to do with scope"""
+    R_OP = "R_OP"
+    """R_OP: TODO: read something to do with scope"""
+
     # R_OD = "R_OD" # found via bruteforce test, purpose unknown!
     # R_OH = "R_OH" # found via bruteforce test, purpose unknown!
     # R_OI = "R_OI" # found via bruteforce test, purpose unknown!
@@ -819,7 +826,7 @@ class CMD(str, Enum):
     requires MONITOR login priviliege"""
 
     R_VR = "R_VR"
-    """R_VR: read general info about the control itself.
+    """R_VR: read general info about the control itself. recive version.
     requires INSPECT login priviliege"""
 
     R_WD = "R_WD"
@@ -848,8 +855,14 @@ class RSP(str, Enum):
     M_CC = "M_CC"
     """M_CC: signals that a poeration some king of operation was completed that took some time to complete, ??? response to C_CC??"""
 
+    S_CI = "S_CI"
+    """S_CI: TODO something to do with scope"""
+
     S_DI = "S_DI"
     """S_DI: signals that the command R_DI was accepted, it is followed by more data"""
+
+    S_DT = "S_DT"
+    """S_DT: TODO something to do with date/time and scope?"""
 
     S_DP = "S_DP"
     """S_DP: signals that the command R_DP was accepted, is followed by data value"""
@@ -871,6 +884,13 @@ class RSP(str, Enum):
 
     S_MC = "S_MC"
     """S_MC: signal that the command R_MC to read machine parameter was accepted, is followed by the actual data"""
+
+    S_OC = "S_OC"
+    """S_OC: TODO signal that has something to do with the scope"""
+    S_OD = "S_OD"
+    """S_OP: TODO: read something to do with scope"""
+    S_OP = "S_OP"
+    """S_OP: TODO signal that has something to do with the scope"""
 
     S_PR = "S_PR"
     """S_PR: signals that the command R_PR and the parameter was accepted, it is followed by more data"""
@@ -926,7 +946,7 @@ class ParCCC(IntEnum):
 class ParRVR(IntEnum):
     """enum of parameters used with command R_VR"""
 
-    CONTROL = 1
+    CONTROL = 1  # TNC model version
     NC_VERSION = 2
     PLC_VERSION = 3
     OPTIONS = 4
@@ -959,3 +979,27 @@ class ParRDR(IntEnum):
 
     DRIVES = 0x02
     """mode switch to read drive information"""
+
+
+class ChannelType(IntEnum):
+    """Enum of scope channel types"""
+
+    UNKNOWN = -1
+    TYPE0 = 0  # channel without parameter
+    TYPE1 = 1  # channel with axis parameter
+    TYPE2 = 2  # channel with plc parameter
+    TYPE3 = 3
+    TYPE4 = 4
+    TYPE5 = 10  # channel with plc parameter
+
+    @classmethod
+    def has_value(cls, value):
+        return value in set(item.value for item in ChannelType)
+
+
+class ParRCI(IntEnum):
+    """enum of parameters used with command R_CI, system information response type"""
+
+    TURBO_MODE = 0x01
+    DNC_ALLOWED = 0x02
+    AXES_SAMPLING_RATE = 0x03

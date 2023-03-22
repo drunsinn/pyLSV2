@@ -78,6 +78,33 @@ def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     return sys_par
 
 
+def decode_system_information(data_set: bytearray) -> Union[bool, int]:
+    """
+    Decode the result system information query
+    :param result_set: bytes returned by the signal description query command R_OC
+    :raises LSV2DataException: Error during parsing of data values
+    """
+    if len(data_set) != 8:
+        raise LSV2DataException("unexpected length of system information package")
+
+    data_type = struct.unpack("!L", data_set[:4])[0]
+
+    if data_type == 1:
+        return struct.unpack("!xxx?", data_set[4:])[0]
+    elif data_type == 2:
+        return struct.unpack("!L", data_set[4:])[0]
+    else:
+        raise LSV2DataException("unexpected value for data type of system information")
+    # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
+    # -> is independent of channel, axes, interval or samples
+    # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
+    # documentation hints
+    if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
+        print(" # unexpected return pattern for R_CI!")
+        raise Exception("unknown data for S_CI result")
+    return data_set
+
+
 def decode_file_system_info(
     data_set: bytearray, control_type: ControlType = ControlType.UNKNOWN
 ) -> ld.FileEntry:
@@ -86,6 +113,19 @@ def decode_file_system_info(
 
     :param result_set: bytes returned by the system parameter query command R_FI or CR_DR
     """
+
+    # from documentation (lsv2_def.h)
+    # flag_display = 0x01 # attribute should be displayed
+    # flag_changable = 0x02 # attribute can be changed
+    # flag_run = 0x04 # file is selected for run, only on TNC 406
+    # flag_highlited = 0x04 # file name should be highlited in colour
+    # flag_hidden = 0x08 # file is hidden
+    # flag_dir = 0x10 # identiier for directory / drive name
+    # flag_protected = 0x20 # identifier for write protetion
+    # flag_subdir = 0x40 # identidier for subdirectory / drive name
+    # flag_selected = 0x80 # file is selected (M-flag)
+    # flag_drive_protected = 0x20 # if flag_dir is set, drive is write protected
+
     if control_type in (ControlType.MILL_OLD, ControlType.LATHE_OLD):
         # print("select old")
         # according to documentation an LSV version 1 this should be:
@@ -307,3 +347,14 @@ def ustr_to_ba(str_to_convert: str) -> bytearray:
     str_bytes = bytearray(map(ord, str(str_to_convert)))
     str_bytes.append(0x00)
     return str_bytes
+
+
+def decode_timestamp(data_set: bytearray) -> datetime:
+    """
+    Decode result from reading the time and date with R_DT
+    Returns datetime
+
+    :param data_set: bytes returned from query
+    """
+    timestamp = struct.unpack("!L", data_set[0:4])[0]
+    return datetime.fromtimestamp(timestamp)
