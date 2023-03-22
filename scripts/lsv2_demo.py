@@ -135,7 +135,7 @@ if __name__ == "__main__":
         print("# Value of machine parameter for NC language: {:s}".format(lang))
 
         if con.version.is_tnc7():
-            print("UI Interface test not availible on TNC7?")
+            print("UI Interface test not available on TNC7?")
         else:
             print("UI Interface")
             print("# switch to mode manual")

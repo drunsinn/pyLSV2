@@ -122,7 +122,7 @@ def decode_file_system_info(
     # flag_hidden = 0x08 # file is hidden
     # flag_dir = 0x10 # identiier for directory / drive name
     # flag_protected = 0x20 # identifier for write protetion
-    # flag_subdir = 0x40 # identidier for subdirectory / drive name
+    # flag_subdir = 0x40 # identifier for subdirectory / drive name
     # flag_selected = 0x80 # file is selected (M-flag)
     # flag_drive_protected = 0x20 # if flag_dir is set, drive is write protected
 

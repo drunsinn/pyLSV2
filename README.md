@@ -204,7 +204,7 @@ These changes where made intentionally to make further development easier. See t
 ```
  The results indicate that pyLSV2 should work with python 3.5 and even with 3.4 if you install
  the packported modules argparse, enum and typing. While argpares is only used in the demo script
- the other two are necessary. Therefore it should be possible to use pyLSV2 with the curretn version
+ the other two are necessary. Therefore it should be possible to use pyLSV2 with the current version
  of [IronPython](https://ironpython.net/) if you install these two modules.
 
 # Resources

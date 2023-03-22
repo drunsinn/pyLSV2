@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "signals",
-        help="list of signal numbers to record. seperated by spaces",
+        help="list of signal numbers to record. separated by spaces",
         nargs="+",
         type=int,
     )
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     selected_signals = args.signals
     if sorted(selected_signals)[0] < 0:
         logging.error(
-            "the selected signal numbers contain at least one negativ value: %d",
+            "the selected signal numbers contain at least one negative value: %d",
             selected_signals[0],
         )
         sys.exit(-1)
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
         if sorted(selected_signals)[-1] > len(availible_signals):
             logging.error(
-                "the selected signal number is outside the rage of availible signals of %s",
+                "the selected signal number is outside the rage of available signals of %s",
                 len(availible_signals),
             )
             sys.exit(-10)

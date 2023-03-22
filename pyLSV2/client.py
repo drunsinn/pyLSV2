@@ -1445,7 +1445,7 @@ class LSV2:
         :param unlocked: if ``True`` unlocks the keyboard so it can be used. If ``False``, input is set to locked
         """
         if self.versions.is_tnc7():
-            self._logger.warning("this function might not be supportet on TNC7")
+            self._logger.warning("this function might not be supported on TNC7")
 
         if not self.login(lc.Login.MONITOR):
             self._logger.warning("clould not log in as user MONITOR")
@@ -1556,7 +1556,7 @@ class LSV2:
         :param key_code: code number of the keyboard key
         """
         if self.versions.is_tnc7():
-            self._logger.warning("this function might not be supportet on TNC7")
+            self._logger.warning("this function might not be supported on TNC7")
 
         if not self.login(lc.Login.MONITOR):
             self._logger.warning("clould not log in as user MONITOR")

@@ -142,7 +142,7 @@ class VersionInfo:
     def is_pilot(self) -> bool:
         """return ``True`` if control is a CNCPILOT640"""
         return self._control_type == ControlType.LATHE_NEW
-    
+
     def is_tnc7(self) -> bool:
         """return ```True``` if control is a TNC7"""
         return self._control_type == ControlType.TNC7

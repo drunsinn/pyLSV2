@@ -826,7 +826,7 @@ class CMD(str, Enum):
     requires MONITOR login priviliege"""
 
     R_VR = "R_VR"
-    """R_VR: read general info about the control itself. recive version.
+    """R_VR: read general info about the control itself. receive version.
     requires INSPECT login priviliege"""
 
     R_WD = "R_WD"

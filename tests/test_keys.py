@@ -15,7 +15,7 @@ def test_key_press_sim(address: str, timeout: float):
     lsv2.login(pyLSV2.Login.MONITOR)
 
     if lsv2.versions.is_tnc7():
-        # key access not availible for tnc7?
+        # key access not available for tnc7?
         pass
     else:
         assert lsv2.set_keyboard_access(False) is True
