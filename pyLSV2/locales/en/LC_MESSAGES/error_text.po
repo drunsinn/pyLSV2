@@ -1,15 +1,15 @@
 # pyLSV2 error text translation file.
-# Copyright (C) 2021
+# Copyright (C) 2023
 # This file is distributed under the same MIT license as pyLSV2 package.
-# drunsinn <dr.unsinn@googlemail.com>, 2021.
+# drunsinn <dr.unsinn@googlemail.com>, 2023.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-26 19:44+0100\n"
-"PO-Revision-Date: 2021-01-26 19:44+0100\n"
+"POT-Creation-Date: 2023-01-26 19:44+0100\n"
+"PO-Revision-Date: 2023-01-26 19:44+0100\n"
 "Last-Translator: dr.unsinn@googlemail.com\n"
 "Language-Team: English dr.unsinn@googlemail.com\n"
 "Language: English\n"

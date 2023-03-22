@@ -19,7 +19,7 @@ from pyLSV2 import __version__
 # -- Project information -----------------------------------------------------
 
 project = "pyLSV2"
-copyright = "2021, drunsinn"
+copyright = "2023, drunsinn"
 author = "drunsinn"
 
 # The full version, including alpha/beta/rc tags

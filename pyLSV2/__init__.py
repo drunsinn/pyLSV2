@@ -8,7 +8,7 @@ from .table_reader import *
 from .translate_messages import *
 from .err import *
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __author__ = "drunsinn"
 __license__ = "MIT"
 __email__ = "dr.unsinn@googlemail.com"

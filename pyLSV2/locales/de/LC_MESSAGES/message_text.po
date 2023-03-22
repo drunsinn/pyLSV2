@@ -1,7 +1,7 @@
 # pyLSV2 message text translation file.
-# Copyright (C) 2021
+# Copyright (C) 2023
 # This file is distributed under the same MIT license as pyLSV2 package.
-# drunsinn <dr.unsinn@googlemail.com>, 2021.
+# drunsinn <dr.unsinn@googlemail.com>, 2023.
 #
 #, fuzzy
 msgid ""

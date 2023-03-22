@@ -6,7 +6,7 @@ from pyLSV2 import __doc__, __version__, __author__, __license__, __email__
 
 setup(
     name="pyLSV2",
-    python_requires=">=3.4",
+    python_requires=">=3.5",
     packages=find_packages(
         include=[
             "pyLSV2",
@@ -24,11 +24,10 @@ setup(
     url="https://github.com/drunsinn/pyLSV2",
     license=__license__,
     install_requires=[],
-    scripts=["scripts/lsv2cmd.py", "scripts/tab2csv.py"],
+    scripts=["scripts/lsv2cmd.py", "scripts/tab2csv.py", "scripts/scope2csv.py"],
     keywords="LSV2 cnc communication transfer plc",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
