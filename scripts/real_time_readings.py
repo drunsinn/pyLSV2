@@ -65,13 +65,13 @@ with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as co
                 )
                 # velocity_X = round(signal_readings[3].data[i]*0.0953652489,3)
                 # acceleration_X = round(signal_readings[4].data[i]*0.5299145299,3)
-                readings_counter += 1
 
                 # print(f"Position X = {Position_X} mm , Position Y = {Position_Y} , Position Z = {Position_Z} , Velocity X = {Velocity_X} mm/min, Acceleration X = {Accelera_X} mm/s^2")
                 fp.write(
                     "Position X = %f mm , Position Y = %f , Position Z = %f\n"
                     % (position_X, position_Y, position_Z)
                 )
+            readings_counter += 1
 
     print("a total of %d readings were taken" % readings_counter)
 
