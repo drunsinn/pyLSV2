@@ -71,7 +71,7 @@ with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as co
                     "Position X = %f mm , Position Y = %f , Position Z = %f\n"
                     % (position_X, position_Y, position_Z)
                 )
-            readings_counter += 1
+            readings_counter += readings_per_signal
 
     print("a total of %d readings were taken" % readings_counter)
 
