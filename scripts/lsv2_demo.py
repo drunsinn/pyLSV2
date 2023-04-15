@@ -42,7 +42,6 @@ if __name__ == "__main__":
     print("Connecting to {}".format(args.address))
 
     with pyLSV2.LSV2(args.address, port=19000, timeout=5) as con:
-
         con = pyLSV2.LSV2(args.address, port=19000, timeout=5, safe_mode=False)
         con.connect()
 

@@ -132,7 +132,6 @@ if __name__ == "__main__":
             scope_signals.append(new_signal)
 
         with open(args.output, "w", encoding="utf8") as csv_fp:
-
             csv = csv.writer(csv_fp, dialect="excel", lineterminator="\n")
             csv.writerow(list(map(lambda x: x.normalized_name(), scope_signals)))
             readings_counter = 0

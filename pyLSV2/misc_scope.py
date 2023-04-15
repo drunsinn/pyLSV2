@@ -185,8 +185,8 @@ def decode_scope_reading(
             unit=signal.unit,
         )
 
-        #header = data_set[sig_data_start : sig_data_start + 6]
-        #if header != bytearray(b"\x00\x20\xff\xff\xff\xff"):
+        # header = data_set[sig_data_start : sig_data_start + 6]
+        # if header != bytearray(b"\x00\x20\xff\xff\xff\xff"):
         #    raise LSV2DataException("unknown signal header format")
 
         unpack_string = "!32l"

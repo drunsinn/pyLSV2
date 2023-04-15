@@ -1351,7 +1351,6 @@ class LSV2:
         plc_values = []
 
         if mem_type is lc.MemoryType.STRING:
-
             for i in range(number_of_elements):
                 address = (
                     start_address + first_element * mem_byte_count + i * mem_byte_count
@@ -1381,7 +1380,6 @@ class LSV2:
                     )
                     return []
         else:
-
             max_elements_per_transfer = math.floor(255 / mem_byte_count)
             num_groups = math.ceil(number_of_elements / max_elements_per_transfer)
             logging.debug(
