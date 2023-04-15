@@ -75,8 +75,8 @@ with pyLSV2.LSV2("192.168.56.103", port=19000, timeout=5, safe_mode=False) as co
 
                 print(f"Position X = {position_X} mm , Position Y = {position_Y} , Position Z = {position_Z}, I nominal X = {I_nominal_X} ")
                 fp.write(
-                    "Position X = %f mm , Position Y = %f , Position Z = %f\n"
-                    % (position_X, position_Y, position_Z)
+                    "Position X = %f mm , Position Y = %f , Position Z = %f , I nominal X = %f\n"
+                    % (position_X, position_Y, position_Z, I_nominal_X)
                 )
                 count_high_freq += 1
 
