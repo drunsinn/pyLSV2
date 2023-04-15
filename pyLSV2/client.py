@@ -1941,14 +1941,13 @@ class LSV2:
         payload = bytearray()
         payload.extend(struct.pack("!L", interval))
         for signal in signal_list:
-            if signal.min_interval > interval:
+            if interval not in [600, 3000, 21000]:
                 self._logger.warning(
-                    "the selected interval is to small for signal %s %s %dus",
-                    signal.channel_name,
-                    signal.signal_name,
-                    signal.min_interval,
+                    "the selected interval doesn't fit for signals readings!"
                 )
-                raise LSV2ProtocolException("the selected interval is to small")
+                raise LSV2ProtocolException(
+                    "the selected interval must be: 600 or 3000 or 21000 us"
+                )
             payload.extend(signal.to_ba())
 
         result = self._send_recive(lc.CMD.R_OP, payload, lc.RSP.S_OP)
