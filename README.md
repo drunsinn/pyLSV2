@@ -108,7 +108,7 @@ These changes where made intentionally to make further development easier. See t
 ```
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
 
- The available memory aread and their python data type
+ The available memory areas and their python data type
 | Memory Type              | Python Type |
 |--------------------------|-------------|
 | PLC_MEM_TYPE_MARKER      | bool        |
@@ -123,6 +123,8 @@ These changes where made intentionally to make further development easier. See t
 | PLC_MEM_TYPE_INPUT_WORD  | integer     |
 | PLC_MEM_TYPE_OUTPUT_WORD | integer     |
 
+ Reading the values from the memory address takes the size of each memory type into account.
+
 #### Reading via Data Path
  The following command reads values from the control not via a memory address but via supplying a data access path. This will only work on iTNC controls!
  The advantage is that it also allows you to access tables like the tool table without reading the complete file.
@@ -131,8 +133,17 @@ These changes where made intentionally to make further development easier. See t
  con.read_data_path('/PLC/memory/K/1')
  con.read_data_path('/TABLE/TOOL/T/1/DOC')
 ```
- 
+
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
+
+ Note that reading values from memory does not take into account the actual size in the control memory. This leads to an offset between the values read with `read_data_path` and `read_plc_memory`. As a workaround you have to multiply the address value with the number of bytes the data type requires. The following example tries to show how this can be accomplished:
+
+```
+ for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 368]:
+    v1 = lsv2.read_plc_memory(mem_address, pyLSV2.MemoryType.DWORD, 1)[0]
+    v2 = lsv2.read_data_path("/PLC/memory/D/%d" % (mem_address * 4))
+    assert v1 == v2
+```
 
 ### SSH Tunnel
  Newer controls allow the use of ssh to encrypt the communication via LSV2. 
