@@ -120,3 +120,27 @@ def test_data_path_read(address: str, timeout: float):
         assert lsv2.read_data_path("\\PLC\\memory\\K\\1") is not None
 
     lsv2.disconnect()
+
+def test_comapare_values(address: str, timeout: float):
+    """test to see if reading via data path and plc memory returns the same value. run only on iTNC"""
+    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2.connect()
+
+    if lsv2.versions.is_itnc():
+
+        for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 368]:
+            v1 = lsv2.read_plc_memory(mem_address, pyLSV2.MemoryType.DWORD, 1)[0]
+            v2 = lsv2.read_data_path("/PLC/memory/D/%d" % (mem_address * 4))
+            assert v1 == v2
+
+        for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 368]:
+            v1 = lsv2.read_plc_memory(mem_address, pyLSV2.MemoryType.WORD, 1)[0]
+            v2 = lsv2.read_data_path("/PLC/memory/W/%d" % (mem_address * 2))
+            assert v1 == v2
+
+        for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 368]:
+            v1 = lsv2.read_plc_memory(mem_address, pyLSV2.MemoryType.BYTE, 1)[0]
+            v2 = lsv2.read_data_path("/PLC/memory/B/%d" % (mem_address * 1))
+            assert v1 == v2
+
+    lsv2.disconnect()
