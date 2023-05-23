@@ -6,14 +6,14 @@ from pyLSV2 import __doc__, __version__, __author__, __license__, __email__
 
 setup(
     name="pyLSV2",
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     packages=find_packages(
         include=[
             "pyLSV2",
         ],
         exclude=["tests", "data"],
     ),
-    package_data={"pyLSV2": ["locales/*/LC_MESSAGES/*.mo"]},
+    #package_data={"pyLSV2": ["locales/*/LC_MESSAGES/*.mo"]},
     include_package_data=True,
     version=__version__,
     description=__doc__,
