@@ -1415,7 +1415,7 @@ class LSV2:
 
             for i in range(num_groups):
 
-                # determin number of elements for this group
+                # determine number of elements for this group
                 if remaining_elements > max_elements_per_transfer:
                     elements_in_group = max_elements_per_transfer
                 else:

@@ -204,7 +204,8 @@ class NCTable:
             version_string = " Version:%s" % str(self._version)
 
         with open(file_path, "w", encoding="ascii") as tfp:
-            tfp.write("BEGIN %s%s%s\n" % (file_name, units_string, version_string))
+            tfp.write("BEGIN %s%s%s\n" %
+                      (file_name, units_string, version_string))
 
             for column_name in self._columns:
                 if column_name not in self._column_format:
@@ -253,7 +254,8 @@ class NCTable:
 
         :param file_path: file location for csv file
         """
-        self._logger.debug("write table to csv, using decimal char '%s'", decimal_char)
+        self._logger.debug(
+            "write table to csv, using decimal char '%s'", decimal_char)
 
         def localize_floats(row):
             float_pattern = re.compile(r"^[+-]?\d+\.\d+$")
@@ -413,7 +415,7 @@ class NCTable:
                     table_entry = {}
                     for column in nctable.column_names:
                         table_entry[column] = line[
-                            nctable.get_column_start(column) : nctable.get_column_end(
+                            nctable.get_column_start(column): nctable.get_column_end(
                                 column
                             )
                         ].strip()
@@ -506,7 +508,8 @@ class NCTable:
                 if isinstance(last_object, (list,)):
                     if ":=" in line:
                         parts = line.split(":=")
-                        last_object.append({parts[0]: str_to_typed_value(parts[1])})
+                        last_object.append(
+                            {parts[0]: str_to_typed_value(parts[1])})
                     else:
                         last_object.append(line)
 
