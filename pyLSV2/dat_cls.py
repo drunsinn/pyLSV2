@@ -165,7 +165,7 @@ class SystemParameters:
         self.number_of_timers = -1
 
         self.words_start_address = -1
-        self.umber_of_words = -1
+        self.number_of_words = -1
 
         self.strings_start_address = -1
         self.number_of_strings = -1
