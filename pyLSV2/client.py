@@ -1678,7 +1678,7 @@ class LSV2:
                 messages.append(lm.decode_error_message(result))
                 result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
 
-            if self.last_error is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
+            if self.last_error.e_code is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
                 self._logger.debug("successfully read all errors")
             else:
                 self._logger.warning(
@@ -1687,7 +1687,7 @@ class LSV2:
 
             return messages
 
-        if self.last_error is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
+        if self.last_error.e_code is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
             self._logger.debug(
                 "successfully read first error but no error active")
             return messages
