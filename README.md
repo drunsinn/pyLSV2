@@ -55,6 +55,7 @@
  - NeeXoo
  - Baptou88
  - Md-aliy7
+ - npalmerDNX
 
 ## Usage
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for a demonstration of some of the functions.
