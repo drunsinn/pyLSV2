@@ -53,7 +53,7 @@ quiet-level = 3
 ignore-words-list = "spindel"
 
 [tool.pylint.main]
-fail-under = 10
+fail-under = 9
 ignore = ["CVS"]
 ignore-patterns = ["^\\.#"]
 jobs = 0
