@@ -26,9 +26,7 @@ if __name__ == "__main__":
 
     parser.add_argument("host", help="ip or hostname of control", type=str)
 
-    parser.add_argument(
-        "output", help="path of the csv file the data should be written to", type=Path
-    )
+    parser.add_argument("output", help="path of the csv file the data should be written to", type=Path)
 
     parser.add_argument(
         "signals",
@@ -37,13 +35,9 @@ if __name__ == "__main__":
         type=int,
     )
 
-    parser.add_argument(
-        "-a", "--duration", help="number of seconds to record", type=int, default=10
-    )
+    parser.add_argument("-a", "--duration", help="number of seconds to record", type=int, default=10)
 
-    parser.add_argument(
-        "-i", "--interval", help="number of µs between readings", type=int, default=6000
-    )
+    parser.add_argument("-i", "--interval", help="number of µs between readings", type=int, default=6000)
 
     parser.add_argument(
         "-d",
@@ -103,14 +97,10 @@ if __name__ == "__main__":
         sys.exit(-2)
 
     if args.interval <= 0:
-        logging.error(
-            "the selected interval has to be at least greater than 0: %d", args.interval
-        )
+        logging.error("the selected interval has to be at least greater than 0: %d", args.interval)
         sys.exit(-3)
 
-    with pyLSV2.LSV2(
-        args.host, port=19000, timeout=args.timeout, safe_mode=False
-    ) as con:
+    with pyLSV2.LSV2(args.host, port=19000, timeout=args.timeout, safe_mode=False) as con:
         availible_signals = con.read_scope_signals()
 
         if sorted(selected_signals)[-1] > len(availible_signals):
@@ -136,15 +126,10 @@ if __name__ == "__main__":
             csv.writerow(list(map(lambda x: x.normalized_name(), scope_signals)))
             readings_counter = 0
 
-            for package in con.real_time_readings(
-                scope_signals, args.duration, args.interval
-            ):
+            for package in con.real_time_readings(scope_signals, args.duration, args.interval):
                 signal_readings = package.get_data()
                 readings_per_signal = len(signal_readings[0].data)
-                logging.debug(
-                    "successfulle read %d signals with %d values each"
-                    % (len(signal_readings), readings_per_signal)
-                )
+                logging.debug("successfulle read %d signals with %d values each" % (len(signal_readings), readings_per_signal))
 
                 for i in range(readings_per_signal):
                     row = list()
@@ -154,9 +139,7 @@ if __name__ == "__main__":
                     csv.writerow(row)
                     readings_counter += 1
 
-        logging.info(
-            "finished reading data, data was saved to %s", args.output.absolute()
-        )
+        logging.info("finished reading data, data was saved to %s", args.output.absolute())
         logging.debug("number of recorded data points %d", readings_counter)
 
         for s in scope_signals:

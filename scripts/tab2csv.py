@@ -14,13 +14,9 @@ __version__ = "1.0"
 __email__ = "dr.unsinn@googlemail.com"
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="command line script parsing table files"
-    )
+    parser = argparse.ArgumentParser(description="command line script parsing table files")
     parser.add_argument("source", help="table file to parse", type=pathlib.Path)
-    parser.add_argument(
-        "--decimal_char", help="override local decimal char", type=str, default=","
-    )
+    parser.add_argument("--decimal_char", help="override local decimal char", type=str, default=",")
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument(
         "-d",

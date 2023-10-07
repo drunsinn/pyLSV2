@@ -25,20 +25,10 @@ def test_file_recive(address: str, timeout: float):
 
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
         local_mdi_path = Path(tmp_dir_name).joinpath("mdi.h")
-        assert (
-            lsv2.recive_file(
-                local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False
-            )
-            is True
-        )
+        assert lsv2.recive_file(local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False) is True
 
         local_tool_table_path = Path(tmp_dir_name).joinpath("tool.t")
-        assert (
-            lsv2.recive_file(
-                local_path=str(local_tool_table_path), remote_path=tool_t_path
-            )
-            is True
-        )
+        assert lsv2.recive_file(local_path=str(local_tool_table_path), remote_path=tool_t_path) is True
 
         lsv2.disconnect()
 
@@ -104,11 +94,6 @@ def test_recive_with_path_formating(address: str, timeout: float):
 
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
         local_mdi_path = Path(tmp_dir_name).joinpath("mdi.h")
-        assert (
-            lsv2.recive_file(
-                local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False
-            )
-            is True
-        )
+        assert lsv2.recive_file(local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False) is True
 
     lsv2.disconnect()

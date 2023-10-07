@@ -38,9 +38,7 @@ class SignalConfig:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="command line script for dumping the signal list of a control to json"
-    )
+    parser = argparse.ArgumentParser(description="command line script for dumping the signal list of a control to json")
     parser.add_argument(
         "address",
         help="ip or hostname of the control",

@@ -1150,9 +1150,7 @@ class ScopeSignal:
 
 
 class ScopeSignalData:
-    def __init__(
-        self, channel: int, signal: int, offset: int, factor: float, unit: str
-    ):
+    def __init__(self, channel: int, signal: int, offset: int, factor: float, unit: str):
         self._channel = channel
         self._signal = signal
         self._offset = offset

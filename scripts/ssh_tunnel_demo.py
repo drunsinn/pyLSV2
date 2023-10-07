@@ -26,11 +26,7 @@ if __name__ == "__main__":
     private_key_file = "<path to private key file>"
     lsv2_port = 19000
 
-    print(
-        "Connecting to {:s}@{:s}:{:d} via ssh tunnel".format(
-            user_name, address, lsv2_port
-        )
-    )
+    print("Connecting to {:s}@{:s}:{:d} via ssh tunnel".format(user_name, address, lsv2_port))
     ssh_forwarder = SSHTunnelForwarder(
         address,
         ssh_username=user_name,
@@ -38,21 +34,13 @@ if __name__ == "__main__":
         remote_bind_address=("127.0.0.1", lsv2_port),
     )
     ssh_forwarder.start()
-    print(
-        "SSH tunnel established. local port is {}".format(ssh_forwarder.local_bind_port)
-    )
+    print("SSH tunnel established. local port is {}".format(ssh_forwarder.local_bind_port))
 
     print("Establish regular LSV2 connection via local port")
 
-    con = pyLSV2.LSV2(
-        "127.0.0.1", port=ssh_forwarder.local_bind_port, timeout=5, safe_mode=False
-    )
+    con = pyLSV2.LSV2("127.0.0.1", port=ssh_forwarder.local_bind_port, timeout=5, safe_mode=False)
     con.connect()
-    print(
-        "Connected to '{:s}' with NC Software '{:s}'".format(
-            con.versions.control, con.versions.nc_sw
-        )
-    )
+    print("Connected to '{:s}' with NC Software '{:s}'".format(con.versions.control, con.versions.nc_sw))
     print("Close Connection")
     con.disconnect()
 

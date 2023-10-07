@@ -46,11 +46,7 @@ if __name__ == "__main__":
         con.connect()
 
         print("Basics:")
-        print(
-            "# Connected to a '{:s}' running software version '{:s}'".format(
-                con.versions.control, con.versions.nc_sw
-            )
-        )
+        print("# Connected to a '{:s}' running software version '{:s}'".format(con.versions.control, con.versions.nc_sw))
         print(
             "# Using LSV2 version '{:d}' with version flags '0x{:02x}' and '0x{:02x}'".format(
                 con.parameters.lsv2_version,
@@ -84,19 +80,11 @@ if __name__ == "__main__":
         pgm_stack = con.program_stack()
         if pgm_stack is not None:
             print("# selected program: '{:s}'".format(pgm_stack.main))
-            print(
-                "## currently execution '{:s}' on line {:d}".format(
-                    pgm_stack.current, pgm_stack.line_no
-                )
-            )
+            print("## currently execution '{:s}' on line {:d}".format(pgm_stack.current, pgm_stack.line_no))
 
         ovr_stat = con.override_state()
         if ovr_stat is not None:
-            print(
-                "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
-                    ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindle
-                )
-            )
+            print("# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindle))
 
         print("PLC memory:")
         print("# the first 5 entries for some memory types:")
@@ -150,17 +138,9 @@ if __name__ == "__main__":
 
         print("File access")
         drv_info = con.drive_info()
-        print(
-            "# names of disk drives: {:s}".format(
-                ", ".join([drv.name for drv in drv_info])
-            )
-        )
+        print("# names of disk drives: {:s}".format(", ".join([drv.name for drv in drv_info])))
         dir_info = con.directory_info()
-        print(
-            "# current directory is '{:s}' with {:d} bytes of free drive space".format(
-                dir_info.path, dir_info.free_size
-            )
-        )
+        print("# current directory is '{:s}' with {:d} bytes of free drive space".format(dir_info.path, dir_info.free_size))
 
         dir_content = con.directory_content()
         only_files = filter(
@@ -169,20 +149,10 @@ if __name__ == "__main__":
         )
 
         for file_entry in only_files:
-            print(
-                "## file name: {:s}, date {:}, size {:d} bytes".format(
-                    file_entry.name, file_entry.timestamp, file_entry.size
-                )
-            )
-        only_dir = filter(
-            lambda f_e: f_e.is_directory is True and f_e.is_drive is False, dir_content
-        )
+            print("## file name: {:s}, date {:}, size {:d} bytes".format(file_entry.name, file_entry.timestamp, file_entry.size))
+        only_dir = filter(lambda f_e: f_e.is_directory is True and f_e.is_drive is False, dir_content)
         for file_entry in only_dir:
-            print(
-                "## directory name: {:s}, date {:}".format(
-                    file_entry.name, file_entry.timestamp
-                )
-            )
+            print("## directory name: {:s}, date {:}".format(file_entry.name, file_entry.timestamp))
 
         print("# file search")
         h_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[hH]$")
@@ -194,10 +164,6 @@ if __name__ == "__main__":
         t_info = con.spindle_tool_status()
         if t_info is not None:
             print("# direct reading of current tool successful")
-            print(
-                "# current tool in spindle: {:d}.{:d} '{:s}'".format(
-                    t_info.number, t_info.index, t_info.name
-                )
-            )
+            print("# current tool in spindle: {:d}.{:d} '{:s}'".format(t_info.number, t_info.index, t_info.name))
         else:
             print("# direct reading of current tool not supported for this control")

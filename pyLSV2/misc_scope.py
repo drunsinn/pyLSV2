@@ -44,16 +44,11 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
             name_end += 1
     channel_name = lm.ba_to_ustr(data_set[name_start:name_end])
     if data_set[10:46] != bytearray(b"\x00" * 36):
-        raise LSV2DataException(
-            "unexpected data in channel description in bytes 10 to 45: %s"
-            % data_set[10:46]
-        )
+        raise LSV2DataException("unexpected data in channel description in bytes 10 to 45: %s" % data_set[10:46])
     interval_value_1 = struct.unpack("!H", data_set[2:4])[0]
     interval_value_2 = struct.unpack("!H", data_set[8:10])[0]
     if interval_value_1 != interval_value_2:
-        raise LSV2DataException(
-            "error in decoding of channel description data: %s" % data_set
-        )
+        raise LSV2DataException("error in decoding of channel description data: %s" % data_set)
 
     min_interval = interval_value_1
     type_num = struct.unpack("!H", data_set[4:6])[0]
@@ -62,9 +57,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
 
     channel_type = lc.ChannelType(type_num)
     if not data_set[6:8] == bytearray(b"\x00\x00"):
-        raise LSV2DataException(
-            "unexpected values in bytes 6 and 7: %s" % data_set[6:8]
-        )
+        raise LSV2DataException("unexpected values in bytes 6 and 7: %s" % data_set[6:8])
     if channel_type in [lc.ChannelType.TYPE1, lc.ChannelType.TYPE4]:
         if len(data_set) not in [98, 106]:
             raise LSV2DataException("unexpected length of data for channel type 1 or 4")
@@ -110,9 +103,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     return signals
 
 
-def decode_signal_details(
-    signal_list: List[ld.ScopeSignal], data_set: bytearray
-) -> List[ld.ScopeSignal]:
+def decode_signal_details(signal_list: List[ld.ScopeSignal], data_set: bytearray) -> List[ld.ScopeSignal]:
     """
     Decode the detailed description of a signal after selecting them
 
@@ -130,10 +121,7 @@ def decode_signal_details(
         logger.debug("R_OP dataset has expected length")
         for i, data_sub_set in enumerate(split_dataset(data_set)):
             if data_sub_set[17:] != bytearray(b"?\x00\x00\x00\x00"):
-                raise Exception(
-                    "unexpected data in signal details at position 17 %s"
-                    % data_sub_set[17:]
-                )
+                raise Exception("unexpected data in signal details at position 17 %s" % data_sub_set[17:])
 
             signal_list[i].unit = lm.ba_to_ustr(data_sub_set[0:10])
             signal_list[i].factor = struct.unpack("<d", data_sub_set[10:18])[0]
@@ -147,9 +135,7 @@ def decode_signal_details(
                 signal_list[i].offset,
             )
     else:
-        logger.error(
-            "R_OP dataset has unexpected length %d of %s", len(data_set), data_set
-        )
+        logger.error("R_OP dataset has unexpected length %d of %s", len(data_set), data_set)
     return signal_list
 
 
@@ -174,9 +160,7 @@ def decode_scope_reading(
     sig_data_end = sig_data_start + sig_data_lenth
 
     for signal in signal_list:
-        logger.debug(
-            "decode data for channel %d signal %d", signal.channel, signal.signal
-        )
+        logger.debug("decode data for channel %d signal %d", signal.channel, signal.signal)
         sig_data = ld.ScopeSignalData(
             channel=signal.channel,
             signal=signal.signal,
@@ -191,9 +175,7 @@ def decode_scope_reading(
 
         unpack_string = "!32l"
         value_start = sig_data_start + 6
-        sig_data.data.extend(
-            struct.unpack(unpack_string, data_set[value_start:sig_data_end])
-        )
+        sig_data.data.extend(struct.unpack(unpack_string, data_set[value_start:sig_data_end]))
 
         reading.add_dataset((sig_data))
 

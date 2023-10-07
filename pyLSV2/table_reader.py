@@ -92,9 +92,7 @@ class NCTable:
         """list of columns used in this table"""
         return self._columns
 
-    def append_column(
-        self, name: str, start: int, end: int, width: int = 0, empty_value=None
-    ):
+    def append_column(self, name: str, start: int, end: int, width: int = 0, empty_value=None):
         """add column to the table format"""
         self._columns.append(name)
         if width == 0:
@@ -167,9 +165,7 @@ class NCTable:
 
     def _get_column_names(self):
         """get list of columns used in this table"""
-        raise DeprecationWarning(
-            "Do not use this function anymore! Use ```column_names```"
-        )
+        raise DeprecationWarning("Do not use this function anymore! Use ```column_names```")
 
     def append_row(self, row):
         """add a data entry to the table"""
@@ -204,14 +200,11 @@ class NCTable:
             version_string = " Version:%s" % str(self._version)
 
         with open(file_path, "w", encoding="ascii") as tfp:
-            tfp.write("BEGIN %s%s%s\n" %
-                      (file_name, units_string, version_string))
+            tfp.write("BEGIN %s%s%s\n" % (file_name, units_string, version_string))
 
             for column_name in self._columns:
                 if column_name not in self._column_format:
-                    raise Exception(
-                        "configuration is incomplete, missing definition for column {column_name:s}"
-                    )
+                    raise Exception("configuration is incomplete, missing definition for column {column_name:s}")
                 fixed_width = self._column_format[column_name]["width"]
                 format_string = "{0:<%d}" % fixed_width
                 tfp.write(format_string.format(column_name))
@@ -233,16 +226,9 @@ class NCTable:
                                     "entry is missing optional column %s defined in output format, replace with empty value",
                                     column_name,
                                 )
-                                tfp.write(
-                                    format_string.format(
-                                        self._column_format[column_name]["empty_value"]
-                                    )
-                                )
+                                tfp.write(format_string.format(self._column_format[column_name]["empty_value"]))
                             else:
-                                raise Exception(
-                                    "entry is missing a value for column %s defined in the output format"
-                                    % column_name
-                                )
+                                raise Exception("entry is missing a value for column %s defined in the output format" % column_name)
                 tfp.write("\n")
                 row_counter += 1
 
@@ -254,8 +240,7 @@ class NCTable:
 
         :param file_path: file location for csv file
         """
-        self._logger.debug(
-            "write table to csv, using decimal char '%s'", decimal_char)
+        self._logger.debug("write table to csv, using decimal char '%s'", decimal_char)
 
         def localize_floats(row):
             float_pattern = re.compile(r"^[+-]?\d+\.\d+$")
@@ -277,9 +262,7 @@ class NCTable:
                 csv_writer.writerow(localize_floats(row))
         self._logger.info("csv file saved successfully")
 
-    def find_string(
-        self, column_name: str, search_value: Union[str, re.Pattern]
-    ) -> list:
+    def find_string(self, column_name: str, search_value: Union[str, re.Pattern]) -> list:
         """
         search for string rows by string or pattern
         returns list of lines that contain the search result
@@ -289,20 +272,12 @@ class NCTable:
         """
         search_results = []
         if not column_name in self._columns:
-            self._logger.error(
-                "column with name %s not part of this table", column_name
-            )
+            self._logger.error("column with name %s not part of this table", column_name)
         else:
             if isinstance(search_value, (str,)):
-                search_results = [
-                    itm for itm in self._content if search_value in itm[column_name]
-                ]
+                search_results = [itm for itm in self._content if search_value in itm[column_name]]
             elif isinstance(search_value, (re.Pattern,)):
-                search_results = [
-                    itm
-                    for itm in self._content
-                    if search_value.match(itm[column_name]) is not None
-                ]
+                search_results = [itm for itm in self._content if search_value.match(itm[column_name]) is not None]
         return search_results
 
     @staticmethod
@@ -333,10 +308,7 @@ class NCTable:
                 )
 
                 if header is None:
-                    raise Exception(
-                        "File has wrong format: incorrect header for file %s"
-                        % table_path
-                    )
+                    raise Exception("File has wrong format: incorrect header for file %s" % table_path)
 
                 nctable.name = header.group("name").strip()
                 nctable.suffix = header.group("suffix")
@@ -414,11 +386,7 @@ class NCTable:
 
                     table_entry = {}
                     for column in nctable.column_names:
-                        table_entry[column] = line[
-                            nctable.get_column_start(column): nctable.get_column_end(
-                                column
-                            )
-                        ].strip()
+                        table_entry[column] = line[nctable.get_column_start(column) : nctable.get_column_end(column)].strip()
                     nctable.append_row(table_entry)
 
                 logger.debug("Found %d entries", len(nctable.rows))
@@ -428,12 +396,8 @@ class NCTable:
                     for c_d in table_config["TableDescription"]["columns"]:
                         cfg_column_name = c_d["CfgColumnDescription"]["key"]
                         if cfg_column_name not in nctable.column_names:
-                            raise Exception(
-                                "found unexpected column %s" % cfg_column_name
-                            )
-                        if c_d["CfgColumnDescription"][
-                            "width"
-                        ] != nctable.get_column_width(cfg_column_name):
+                            raise Exception("found unexpected column %s" % cfg_column_name)
+                        if c_d["CfgColumnDescription"]["width"] != nctable.get_column_width(cfg_column_name):
                             raise Exception(
                                 "found difference in column width for colmun %s: %d : %d"
                                 % (
@@ -442,9 +406,7 @@ class NCTable:
                                     nctable.get_column_width(cfg_column_name),
                                 )
                             )
-                        nctable.update_column_format(
-                            cfg_column_name, c_d["CfgColumnDescription"]
-                        )
+                        nctable.update_column_format(cfg_column_name, c_d["CfgColumnDescription"])
 
         except UnicodeDecodeError:
             logger.error("File has invalid utf-8 encoding")
@@ -508,8 +470,7 @@ class NCTable:
                 if isinstance(last_object, (list,)):
                     if ":=" in line:
                         parts = line.split(":=")
-                        last_object.append(
-                            {parts[0]: str_to_typed_value(parts[1])})
+                        last_object.append({parts[0]: str_to_typed_value(parts[1])})
                     else:
                         last_object.append(line)
 
@@ -545,9 +506,7 @@ class NCTable:
                     end=json_data["column_config"][column]["end"],
                 )
                 if "empty_value" in json_data["column_config"][column]:
-                    nct.set_column_empty_value(
-                        column, json_data["column_config"][column]["empty_value"]
-                    )
+                    nct.set_column_empty_value(column, json_data["column_config"][column]["empty_value"])
         return nct
 
     @staticmethod

@@ -40,10 +40,7 @@ with pyLSV2.LSV2("192.168.56.103", port=19000, timeout=5, safe_mode=False) as co
         for package in con.real_time_readings(selected_signals, duration, interval):
             signal_readings = package.get_data()
             readings_per_signal = len(signal_readings[0].data)
-            print(
-                "successfulle read %d signals with %d values each"
-                % (len(signal_readings), readings_per_signal)
-            )
+            print("successfulle read %d signals with %d values each" % (len(signal_readings), readings_per_signal))
 
             for i in range(readings_per_signal):
                 # Signal_type = sample[# appending rank]["data"][one_smaple]
@@ -53,29 +50,23 @@ with pyLSV2.LSV2("192.168.56.103", port=19000, timeout=5, safe_mode=False) as co
                 if count_high_freq % 5 == 0:
                     # This condition is only for signals of low frequency
                     position_X = round(
-                        signal_readings[0].data[i] * signal_readings[0].factor
-                        + signal_readings[0].offset,
+                        signal_readings[0].data[i] * signal_readings[0].factor + signal_readings[0].offset,
                         3,
                     )
                     position_Y = round(
-                        signal_readings[1].data[i] * signal_readings[1].factor
-                        + signal_readings[1].offset,
+                        signal_readings[1].data[i] * signal_readings[1].factor + signal_readings[1].offset,
                         3,
                     )
                     position_Z = round(
-                        signal_readings[2].data[i] * signal_readings[2].factor
-                        + signal_readings[2].offset,
+                        signal_readings[2].data[i] * signal_readings[2].factor + signal_readings[2].offset,
                         3,
                     )
                 I_nominal_X = round(
-                    signal_readings[3].data[i] * signal_readings[3].factor
-                    + signal_readings[3].offset,
+                    signal_readings[3].data[i] * signal_readings[3].factor + signal_readings[3].offset,
                     3,
                 )
 
-                print(
-                    f"Position X = {position_X} mm , Position Y = {position_Y} , Position Z = {position_Z}, I nominal X = {I_nominal_X} "
-                )
+                print(f"Position X = {position_X} mm , Position Y = {position_Y} , Position Z = {position_Z}, I nominal X = {I_nominal_X} ")
                 fp.write(
                     "Position X = %f mm , Position Y = %f , Position Z = %f , I nominal X = %f\n"
                     % (position_X, position_Y, position_Z, I_nominal_X)
