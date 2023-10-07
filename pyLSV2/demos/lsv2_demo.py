@@ -9,15 +9,14 @@ import time
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-__author__ = "drunsinn"
-__license__ = "MIT"
-__version__ = "1.0"
-__email__ = "dr.unsinn@googlemail.com"
 
-if __name__ == "__main__":
+def comprehensive_demo():
+    """Basic demo for pyLSV2"""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("address", nargs="?", default="192.168.56.101", type=str)
+    # parser.add_argument("address", nargs="?", default="192.168.56.101", type=str)
+
+    parser.add_argument("address", help="ip or hostname of control", type=str)
 
     parser.add_argument(
         "-d",
@@ -121,7 +120,7 @@ if __name__ == "__main__":
             lang = con.get_machine_parameter("CfgDisplayLanguage.ncLanguage")
         print("# Value of machine parameter for NC language: {:s}".format(lang))
 
-        if con.version.is_tnc7():
+        if con.versions.is_tnc7():
             print("UI Interface test not available on TNC7?")
         else:
             print("UI Interface")
@@ -167,3 +166,7 @@ if __name__ == "__main__":
             print("# current tool in spindle: {:d}.{:d} '{:s}'".format(t_info.number, t_info.index, t_info.name))
         else:
             print("# direct reading of current tool not supported for this control")
+
+
+if __name__ == "__main__":
+    comprehensive_demo()

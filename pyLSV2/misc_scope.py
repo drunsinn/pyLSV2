@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """misc helper functions for the scope part of pyLSV2"""
 import struct
-from datetime import datetime
 from typing import List
 import logging
 
@@ -32,7 +31,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     # data_set[ 46: ??] : name of the channel
     # type 1, 2, 4, 5:
     # data_set[ 59:   ] : signal names
-    signals = list()
+    signals = []
     channel_number = struct.unpack("!H", data_set[0:2])[0]
     name_start = 46
     name_end = 46
@@ -121,7 +120,7 @@ def decode_signal_details(signal_list: List[ld.ScopeSignal], data_set: bytearray
         logger.debug("R_OP dataset has expected length")
         for i, data_sub_set in enumerate(split_dataset(data_set)):
             if data_sub_set[17:] != bytearray(b"?\x00\x00\x00\x00"):
-                raise Exception("unexpected data in signal details at position 17 %s" % data_sub_set[17:])
+                raise LSV2DataException("unexpected data in signal details at position 17 %s" % data_sub_set[17:])
 
             signal_list[i].unit = lm.ba_to_ustr(data_sub_set[0:10])
             signal_list[i].factor = struct.unpack("<d", data_sub_set[10:18])[0]

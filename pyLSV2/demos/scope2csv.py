@@ -5,7 +5,7 @@
 import sys
 import logging
 import argparse
-import csv
+from csv import writer as csv_writer
 from pathlib import Path
 
 import pyLSV2
@@ -17,7 +17,7 @@ __version__ = "1.0"
 __email__ = "dr.unsinn@googlemail.com"
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         prog="real_time_readings",
         description="script to read scope signals from control",
@@ -37,7 +37,13 @@ if __name__ == "__main__":
 
     parser.add_argument("-a", "--duration", help="number of seconds to record", type=int, default=10)
 
-    parser.add_argument("-i", "--interval", help="number of µs between readings", type=int, default=6000)
+    parser.add_argument(
+        "-i",
+        "--interval",
+        help="number of µs between readings",
+        type=int,
+        default=21000,
+    )
 
     parser.add_argument(
         "-d",
@@ -122,17 +128,21 @@ if __name__ == "__main__":
             scope_signals.append(new_signal)
 
         with open(args.output, "w", encoding="utf8") as csv_fp:
-            csv = csv.writer(csv_fp, dialect="excel", lineterminator="\n")
+            csv = csv_writer(csv_fp, dialect="excel", lineterminator="\n")
             csv.writerow(list(map(lambda x: x.normalized_name(), scope_signals)))
             readings_counter = 0
 
             for package in con.real_time_readings(scope_signals, args.duration, args.interval):
                 signal_readings = package.get_data()
                 readings_per_signal = len(signal_readings[0].data)
-                logging.debug("successfulle read %d signals with %d values each" % (len(signal_readings), readings_per_signal))
+                logging.debug(
+                    "successfulle read %d signals with %d values each",
+                    len(signal_readings),
+                    readings_per_signal,
+                )
 
                 for i in range(readings_per_signal):
-                    row = list()
+                    row = []
                     for signal in signal_readings:
                         value = (signal.data[i] * signal.factor) + signal.offset
                         row.append(value)
@@ -150,3 +160,7 @@ if __name__ == "__main__":
             )
 
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

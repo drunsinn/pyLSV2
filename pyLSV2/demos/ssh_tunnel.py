@@ -10,17 +10,13 @@ For this to work you have to:
 6. edit this file and set address, user name and path to the key file
 """
 import logging
-import pyLSV2
 from sshtunnel import SSHTunnelForwarder
-
-__author__ = "drunsinn"
-__license__ = "MIT"
-__version__ = "1.0"
-__email__ = "dr.unsinn@googlemail.com"
+import pyLSV2
 
 logging.basicConfig(level=logging.INFO)
 
-if __name__ == "__main__":
+
+def main():
     address = "192.168.56.101"
     user_name = "user"
     private_key_file = "<path to private key file>"
@@ -46,3 +42,7 @@ if __name__ == "__main__":
 
     print("Close SSH tunnel")
     ssh_forwarder.stop()
+
+
+if __name__ == "__main__":
+    main()

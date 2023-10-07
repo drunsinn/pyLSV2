@@ -1663,7 +1663,11 @@ class LSV2:
             self._logger.warning("the argument '%s' is not supported by this control", path)
             return None
 
-        self._logger.warning("an error occurred while querying data path '%s'. Error code was %d", path, self.last_error.e_code)
+        self._logger.warning(
+            "an error occurred while querying data path '%s'. Error code was %d",
+            path,
+            self.last_error.e_code,
+        )
         return None
 
     def axes_location(self) -> Union[Dict[str, float], None]:

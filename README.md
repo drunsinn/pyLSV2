@@ -58,7 +58,7 @@
  - npalmerDNX
 
 ## Usage
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for a demonstration of some of the functions.
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for a demonstration of some of the functions.
 
  Since the whole protocol isn't documented there can always be problems with certain corner cases. Especially during file transfer a lot of stuff can go wrong.
  In case the control doesn't accept a command it returns an error. Some of these errors are checked internally but not everything is covered as of now. It is therefore
@@ -107,7 +107,7 @@ These changes where made intentionally to make further development easier. See t
 ```
  con.read_plc_memory(32, pyLSV2.MemoryType.MARKER, 15)
 ```
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for more examples.
 
  The available memory areas and their python data type
 | Memory Type              | Python Type |
@@ -135,7 +135,7 @@ These changes where made intentionally to make further development easier. See t
  con.read_data_path('/TABLE/TOOL/T/1/DOC')
 ```
 
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/lsv2_demo.py) for more examples.
+ See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for more examples.
 
  Note that reading values from memory does not take into account the actual size in the control memory. This leads to an offset between the values read with `read_data_path` and `read_plc_memory`. As a workaround you have to multiply the address value with the number of bytes the data type requires. The following example tries to show how this can be accomplished:
 
@@ -148,7 +148,7 @@ These changes where made intentionally to make further development easier. See t
 
 ### SSH Tunnel
  Newer controls allow the use of ssh to encrypt the communication via LSV2. 
- See [ssh_tunnel_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/ssh_tunnel_demo.py) for an example on
+ See [ssh_tunnel_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/ssh_tunnel.py) for an example on
  how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
 ## Compatibility
@@ -183,7 +183,7 @@ These changes where made intentionally to make further development easier. See t
 # Tables
  Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
- See [tab2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
+ See [tab2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
 
  This script can also be used as a command line tool
 ```

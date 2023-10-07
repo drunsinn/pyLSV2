@@ -136,7 +136,7 @@ class NCTable:
     def set_column_empty_value(self, name, value):
         """set the default value of a column"""
         if len(str(value)) > self._column_format[name]["width"]:
-            raise Exception("value to long for column")
+            raise ValueError("value to long for column")
         self._column_format[name]["empty_value"] = value
 
     def update_column_format(self, name: str, parameters: dict):
@@ -204,7 +204,7 @@ class NCTable:
 
             for column_name in self._columns:
                 if column_name not in self._column_format:
-                    raise Exception("configuration is incomplete, missing definition for column {column_name:s}")
+                    raise ValueError("configuration is incomplete, missing definition for column {column_name:s}")
                 fixed_width = self._column_format[column_name]["width"]
                 format_string = "{0:<%d}" % fixed_width
                 tfp.write(format_string.format(column_name))
@@ -228,7 +228,7 @@ class NCTable:
                                 )
                                 tfp.write(format_string.format(self._column_format[column_name]["empty_value"]))
                             else:
-                                raise Exception("entry is missing a value for column %s defined in the output format" % column_name)
+                                raise ValueError("entry is missing a value for column %s defined in the output format" % column_name)
                 tfp.write("\n")
                 row_counter += 1
 
@@ -308,7 +308,7 @@ class NCTable:
                 )
 
                 if header is None:
-                    raise Exception("File has wrong format: incorrect header for file %s" % table_path)
+                    raise ValueError("File has wrong format: incorrect header for file %s" % table_path)
 
                 nctable.name = header.group("name").strip()
                 nctable.suffix = header.group("suffix")
@@ -396,9 +396,9 @@ class NCTable:
                     for c_d in table_config["TableDescription"]["columns"]:
                         cfg_column_name = c_d["CfgColumnDescription"]["key"]
                         if cfg_column_name not in nctable.column_names:
-                            raise Exception("found unexpected column %s" % cfg_column_name)
+                            raise ValueError("found unexpected column %s" % cfg_column_name)
                         if c_d["CfgColumnDescription"]["width"] != nctable.get_column_width(cfg_column_name):
-                            raise Exception(
+                            raise ValueError(
                                 "found difference in column width for colmun %s: %d : %d"
                                 % (
                                     cfg_column_name,
@@ -447,7 +447,7 @@ class NCTable:
                     last_object.append({name: new_category})
                 else:
                     if name in last_object:
-                        raise Exception("Element already in dict")
+                        raise ValueError("Element already in dict")
                     last_object[name] = new_category
                 object_list.append(new_category)
 
@@ -459,7 +459,7 @@ class NCTable:
                     last_object.append({name: new_group})
                 else:
                     if name in last_object:
-                        raise Exception("Element already in dict")
+                        raise ValueError("Element already in dict")
                     last_object[name] = new_group
                 object_list.append(new_group)
 
@@ -479,7 +479,7 @@ class NCTable:
                         parts = line.split(":=")
                         last_object[parts[0]] = str_to_typed_value(parts[1])
                     else:
-                        raise Exception("no keyname??")
+                        raise ValueError("no keyname??")
                         # last_object["value_%d" % id_counter] = line
 
         return config_data

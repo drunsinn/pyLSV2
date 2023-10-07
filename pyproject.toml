@@ -14,8 +14,15 @@ requires-python = ">=3.6"
 keywords = ["LSV2", "CNC", "PLC"]
 dynamic = ["version", "readme", ]
 
-#[project.scripts]
-#lsv2_demo = "scripts.lsv2_demo"
+[project.urls]
+"Homepage" = "https://github.com/drunsinn/pyLSV2"
+"Bug Tracker" = "https://github.com/drunsinn/pyLSV2/issues"
+
+[project.scripts]
+lsv2_demo = "pyLSV2.demos.lsv2_demo:comprehensive_demo"
+lsv2_scope2csv = "pyLSV2.demos.scope2csv:main"
+lsv2_tab2csv = "pyLSV2.demos.tab2csv:main"
+lsv2_tunnel_demo = "pyLSV2.demos.ssh_tunnel:main"
 
 [tool.setuptools]
 packages = [
