@@ -253,7 +253,7 @@ class LSV2RS232:
         self._last_lsv2_response = RSP.NONE
         self._last_error = LSV2Error()
         raise NotImplementedError()
-        import serial
+        # import serial
 
     @property
     def last_response(self) -> RSP:
@@ -287,14 +287,12 @@ class LSV2RS232:
         Establish connection to control
         """
         raise NotImplementedError()
-        pass
 
     def disconnect(self):
         """
         Close connection
         """
         raise NotImplementedError()
-        pass
 
     def telegram(
         self,

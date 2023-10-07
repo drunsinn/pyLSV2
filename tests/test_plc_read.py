@@ -115,7 +115,6 @@ def test_comapare_values(address: str, timeout: float):
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
-
         for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 368]:
             v1 = lsv2.read_plc_memory(mem_address, pyLSV2.MemoryType.DWORD, 1)[0]
             v2 = lsv2.read_data_path("/PLC/memory/D/%d" % (mem_address * 4))

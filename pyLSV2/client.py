@@ -1290,7 +1290,6 @@ class LSV2:
                     )
                     return []
         else:
-
             max_elements_per_transfer = math.floor(255 / mem_byte_count) - 1  # subtract 1 for safety
             num_groups = math.ceil(number_of_elements / max_elements_per_transfer)
             logging.debug(
@@ -1303,7 +1302,6 @@ class LSV2:
             first_element_in_group = first_element
 
             for i in range(num_groups):
-
                 # determine number of elements for this group
                 if remaining_elements > max_elements_per_transfer:
                     elements_in_group = max_elements_per_transfer
@@ -1660,9 +1658,11 @@ class LSV2:
 
             self._logger.info("successfully read data path: %s and got value '%s'", path, data_value)
             return data_value
-        elif self.last_error.e_code == lc.LSV2StatusCode.T_ER_WRONG_PARA:
+
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_WRONG_PARA:
             self._logger.warning("the argument '%s' is not supported by this control", path)
             return None
+
         self._logger.warning("an error occurred while querying data path '%s'. Error code was %d", path, self.last_error.e_code)
         return None
 
@@ -1748,13 +1748,13 @@ class LSV2:
         """
         if not self.versions.is_itnc():
             self._logger.warning("only works for iTNC530")
-            return list()
+            return []
 
         if not self.login(lc.Login.SCOPE):
             self._logger.warning("clould not log in as user for scope function")
-            return list()
+            return []
 
-        channel_list = list()
+        channel_list = []
 
         content = self._llcom.telegram(lc.CMD.R_OC)
         if self._llcom.last_response in lc.RSP.S_OC:
@@ -1788,11 +1788,11 @@ class LSV2:
         """
         if not self.versions.is_itnc():
             self._logger.warning("only works for iTNC530")
-            return list()
+            return []
 
         if not self.login(lc.Login.SCOPE):
             self._logger.warning("clould not log in as user for scope function")
-            return list()
+            return []
 
         self._logger.debug(
             "start recoding %d readings with interval of %d µs",
@@ -1831,7 +1831,7 @@ class LSV2:
         payload.extend(struct.pack("!L", interval))
 
         start = time.time()  # start timer
-        recorded_data = list()
+        recorded_data = []
         content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
 
         if not isinstance(content, (bytearray,)) or len(content) <= 0:
@@ -1851,6 +1851,6 @@ class LSV2:
                 break
             end = time.time()
             timer = end - start
-            recorded_data = list()
+            recorded_data = []
 
         self._logger.debug("finished reading scope data")

@@ -89,18 +89,19 @@ def decode_system_information(data_set: bytearray) -> Union[bool, int]:
 
     if data_type == 1:
         return struct.unpack("!xxx?", data_set[4:])[0]
-    elif data_type == 2:
+
+    if data_type == 2:
         return struct.unpack("!L", data_set[4:])[0]
-    else:
-        raise LSV2DataException("unexpected value for data type of system information")
+
+    raise LSV2DataException("unexpected value for data type of system information")
     # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
     # -> is independent of channel, axes, interval or samples
     # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
     # documentation hints
-    if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
-        print(" # unexpected return pattern for R_CI!")
-        raise Exception("unknown data for S_CI result")
-    return data_set
+    # if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
+    #    print(" # unexpected return pattern for R_CI!")
+    #    raise Exception("unknown data for S_CI result")
+    # return data_set
 
 
 def decode_file_system_info(data_set: bytearray, control_type: ControlType = ControlType.UNKNOWN) -> ld.FileEntry:

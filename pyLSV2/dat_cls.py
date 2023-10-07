@@ -1158,7 +1158,7 @@ class ScopeSignalData:
         self._unit = unit
 
         # self._header = bytearray()
-        self.data = list()
+        self.data = []
 
     @property
     def channel(self) -> int:
@@ -1199,7 +1199,7 @@ class ScopeReading:
     def __init__(self, sequence_number: int):
         self._seqence_nr = sequence_number
         # self._full_data = bytearray()
-        self._signal_data = list()
+        self._signal_data = []
 
     def seqence_nr(self) -> int:
         """sequence number of consecuetive readings"""
