@@ -11,6 +11,13 @@ description = "A pure Python3 implementation of the LSV2 protocol"
 requires-python = ">=3.6"
 keywords = ["LSV2", "CNC", "PLC"]
 dynamic = ["version", "readme"]
+dependencies = []
+
+[project.license]
+file = "LICENSE"
+
+[project.optional-dependencies]
+SSH = ["sshtunnel>=0.4"]
 
 [project.urls]
 "Homepage" = "https://github.com/drunsinn/pyLSV2"
@@ -31,12 +38,6 @@ packages = [
     "pyLSV2.locales.en.LC_MESSAGES",
     "pyLSV2.locales.de.LC_MESSAGES",
 ]
-
-#[tool.setuptools.package-data]
-#pyLSV2 = ["locales/*/LC_MESSAGES/*.mo", ]
-
-#[tool.setuptools.exclude-package-data]
-#pyLSV2 = ["locales/*/LC_MESSAGES/*.po", ]
 
 [tool.setuptools.dynamic]
 version = { attr = "pyLSV2.__version__" }
