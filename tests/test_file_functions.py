@@ -79,17 +79,11 @@ def test_remote_file_functions(address: str, timeout: float):
 
     if lsv2.versions.is_tnc():
         # only test for tnc controls
-        assert (
-            lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_dir)
-            is True
-        )
+        assert lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_dir) is True
         assert lsv2.file_info(test_dir + mdi_name) is not None
         assert lsv2.delete_file(test_dir + mdi_name) is True
 
-    assert (
-        lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_file_1)
-        is True
-    )
+    assert lsv2.copy_remote_file(source_path=mdi_dir + mdi_name, target_path=test_file_1) is True
     assert lsv2.file_info(test_file_1) is not None
 
     assert lsv2.change_directory(remote_directory=mdi_dir) is True
@@ -150,30 +144,10 @@ def test_file_search(address: str, timeout: float):
             > 0
         )
     elif lsv2.versions.is_pilot():
-        file_path = (
-            pyLSV2.DriveName.TNC
-            + pyLSV2.PATH_SEP
-            + "nc_prog"
-            + pyLSV2.PATH_SEP
-            + "ncps"
-        )
-        assert (
-            len(
-                lsv2.get_file_list(
-                    file_path, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H
-                )
-            )
-            > 0
-        )
+        file_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + "nc_prog" + pyLSV2.PATH_SEP + "ncps"
+        assert len(lsv2.get_file_list(file_path, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H)) > 0
     else:
         file_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + "nc_prog"
-        assert (
-            len(
-                lsv2.get_file_list(
-                    file_path, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H
-                )
-            )
-            > 0
-        )
+        assert len(lsv2.get_file_list(file_path, descend=False, pattern=pyLSV2.REGEX_FILE_NAME_H)) > 0
 
     lsv2.disconnect()

@@ -9,15 +9,14 @@ import time
 import pyLSV2
 from pyLSV2.const import MemoryType
 
-__author__ = "drunsinn"
-__license__ = "MIT"
-__version__ = "1.0"
-__email__ = "dr.unsinn@googlemail.com"
 
-if __name__ == "__main__":
+def comprehensive_demo():
+    """Basic demo for pyLSV2"""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("address", nargs="?", default="192.168.56.101", type=str)
+    # parser.add_argument("address", nargs="?", default="192.168.56.101", type=str)
+
+    parser.add_argument("address", help="ip or hostname of control", type=str)
 
     parser.add_argument(
         "-d",
@@ -46,11 +45,7 @@ if __name__ == "__main__":
         con.connect()
 
         print("Basics:")
-        print(
-            "# Connected to a '{:s}' running software version '{:s}'".format(
-                con.versions.control, con.versions.nc_sw
-            )
-        )
+        print("# Connected to a '{:s}' running software version '{:s}'".format(con.versions.control, con.versions.nc_sw))
         print(
             "# Using LSV2 version '{:d}' with version flags '0x{:02x}' and '0x{:02x}'".format(
                 con.parameters.lsv2_version,
@@ -84,19 +79,11 @@ if __name__ == "__main__":
         pgm_stack = con.program_stack()
         if pgm_stack is not None:
             print("# selected program: '{:s}'".format(pgm_stack.main))
-            print(
-                "## currently execution '{:s}' on line {:d}".format(
-                    pgm_stack.current, pgm_stack.line_no
-                )
-            )
+            print("## currently execution '{:s}' on line {:d}".format(pgm_stack.current, pgm_stack.line_no))
 
         ovr_stat = con.override_state()
         if ovr_stat is not None:
-            print(
-                "# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(
-                    ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindle
-                )
-            )
+            print("# override states: feed {:f}%, rapid {:f}%, spindle {:f}%".format(ovr_stat.feed, ovr_stat.rapid, ovr_stat.spindle))
 
         print("PLC memory:")
         print("# the first 5 entries for some memory types:")
@@ -133,7 +120,7 @@ if __name__ == "__main__":
             lang = con.get_machine_parameter("CfgDisplayLanguage.ncLanguage")
         print("# Value of machine parameter for NC language: {:s}".format(lang))
 
-        if con.version.is_tnc7():
+        if con.versions.is_tnc7():
             print("UI Interface test not available on TNC7?")
         else:
             print("UI Interface")
@@ -150,17 +137,9 @@ if __name__ == "__main__":
 
         print("File access")
         drv_info = con.drive_info()
-        print(
-            "# names of disk drives: {:s}".format(
-                ", ".join([drv.name for drv in drv_info])
-            )
-        )
+        print("# names of disk drives: {:s}".format(", ".join([drv.name for drv in drv_info])))
         dir_info = con.directory_info()
-        print(
-            "# current directory is '{:s}' with {:d} bytes of free drive space".format(
-                dir_info.path, dir_info.free_size
-            )
-        )
+        print("# current directory is '{:s}' with {:d} bytes of free drive space".format(dir_info.path, dir_info.free_size))
 
         dir_content = con.directory_content()
         only_files = filter(
@@ -169,20 +148,10 @@ if __name__ == "__main__":
         )
 
         for file_entry in only_files:
-            print(
-                "## file name: {:s}, date {:}, size {:d} bytes".format(
-                    file_entry.name, file_entry.timestamp, file_entry.size
-                )
-            )
-        only_dir = filter(
-            lambda f_e: f_e.is_directory is True and f_e.is_drive is False, dir_content
-        )
+            print("## file name: {:s}, date {:}, size {:d} bytes".format(file_entry.name, file_entry.timestamp, file_entry.size))
+        only_dir = filter(lambda f_e: f_e.is_directory is True and f_e.is_drive is False, dir_content)
         for file_entry in only_dir:
-            print(
-                "## directory name: {:s}, date {:}".format(
-                    file_entry.name, file_entry.timestamp
-                )
-            )
+            print("## directory name: {:s}, date {:}".format(file_entry.name, file_entry.timestamp))
 
         print("# file search")
         h_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[hH]$")
@@ -194,10 +163,59 @@ if __name__ == "__main__":
         t_info = con.spindle_tool_status()
         if t_info is not None:
             print("# direct reading of current tool successful")
-            print(
-                "# current tool in spindle: {:d}.{:d} '{:s}'".format(
-                    t_info.number, t_info.index, t_info.name
-                )
-            )
+            print("# current tool in spindle: {:d}.{:d} '{:s}'".format(t_info.number, t_info.index, t_info.name))
         else:
             print("# direct reading of current tool not supported for this control")
+
+
+def scope_demo():
+    with pyLSV2.LSV2("192.168.56.102", port=19000, timeout=5, safe_mode=False) as con:
+        if not con.versions.is_itnc():
+            print("the scope functions only work for iTNC controls")
+            sys.exit(-1)
+
+        availible_signals = con.read_scope_signals()
+
+        # build list with selected signals
+        selected_signals = list()
+        selected_signals.append(availible_signals[0])
+        selected_signals.append(availible_signals[1])
+        selected_signals.append(availible_signals[2])
+
+        print("selected signals:")
+        for sig in selected_signals:
+            print("# %s" % sig)
+
+        duration = 2
+        interval = 3000
+
+        print("reading values for a duration of %d seconds with an interval of %d µs")
+
+        # take readings:
+        readings_counter = 0
+
+        for package in con.real_time_readings(selected_signals, duration, interval):
+            signal_readings = package.get_data()
+            readings_per_signal = len(signal_readings[0].data)
+            print("successfully read %d signals with %d values each" % (len(signal_readings), readings_per_signal))
+
+            for i in range(readings_per_signal):
+                position_X = signal_readings[0].data[i] * signal_readings[0].factor + signal_readings[0].offset
+                position_Y = signal_readings[1].data[i] * signal_readings[1].factor + signal_readings[1].offset
+                position_Z = signal_readings[2].data[i] * signal_readings[2].factor + signal_readings[2].offset
+                readings_counter += 1
+
+                print(
+                    "Count: %d Position X = %.3f mm, Position Y = %.3f, Position Z = %.3f"
+                    % (readings_counter, position_X, position_Y, position_Z)
+                )
+
+    print("# a total of %d readings were taken" % readings_counter)
+
+    print("# the signal description was updated to:")
+    for signal in selected_signals:
+        print("##", signal)
+
+
+if __name__ == "__main__":
+    comprehensive_demo()

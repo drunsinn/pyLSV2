@@ -17,12 +17,13 @@ __license__ = "MIT"
 __version__ = "1.0"
 __email__ = "dr.unsinn@googlemail.com"
 
-REMOTE_PATH_REGEX = r"^(?P<prot>lsv2(\+ssh)?):\/\/(?P<host>[\w\.-]*)(?::(?P<port>\d{2,5}))?(?:\/(?P<drive>(TNC|PLC):))(?P<path>(\/[\$\.\w\d_-]+)*)\/?$"
+REMOTE_PATH_REGEX = (
+    r"^(?P<prot>lsv2(\+ssh)?):\/\/(?P<host>[\w\.-]*)(?::(?P<port>\d{2,5}))?(?:\/(?P<drive>(TNC|PLC):))(?P<path>(\/[\$\.\w\d_-]+)*)\/?$"
+)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="command line script for functions in pyLSV2"
-    )
+
+def main():
+    parser = argparse.ArgumentParser(description="command line script for functions in pyLSV2")
     parser.add_argument(
         "source",
         help="source file. Either local path or URL with format lsv2://<hostname_or_ip>:<port>/TNC:/<path_to_file>",
@@ -54,9 +55,7 @@ if __name__ == "__main__":
         default=logging.WARNING,
     )
 
-    parser.add_argument(
-        "-t", "--timeout", help="timeout duration in seconds", type=float, default=10.0
-    )
+    parser.add_argument("-t", "--timeout", help="timeout duration in seconds", type=float, default=10.0)
     parser.add_argument(
         "-f",
         "--force",
@@ -138,9 +137,7 @@ if __name__ == "__main__":
     if use_ssh:
         import sshtunnel
 
-        ssh_forwarder = sshtunnel.SSHTunnelForwarder(
-            host_machine, remote_bind_address=("127.0.0.1", host_port)
-        )
+        ssh_forwarder = sshtunnel.SSHTunnelForwarder(host_machine, remote_bind_address=("127.0.0.1", host_port))
         ssh_forwarder.start()
         host_machine = "127.0.0.1"
         host_port = ssh_forwarder.local_bind_port
@@ -160,9 +157,7 @@ if __name__ == "__main__":
             logger.error("source file dose not exist on remote: '%s'", source_path)
             sys.exit(-3)
         elif file_info.is_directory or file_info.is_drive:
-            logger.error(
-                "source on remote is not file but directory: '%s'", source_path
-            )
+            logger.error("source on remote is not file but directory: '%s'", source_path)
             sys.exit(-4)
     else:
         if os.path.exists(source_path):
@@ -181,17 +176,17 @@ if __name__ == "__main__":
         success = con.copy_remote_file(source_path=source_path, target_path=dest_path)
     elif source_is_remote and not dest_is_remote:
         logger.debug("copy from remote to local")
-        success = con.recive_file(
-            remote_path=source_path, local_path=dest_path, override_file=args.force
-        )
+        success = con.recive_file(remote_path=source_path, local_path=dest_path, override_file=args.force)
     else:
         logger.debug("copy from local to remote")
-        success = con.send_file(
-            local_path=source_path, remote_path=dest_path, override_file=args.force
-        )
+        success = con.send_file(local_path=source_path, remote_path=dest_path, override_file=args.force)
     con.disconnect()
 
     if success:
         logger.info("File copied successful")
         sys.exit(0)
     sys.exit(-10)
+
+
+if __name__ == "__main__":
+    main()

@@ -36,9 +36,7 @@ class LSV2TCP:
         try:
             self._host_ip = socket.gethostbyname(hostname)
         except socket.gaierror:
-            logging.error(
-                "there was an error getting the IP for the hostname %s", hostname
-            )
+            logging.error("there was an error getting the IP for the hostname %s", hostname)
             raise
 
         self._port = self.DEFAULT_PORT
@@ -182,10 +180,7 @@ class LSV2TCP:
             telegram,
         )
         if len(telegram) >= self.buffer_size:
-            raise OverflowError(
-                "telegram to long for set current buffer size: %d >= %d"
-                % (len(telegram), self.buffer_size)
-            )
+            raise OverflowError("telegram to long for set current buffer size: %d >= %d" % (len(telegram), self.buffer_size))
 
         data_recived = bytearray()
         try:
@@ -201,22 +196,16 @@ class LSV2TCP:
             raise
 
         if len(data_recived) > 0:
-            self._logger.debug(
-                "received block of data with length %d", len(data_recived)
-            )
+            self._logger.debug("received block of data with length %d", len(data_recived))
             if len(data_recived) >= 8:
                 # read 4 bytes for response length
                 response_length = struct.unpack("!L", data_recived[0:4])[0]
 
                 # read 4 bytes for response type
-                self._last_lsv2_response = RSP(
-                    data_recived[4:8].decode("utf-8", "ignore")
-                )
+                self._last_lsv2_response = RSP(data_recived[4:8].decode("utf-8", "ignore"))
             else:
                 # response is less than 8 bytes long which is not enough space for package length and response message!
-                raise LSV2ProtocolException(
-                    "response to short, less than 8 bytes: %s" % data_recived
-                )
+                raise LSV2ProtocolException("response to short, less than 8 bytes: %s" % data_recived)
         else:
             response_length = 0
             self._last_lsv2_response = RSP.NONE
@@ -229,9 +218,7 @@ class LSV2TCP:
                     len(response_content) < response_length,
                 )
                 try:
-                    response_content.extend(
-                        self._tcpsock.recv(response_length - len(data_recived[8:]))
-                    )
+                    response_content.extend(self._tcpsock.recv(response_length - len(data_recived[8:])))
                 except Exception:
                     self._logger.error(
                         "something went wrong while waiting for more data to arrive. expected %d, received %d, content so far: %s",
@@ -266,7 +253,7 @@ class LSV2RS232:
         self._last_lsv2_response = RSP.NONE
         self._last_error = LSV2Error()
         raise NotImplementedError()
-        import serial
+        # import serial
 
     @property
     def last_response(self) -> RSP:
@@ -300,14 +287,12 @@ class LSV2RS232:
         Establish connection to control
         """
         raise NotImplementedError()
-        pass
 
     def disconnect(self):
         """
         Close connection
         """
         raise NotImplementedError()
-        pass
 
     def telegram(
         self,

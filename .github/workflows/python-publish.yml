@@ -13,23 +13,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-    - name: msgfmt
-      uses: whtsky/msgfmt-action@6b2181f051b002182d01a1e1f1aff216230c5a4d
+        pip install setuptools wheel twine tox
+    
+    - name: Create Translation Files
+      uses: docker://textadi/build-language-i18n-action@v2
       env:
-        WORKDIR: "pyLSV2/locales"
+        DIR: pyLSV2/locales
+
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        python setup.py sdist bdist_wheel
+        pip wheel -w dist .
         twine upload dist/*

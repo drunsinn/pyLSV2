@@ -35,10 +35,7 @@ def test_rw_machine_parameter(address: str, timeout: float):
     assert lsv2.login(pyLSV2.Login.PLCDEBUG) is True
 
     current_value = lsv2.get_machine_parameter(parameter_name)
-    assert (
-        lsv2.set_machine_parameter(parameter_name, current_value, safe_to_disk=False)
-        is not False
-    )
+    assert lsv2.set_machine_parameter(parameter_name, current_value, safe_to_disk=False) is not False
 
     lsv2.logout(pyLSV2.Login.PLCDEBUG)
 

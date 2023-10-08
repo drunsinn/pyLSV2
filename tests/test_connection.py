@@ -50,10 +50,7 @@ def test_switching_safe_mode(address: str, timeout: float):
 def test_login_with_password(address: str, timeout: float):
     """check if logging in with a password works"""
     with pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False) as lsv2:
-        if not (
-            lsv2.versions.control.startswith("iTNC530 Program")
-            or lsv2.versions.control.startswith("iTNC530Program")
-        ):
+        if not (lsv2.versions.control.startswith("iTNC530 Program") or lsv2.versions.control.startswith("iTNC530Program")):
             # logon to plc is not locked?
             lsv2.logout(pyLSV2.Login.FILEPLC)
             assert lsv2.login(login=pyLSV2.Login.FILEPLC) is False

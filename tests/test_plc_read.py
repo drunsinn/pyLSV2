@@ -98,22 +98,9 @@ def test_data_path_read(address: str, timeout: float):
         assert lsv2.read_data_path("/TABLE/TOOL/T/1/L") is not None
 
         # These probably only work on a programming station
-        assert (
-            lsv2.read_data_path("/PLC/program/symbol/global/MG_BA_Automatik")
-            is not None
-        )
-        assert (
-            lsv2.read_data_path(
-                '/PLC/program/symbol/module/"SPINDEL.SRC"/KL_100_PROZENT'
-            )
-            is not None
-        )
-        assert (
-            lsv2.read_data_path(
-                "/PLC/program/symbol/global/STG_WZM[0].WL_WZM_SIMULATION_ZAEHLE"
-            )
-            is not None
-        )
+        assert lsv2.read_data_path("/PLC/program/symbol/global/MG_BA_Automatik") is not None
+        assert lsv2.read_data_path('/PLC/program/symbol/module/"SPINDEL.SRC"/KL_100_PROZENT') is not None
+        assert lsv2.read_data_path("/PLC/program/symbol/global/STG_WZM[0].WL_WZM_SIMULATION_ZAEHLE") is not None
         assert lsv2.read_data_path("/PLC/program/symbol/global/+STG_WZM[1]") is not None
 
         # check if path is sanitized correctly
@@ -121,13 +108,13 @@ def test_data_path_read(address: str, timeout: float):
 
     lsv2.disconnect()
 
+
 def test_comapare_values(address: str, timeout: float):
     """test to see if reading via data path and plc memory returns the same value. run only on iTNC"""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
-
         for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 368]:
             v1 = lsv2.read_plc_memory(mem_address, pyLSV2.MemoryType.DWORD, 1)[0]
             v2 = lsv2.read_data_path("/PLC/memory/D/%d" % (mem_address * 4))
