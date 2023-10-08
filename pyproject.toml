@@ -6,13 +6,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyLSV2"
-authors = [
-    {name = "drunsinn", email = "dr.unsinn@googlemail.com"},
-]
+authors = [{ name = "drunsinn", email = "dr.unsinn@googlemail.com" }]
 description = "A pure Python3 implementation of the LSV2 protocol"
 requires-python = ">=3.6"
 keywords = ["LSV2", "CNC", "PLC"]
-dynamic = ["version", "readme", ]
+dynamic = ["version", "readme"]
 
 [project.urls]
 "Homepage" = "https://github.com/drunsinn/pyLSV2"
@@ -27,9 +25,10 @@ lsv2_tunnel_demo = "pyLSV2.demos.ssh_tunnel:main"
 [tool.setuptools]
 packages = [
     "pyLSV2",
+    "pyLSV2.demos",
     "pyLSV2.locales.en.LC_MESSAGES",
-    "pyLSV2.locales.de.LC_MESSAGES"
-    ]
+    "pyLSV2.locales.de.LC_MESSAGES",
+]
 
 #[tool.setuptools.package-data]
 #pyLSV2 = ["locales/*/LC_MESSAGES/*.mo", ]
@@ -38,12 +37,12 @@ packages = [
 #pyLSV2 = ["locales/*/LC_MESSAGES/*.po", ]
 
 [tool.setuptools.dynamic]
-version = {attr = "pyLSV2.__version__"}
-readme = {file = ["README.md", ]}
+version = { attr = "pyLSV2.__version__" }
+readme = { file = ["README.md"] }
 
 [tool.black]
 line-length = 140
-target-version = ["py36",]
+target-version = ["py36"]
 include = "\\.pyi?$"
 verbose = true
 
@@ -88,8 +87,21 @@ property-classes = ["abc.abstractproperty"]
 variable-naming-style = "snake_case"
 
 [tool.pylint.classes]
-defining-attr-methods = ["__init__", "__new__", "setUp", "asyncSetUp", "__post_init__"]
-exclude-protected = ["_asdict", "_fields", "_replace", "_source", "_make", "os._exit"]
+defining-attr-methods = [
+    "__init__",
+    "__new__",
+    "setUp",
+    "asyncSetUp",
+    "__post_init__",
+]
+exclude-protected = [
+    "_asdict",
+    "_fields",
+    "_replace",
+    "_source",
+    "_make",
+    "os._exit",
+]
 valid-classmethod-first-arg = ["cls"]
 valid-metaclass-classmethod-first-arg = ["mcs"]
 
@@ -123,7 +135,13 @@ logging-format-style = "old"
 logging-modules = ["logging"]
 
 [tool.pylint."messages control"]
-confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "INFERENCE_FAILURE", "UNDEFINED"]
+confidence = [
+    "HIGH",
+    "CONTROL_FLOW",
+    "INFERENCE",
+    "INFERENCE_FAILURE",
+    "UNDEFINED",
+]
 disable = [
     "raw-checker-failed",
     "bad-inline-option",
@@ -135,8 +153,8 @@ disable = [
     "use-symbolic-message-instead",
     "use-implicit-booleaness-not-comparison-to-string",
     "use-implicit-booleaness-not-comparison-to-zero",
-    "consider-using-f-string"
-    ]
+    "consider-using-f-string",
+]
 
 [tool.pylint.method_args]
 
@@ -148,8 +166,8 @@ timeout-methods = [
     "requests.api.patch",
     "requests.api.post",
     "requests.api.put",
-    "requests.api.request"
-    ]
+    "requests.api.request",
+]
 
 [tool.pylint.miscellaneous]
 notes = ["FIXME", "XXX", "TODO", "ToDo"]
@@ -181,14 +199,14 @@ ignored-checks-for-mixins = [
     "no-member",
     "not-async-context-manager",
     "not-context-manager",
-    "attribute-defined-outside-init"
-    ]
+    "attribute-defined-outside-init",
+]
 ignored-classes = [
     "optparse.Values",
     "thread._local",
     "_thread._local",
-    "argparse.Namespace"
-    ]
+    "argparse.Namespace",
+]
 missing-member-hint = true
 missing-member-hint-distance = 1
 missing-member-max-choices = 1
@@ -199,4 +217,10 @@ allow-global-unused-variables = true
 callbacks = ["cb_", "_cb"]
 dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_"
 ignored-argument-names = "_.*|^ignored_|^unused_"
-redefining-builtins-modules = ["six.moves", "past.builtins", "future.builtins", "builtins", "io"]
+redefining-builtins-modules = [
+    "six.moves",
+    "past.builtins",
+    "future.builtins",
+    "builtins",
+    "io",
+]
