@@ -187,7 +187,7 @@ def scope_demo():
             print("# %s" % sig)
 
         duration = 2
-        interval = 6000
+        interval = 3000
 
         print("reading values for a duration of %d seconds with an interval of %d µs")
 
