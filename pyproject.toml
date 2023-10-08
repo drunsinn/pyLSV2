@@ -17,15 +17,17 @@ dynamic = ["version", "readme"]
 "Bug Tracker" = "https://github.com/drunsinn/pyLSV2/issues"
 
 [project.scripts]
-lsv2_demo = "pyLSV2.demos.lsv2_demo:comprehensive_demo"
-lsv2_scope2csv = "pyLSV2.demos.scope2csv:main"
-lsv2_tab2csv = "pyLSV2.demos.tab2csv:main"
-lsv2_tunnel_demo = "pyLSV2.demos.ssh_tunnel:main"
+lsv2demo = "pyLSV2.scripts.demo:comprehensive_demo"
+lsv2demo_scope = "pyLSV2.scripts.demo:scope_demo"
+lsv2demo_ssh = "pyLSV2.scripts.ssh_tunnel:main"
+lsv2scope2csv = "pyLSV2.scripts.scope2csv:main"
+lsv2tab2csv = "pyLSV2.scripts.tab2csv:main"
+lsv2cmd = "pyLSV2.scripts.cmd:main"
 
 [tool.setuptools]
 packages = [
     "pyLSV2",
-    "pyLSV2.demos",
+    "pyLSV2.scripts",
     "pyLSV2.locales.en.LC_MESSAGES",
     "pyLSV2.locales.de.LC_MESSAGES",
 ]
