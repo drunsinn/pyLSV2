@@ -179,6 +179,10 @@ class LSV2:
             raise LSV2ProtocolException("unknown response received")
 
         if self._llcom.last_response is lc.RSP.T_ER:
+            if self.last_error.e_code is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
+                # workaround since querying for error messages will also return an error state
+                return True
+
             self._logger.info(
                 "an error was received after the last transmission, %s '%s'",
                 self.last_error,
