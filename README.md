@@ -62,7 +62,7 @@
 
  Since the whole protocol isn't documented there can always be problems with certain corner cases. Especially during file transfer a lot of stuff can go wrong.
  In case the control doesn't accept a command it returns an error. Some of these errors are checked internally but not everything is covered as of now. It is therefore
- best to check the last error with `con.last_error()`. Every error consists of type and a status code. The enum `LSV2StatusCode` contains all known status codes.
+ best to check the last error with `con.last_error`. Every error consists of type and a status code. The enum `LSV2StatusCode` contains all known status codes.
 
 ### Notes for upgrade to v1.xx
 Notice: The change from 0.xx to 1.xx brought some major incompatible changes in regards to the API:
