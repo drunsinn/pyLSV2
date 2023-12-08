@@ -373,15 +373,11 @@ class LSV2:
         payload = bytearray()
 
         if login is not None:
-            if isinstance(login, (lc.Login,)):
-                if login in self._active_logins:
-                    payload.extend(lm.ustr_to_ba(login.value))
-                else:
-                    # login is not active
-                    return True
+            if login in self._active_logins:
+                payload.extend(lm.ustr_to_ba(login.value))
             else:
-                # unknown login
-                return False
+                # login is not active
+                return True
 
         if self._send_recive(lc.CMD.A_LO, payload, lc.RSP.T_OK):
             self._logger.info("logout executed successfully for login %s", login)
@@ -432,10 +428,7 @@ class LSV2:
             payload = struct.pack("!L", lc.ParRCI.AXES_SAMPLING_RATE)
             result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                data = lm.decode_system_information(result)
-                if not isinstance(data, int):
-                    raise LSV2DataException("expected int")
-                self._sys_par.axes_sampling_rate = data
+                self._sys_par.axes_sampling_rate = lm.decode_system_information(result)
             else:
                 self._logger.warning("an error occurred while querying system information on axes samling rate")
         return self._sys_par
