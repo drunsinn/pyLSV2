@@ -248,7 +248,7 @@ class LSV2:
                 self._logger.debug("transfer finished without content")
             return False
 
-        response_buffer = []
+        response_buffer: List[bytearray] = []
         if self._llcom.last_response is expected_response:
             # expected response received
             self._logger.debug("expected response received: %s", self._llcom.last_response)
@@ -352,7 +352,7 @@ class LSV2:
 
         payload = lm.ustr_to_ba(login.value)
 
-        if password is not None and len(password) > 0:
+        if len(password) > 0:
             payload.extend(lm.ustr_to_ba(password))
 
         if self._send_recive(lc.CMD.A_LG, payload, lc.RSP.T_OK):
@@ -386,7 +386,7 @@ class LSV2:
         if self._send_recive(lc.CMD.A_LO, payload, lc.RSP.T_OK):
             self._logger.info("logout executed successfully for login %s", login)
             if login is None:
-                self._active_logins = []
+                self._active_logins: List[lc.Login] = []
             else:
                 self._active_logins.remove(login)
             return True
@@ -440,7 +440,7 @@ class LSV2:
                 self._logger.warning("an error occurred while querying system information on axes samling rate")
         return self._sys_par
 
-    def _read_version(self, force=False) -> ld.VersionInfo:
+    def _read_version(self, force: bool = False) -> ld.VersionInfo:
         """
         Read all available version information entries. The results are buffered since it is also used internally.
         This means additional calls dont cause communication with the control.
@@ -671,7 +671,7 @@ class LSV2:
             self._logger.warning("could not log in as user FILE")
             return []
 
-        dir_content = []
+        dir_content: List[ld.FileEntry] = []
         payload = bytearray(struct.pack("!B", lc.ParRDR.SINGLE))
 
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
@@ -697,7 +697,7 @@ class LSV2:
             self._logger.warning("could not log in as user FILE")
             return []
 
-        drives_list = []
+        drives_list: List[ld.DriveEntry] = []
         payload = bytearray(struct.pack("!B", lc.ParRDR.DRIVES))
         result = self._send_recive_block(lc.CMD.R_DR, payload, lc.RSP.S_DR)
         if isinstance(result, (list,)):
@@ -1183,7 +1183,9 @@ class LSV2:
 
         return True
 
-    def read_plc_memory(self, first_element: int, mem_type: lc.MemoryType, number_of_elements: int = 1) -> list:
+    def read_plc_memory(
+        self, first_element: int, mem_type: lc.MemoryType, number_of_elements: int = 1
+    ) -> List[Union[None, int, float, str]]:
         """
         Read data from plc memory.
         Requires access level ``PLCDEBUG`` to work.
@@ -1266,7 +1268,7 @@ class LSV2:
                 "highest address is %d but address of last requested element is %d" % (max_elements, (first_element + number_of_elements))
             )
 
-        plc_values = []
+        plc_values: List[Union[None, int, float, str]] = []
 
         if mem_type is lc.MemoryType.STRING:
             for i in range(number_of_elements):
@@ -1522,7 +1524,7 @@ class LSV2:
         Requires access level ``DNC`` to work.
         Returns error list of error messages
         """
-        messages = []
+        messages: List[ld.NCErrorMessage] = []
         if not self.login(lc.Login.DNC):
             self._logger.warning("clould not log in as user DNC")
             return []
@@ -1569,7 +1571,7 @@ class LSV2:
             return []
 
         current_path = self.directory_info().path
-        content = []
+        content: List[str] = []
         for entry in self.directory_content():
             if entry.name == "." or entry.name == ".." or entry.name.endswith(":"):
                 continue
@@ -1595,15 +1597,14 @@ class LSV2:
             self._logger.warning("clould not log in as user FILE")
             return []
 
-        if path is not None:
-            if self.change_directory(path) is False:
-                self._logger.warning("could not change to directory")
-                return []
+        if self.change_directory(path) is False:
+            self._logger.warning("could not change to directory")
+            return []
 
         if len(pattern) == 0:
             file_list = self._walk_dir(descend)
         else:
-            file_list = []
+            file_list: List[str] = []
             for entry in self._walk_dir(descend):
                 file_name = entry.split(lc.PATH_SEP)[-1]
                 if re.match(pattern, file_name):
@@ -1762,7 +1763,7 @@ class LSV2:
             self._logger.warning("clould not log in as user for scope function")
             return []
 
-        channel_list = []
+        channel_list: List[ld.ScopeSignal] = []
 
         content = self._llcom.telegram(lc.CMD.R_OC)
         if self._llcom.last_response in lc.RSP.S_OC:
@@ -1839,7 +1840,7 @@ class LSV2:
         payload.extend(struct.pack("!L", interval))
 
         start = time.time()  # start timer
-        recorded_data = []
+        recorded_data: List[ld.ScopeReading] = []
         content = self._send_recive(lc.CMD.R_OD, payload, lc.RSP.S_OD)
 
         if not isinstance(content, (bytearray,)) or len(content) <= 0:

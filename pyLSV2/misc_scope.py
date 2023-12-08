@@ -31,7 +31,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     # data_set[ 46: ??] : name of the channel
     # type 1, 2, 4, 5:
     # data_set[ 59:   ] : signal names
-    signals = []
+    signals: List[ld.ScopeSignal] = []
     channel_number = struct.unpack("!H", data_set[0:2])[0]
     name_start = 46
     name_end = 46
@@ -112,7 +112,7 @@ def decode_signal_details(signal_list: List[ld.ScopeSignal], data_set: bytearray
     :raises LSV2DataException: Error during parsing of data values
     """
 
-    def split_dataset(data):
+    def split_dataset(data: bytearray):
         for i in range(0, len(data), 22):
             yield data[i : i + 22]
 

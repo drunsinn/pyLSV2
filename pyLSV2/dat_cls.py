@@ -8,6 +8,7 @@ after migration to python 3.7+ these will be changed to @dataclass!
 
 from datetime import datetime
 import struct
+from typing import List
 
 from .const import ControlType, LSV2StatusCode, ChannelType
 
@@ -851,12 +852,12 @@ class DirectoryEntry:
         self._free_size = value
 
     @property
-    def dir_attributes(self) -> list:
+    def dir_attributes(self) -> List[str]:
         """attriutes of this directory"""
         return self._dir_attributes
 
     @dir_attributes.setter
-    def dir_attributes(self, value: list):
+    def dir_attributes(self, value: List[str]):
         self._dir_attributes = value
 
     @property
@@ -1158,7 +1159,7 @@ class ScopeSignalData:
         self._unit = unit
 
         # self._header = bytearray()
-        self.data = []
+        self.data: List[float] = []
 
     @property
     def channel(self) -> int:
@@ -1199,7 +1200,7 @@ class ScopeReading:
     def __init__(self, sequence_number: int):
         self._seqence_nr = sequence_number
         # self._full_data = bytearray()
-        self._signal_data = []
+        self._signal_data: List[ScopeSignalData] = []
 
     def seqence_nr(self) -> int:
         """sequence number of consecuetive readings"""

@@ -178,7 +178,7 @@ def decode_drive_info(data_set: bytearray) -> List[ld.DriveEntry]:
     """
     offset = 0
     fixed_length = 15
-    drive_entries = []
+    drive_entries: List[ld.DriveEntry] = []
 
     while (offset + fixed_length + 1) < len(data_set):
         drive_entry = ld.DriveEntry()
@@ -206,7 +206,7 @@ def decode_directory_info(data_set: bytearray) -> ld.DirectoryEntry:
     dir_entry = ld.DirectoryEntry()
     dir_entry.free_size = struct.unpack("!L", data_set[:4])[0]
 
-    attribute_list = []
+    attribute_list: List[str] = []
     for i in range(4, len(data_set[4:132]), 4):
         attr = ba_to_ustr(data_set[i : i + 4])
         if len(attr) > 0:
@@ -286,9 +286,9 @@ def decode_axis_location(data_set: bytearray) -> Dict[str, float]:
     :raises LSV2DataException: Error during parsing of data values
     """
     # unknown = result[0:1] # <- ???
-    number_of_axes = struct.unpack("!b", data_set[1:2])[0]
+    number_of_axes = int(struct.unpack("!b", data_set[1:2])[0])
 
-    split_list = []
+    split_list: List[str] = []
     start = 2
     for i, byte in enumerate(data_set[start:]):
         if byte == 0x00:
@@ -299,9 +299,10 @@ def decode_axis_location(data_set: bytearray) -> Dict[str, float]:
     if len(split_list) != (2 * number_of_axes):
         raise LSV2DataException("error while parsing axis data: %s" % data_set)
 
-    axes_values = {}
+    axes_values: Dict[str, float] = {}
     for i in range(number_of_axes):
-        axes_values[split_list[i + number_of_axes]] = float(split_list[i])
+        axis_name = str(split_list[i + number_of_axes])
+        axes_values[axis_name] = float(split_list[i])
 
     return axes_values
 

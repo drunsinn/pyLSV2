@@ -993,7 +993,7 @@ class ChannelType(IntEnum):
     TYPE5 = 10  # channel with plc parameter
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: int):
         return value in set(item.value for item in ChannelType)
 
 
