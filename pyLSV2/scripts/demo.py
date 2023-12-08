@@ -3,6 +3,7 @@
 """This script contains examples on how to use different functions of pyLSV2
    Not all functions are shown here
 """
+import sys
 import argparse
 import logging
 import time
@@ -72,9 +73,8 @@ def comprehensive_demo():
         exec_stat_text = pyLSV2.get_execution_status_text(exec_stat)
         print("# execution: {:d} - '{:s}'".format(exec_stat, exec_stat_text))
         pgm_stat = con.program_status()
-        if pgm_stat is not None:
-            pgm_stat_text = pyLSV2.get_program_status_text(pgm_stat)
-            print("# program: {:d} - '{:s}'".format(pgm_stat, pgm_stat_text))
+        pgm_stat_text = pyLSV2.get_program_status_text(pgm_stat)
+        print("# program: {:d} - '{:s}'".format(pgm_stat, pgm_stat_text))
 
         pgm_stack = con.program_stack()
         if pgm_stack is not None:
