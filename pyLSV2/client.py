@@ -6,6 +6,13 @@ CNC controls.
 Please consider the dangers of using this library on a production machine! This library is
 by no means complete and could damage the control or cause injuries! Everything beyond simple
 file manipulation is blocked by a lockout parameter. Use at your own risk!
+
+TODO: research and implement support for `self._sys_par.turbo_mode_active`
+TODO: research and implement support for `self._sys_par.dnc_mode_allowed`
+TODO: fix unknown parameter type warnings in scope function `real_time_readings`
+TODO: add wrapper for `read_plc_memory` to support addressing with named addresses like W0 or D2
+TODO: add serial mode to low level com
+
 """
 import logging
 import math
@@ -401,7 +408,6 @@ class LSV2:
             result = self._send_recive(lc.CMD.R_PR, None, lc.RSP.S_PR)
             if isinstance(result, (bytearray,)):
                 self._sys_par = lm.decode_system_parameters(result)
-                self._logger.debug("got system parameters: %s", self._sys_par)
             else:
                 self._logger.warning("an error occurred while querying system parameters")
 

@@ -94,14 +94,6 @@ def decode_system_information(data_set: bytearray) -> Union[bool, int]:
         return struct.unpack("!L", data_set[4:])[0]
 
     raise LSV2DataException("unexpected value for data type of system information")
-    # always returns b"\x00\x00\x00\x02\x00\x00\x0b\xb8" for recording 1, 2 and 3
-    # -> is independent of channel, axes, interval or samples
-    # maybe the last four bytes are the actual interval? 0x00 00 0b b8 = 3000
-    # documentation hints
-    # if data_set != bytearray(b"\x00\x00\x00\x02\x00\x00\x0b\xb8"):
-    #    print(" # unexpected return pattern for R_CI!")
-    #    raise Exception("unknown data for S_CI result")
-    # return data_set
 
 
 def decode_file_system_info(data_set: bytearray, control_type: ControlType = ControlType.UNKNOWN) -> ld.FileEntry:
@@ -110,18 +102,6 @@ def decode_file_system_info(data_set: bytearray, control_type: ControlType = Con
 
     :param result_set: bytes returned by the system parameter query command R_FI or CR_DR
     """
-
-    # from documentation (lsv2_def.h)
-    # flag_display = 0x01 # attribute should be displayed
-    # flag_changable = 0x02 # attribute can be changed
-    # flag_run = 0x04 # file is selected for run, only on TNC 406
-    # flag_highlited = 0x04 # file name should be highlited in colour
-    # flag_hidden = 0x08 # file is hidden
-    # flag_dir = 0x10 # identiier for directory / drive name
-    # flag_protected = 0x20 # identifier for write protetion
-    # flag_subdir = 0x40 # identifier for subdirectory / drive name
-    # flag_selected = 0x80 # file is selected (M-flag)
-    # flag_drive_protected = 0x20 # if flag_dir is set, drive is write protected
 
     if control_type in (ControlType.MILL_OLD, ControlType.LATHE_OLD):
         # print("select old")
@@ -166,7 +146,6 @@ def decode_file_system_info(data_set: bytearray, control_type: ControlType = Con
 
     file_entry.name = ba_to_ustr(data_set[12:]).replace("/", PATH_SEP)
 
-    # print(file_entry.name, file_entry.is_directory, file_entry.attributes)
     return file_entry
 
 
