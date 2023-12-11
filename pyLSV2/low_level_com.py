@@ -230,7 +230,7 @@ class LSV2TCP:
         else:
             response_content = bytearray()
 
-        if self._last_lsv2_response is RSP.T_ER:
+        if self._last_lsv2_response in [RSP.T_ER, RSP.T_BD]:
             self._last_error = LSV2Error.from_ba(response_content)
         else:
             self._last_error = LSV2Error()

@@ -1021,23 +1021,26 @@ class LSV2:
                         # finished reading file
                         break
 
-                    self._llcom.telegram(
+                    result = self._llcom.telegram(
                         lc.RSP.S_FL,
                         buffer,
                     )
                     if self._llcom.last_response in lc.RSP.T_OK:
                         pass
                     else:
-                        if self._llcom.last_response == lc.RSP.T_ER:
+                        if self._llcom.last_response in [lc.RSP.T_ER, lc.RSP.T_BD]:
                             self._logger.info(
                                 "control returned error '%s' which translates to '%s'",
                                 self.last_error,
                                 lt.get_error_text(self.last_error),
                             )
                         else:
+                            #if len(result) == 2:
+
                             self._logger.warning(
-                                "could not send data, received unexpected response '%s'",
+                                "could not send data, received unexpected response '%s' with data 0x%s",
                                 self._llcom.last_response,
+                                result.hex()
                             )
                         return False
 
