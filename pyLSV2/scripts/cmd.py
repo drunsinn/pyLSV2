@@ -148,7 +148,7 @@ def main():
         con.connect()
     except socket.gaierror as ex:
         logger.error("An Exception occurred: '%s'", ex)
-        logger.error("Could not resove host information: '%s'", host_machine)
+        logger.error("Could not resolve host information: '%s'", host_machine)
         sys.exit(-2)
 
     if source_is_remote:

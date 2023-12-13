@@ -47,7 +47,11 @@ def comprehensive_demo():
 
         print("Basics:")
         print("# Connected to a '{:s}' running software version '{:s}'".format(con.versions.control, con.versions.nc_sw))
-        print("# Version as numeric values base:{:d} type:{:d} version:{:d} service pack:{:d}".format(con.versions.nc_sw_base, con.versions.nc_sw_type, con.versions.nc_sw_version, con.versions.nc_sw_service_pack))
+        print(
+            "# Version as numeric values base:{:d} type:{:d} version:{:d} service pack:{:d}".format(
+                con.versions.nc_sw_base, con.versions.nc_sw_type, con.versions.nc_sw_version, con.versions.nc_sw_service_pack
+            )
+        )
         print(
             "# Using LSV2 version '{:d}' with version flags '0x{:02x}' and '0x{:02x}'".format(
                 con.parameters.lsv2_version,
@@ -163,8 +167,8 @@ def comprehensive_demo():
         for file_entry in only_dir:
             print("## directory name: {:s}, date {:}".format(file_entry.name, file_entry.timestamp))
 
-        #con.change_directory("TNC:/smartNC")
-        #print([c.name for c in con.directory_content()])
+        # con.change_directory("TNC:/smartNC")
+        # print([c.name for c in con.directory_content()])
 
         print("# file search")
         h_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[hH]$")

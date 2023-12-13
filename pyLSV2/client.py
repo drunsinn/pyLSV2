@@ -41,14 +41,7 @@ from .err import (
 class LSV2:
     """implements functions for communicationg with CNC controls via LSV2"""
 
-    def __init__(
-        self,
-        hostname: str,
-        port: int = 0,
-        timeout: float = 15.0,
-        safe_mode: bool = True,
-        compatibility_mode: bool = False
-    ):
+    def __init__(self, hostname: str, port: int = 0, timeout: float = 15.0, safe_mode: bool = True, compatibility_mode: bool = False):
         """
         Implementation of the LSV2 protocol used to communicate with certain CNC controls
 
@@ -446,7 +439,7 @@ class LSV2:
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 self._sys_par.axes_sampling_rate = lm.decode_system_information(result)
             else:
-                self._logger.debug("could not read system information on axes samling rate")
+                self._logger.debug("could not read system information on axes sampling rate")
         return self._sys_par
 
     def _read_version(self, force: bool = False) -> ld.VersionInfo:
@@ -589,7 +582,7 @@ class LSV2:
 
     def directory_info(self, remote_directory: str = "") -> ld.DirectoryEntry:
         """
-        Read information about the currenct working directory on the control.
+        Read information about the current working directory on the control.
         Requires access level ``FILETRANSFER`` to work.
 
         :param remote_directory: optional. change working directory before reading info
@@ -633,7 +626,7 @@ class LSV2:
         if isinstance(result, (bool,)) and result is True:
             self._logger.debug("changed working directory to %s", dir_path)
             return True
-        
+
         if remote_directory == self.directory_info().path:
             self._logger.info("control responded as if the dir change did not work but path is still correct...")
             return True
@@ -721,7 +714,7 @@ class LSV2:
             for entry in result:
                 drives_list.extend(lm.decode_drive_info(entry))
 
-            self._logger.debug(  
+            self._logger.debug(
                 "successfully received %d packages for drive information %s",
                 len(result),
                 drives_list,
@@ -733,7 +726,9 @@ class LSV2:
             )
 
         if "TNC:" not in [d.name for d in drives_list]:
-            self._logger.warning("an error occured while parsing drive info. this might be either a problem with the decoding or the control does not support this function!")
+            self._logger.warning(
+                "an error occurred while parsing drive info. this might be either a problem with the decoding or the control does not support this function!"
+            )
             return []
         return drives_list
 
@@ -1057,12 +1052,12 @@ class LSV2:
                                 lt.get_error_text(self.last_error),
                             )
                         else:
-                            #if len(result) == 2:
+                            # if len(result) == 2:
 
                             self._logger.info(
                                 "could not send data, received unexpected response '%s' with data 0x%s",
                                 self._llcom.last_response,
-                                result.hex()
+                                result.hex(),
                             )
                         return False
 
@@ -1625,7 +1620,7 @@ class LSV2:
         if self.change_directory(path) is False:
             self._logger.warning("could not change to directory %s" % path)
             return []
-        
+
         if len(pattern) == 0:
             file_list = self._walk_dir(descend)
         else:

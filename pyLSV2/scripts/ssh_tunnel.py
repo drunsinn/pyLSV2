@@ -4,7 +4,7 @@
 For this to work you have to:
 1. enable ssh connections on the control
 2. create a ssh key pair on your computer
-3. add the private key to one of the user accouts on the control (default is 'user')
+3. add the private key to one of the user accounts on the control (default is 'user')
 4. make sure ssh is allowed through the firewall on the control
 5. install the python library 'sshtunnel'
 6. edit this file and set address, user name and path to the key file

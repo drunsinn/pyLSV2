@@ -33,7 +33,7 @@ class VersionInfo:
     @property
     def control(self) -> str:
         """
-        version identifyer of the control
+        version identifier of the control
 
         :getter: returns the version string
         :setter: sets the version string
@@ -67,7 +67,7 @@ class VersionInfo:
     @property
     def type(self) -> ControlType:
         """
-        control type identifyer of the control
+        control type identifier of the control
 
         :getter: returns the control type
         :setter: sets the control type
@@ -386,7 +386,7 @@ class SystemParameters:
 
     @property
     def number_of_output_words(self) -> int:
-        """total number of outpu words"""
+        """total number of output words"""
         return self._number_of_output_words
 
     @number_of_output_words.setter
