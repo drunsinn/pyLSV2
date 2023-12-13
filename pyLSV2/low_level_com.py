@@ -6,7 +6,7 @@ import socket
 import struct
 from typing import Union
 
-from .const import CMD, RSP
+from .const import CMD, RSP, LSV2StatusCode
 from .dat_cls import LSV2Error
 from .err import LSV2StateException, LSV2ProtocolException
 
@@ -230,10 +230,14 @@ class LSV2TCP:
         else:
             response_content = bytearray()
 
+        self._last_error = LSV2Error()
         if self._last_lsv2_response in [RSP.T_ER, RSP.T_BD]:
-            self._last_error = LSV2Error.from_ba(response_content)
-        else:
-            self._last_error = LSV2Error()
+            if len(response_content) == 2:
+                self._last_error = LSV2Error.from_ba(response_content)
+            elif len(response_content) == 0:
+                self._last_error.e_type = 1
+            else:
+                raise Exception(response_content)
 
         return response_content
 
