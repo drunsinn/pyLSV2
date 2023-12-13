@@ -47,6 +47,7 @@ class LSV2:
         port: int = 0,
         timeout: float = 15.0,
         safe_mode: bool = True,
+        compatibility_mode: bool = False
     ):
         """
         Implementation of the LSV2 protocol used to communicate with certain CNC controls
@@ -55,6 +56,7 @@ class LSV2:
         :param port: port number to connect to
         :param timeout: number of seconds waited for a response
         :param safe_mode: switch to disable safety functions that might influence the control
+        :param compatibility_mode: switch to connect using the least amount of features, for example the buffer size
         """
         self._logger = logging.getLogger("LSV2 Client")
 
@@ -68,6 +70,7 @@ class LSV2:
         self._sys_par = ld.SystemParameters()
 
         self._secure_file_send = False
+        self._comp_mode = compatibility_mode
 
     @property
     def versions(self) -> ld.VersionInfo:
@@ -321,6 +324,9 @@ class LSV2:
         if selected_command is None:
             self._logger.debug("use smallest buffer size of 256")
             self._llcom.buffer_size = selected_size
+        elif self._comp_mode:
+            self._logger.debug("compatibility mode active, use lowest buffer size of 256")
+            self._llcom.buffer_size = 256
         else:
             self._logger.debug("use buffer size of %d", selected_size)
             if self._send_recive(lc.CMD.C_CC, struct.pack("!H", selected_command), lc.RSP.T_OK):
@@ -328,12 +334,16 @@ class LSV2:
             else:
                 raise LSV2ProtocolException("error in communication while setting buffer size to %d" % selected_size)
 
-        if not self._send_recive(lc.CMD.C_CC, struct.pack("!H", lc.ParCCC.SECURE_FILE_SEND), lc.RSP.T_OK):
-            self._logger.debug("secure file transfer not supported? use fallback")
+        if self._comp_mode:
+            self._logger.debug("compatibility mode active, secure file send is ignored")
             self._secure_file_send = False
         else:
-            self._logger.debug("secure file send is enabled")
-            self._secure_file_send = True
+            if not self._send_recive(lc.CMD.C_CC, struct.pack("!H", lc.ParCCC.SECURE_FILE_SEND), lc.RSP.T_OK):
+                self._logger.debug("secure file transfer not supported? use fallback")
+                self._secure_file_send = False
+            else:
+                self._logger.debug("secure file send is enabled")
+                self._secure_file_send = True
 
         self.login(login=lc.Login.FILETRANSFER)
 
