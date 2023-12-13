@@ -158,19 +158,18 @@ def decode_drive_info(data_set: bytearray) -> List[ld.DriveEntry]:
     offset = 0
     fixed_length = 15
     drive_entries: List[ld.DriveEntry] = []
-
     while (offset + fixed_length + 1) < len(data_set):
         drive_entry = ld.DriveEntry()
-        drive_entry.unknown_0 = struct.unpack("!L", data_set[offset : offset + 4])[0]
-        drive_entry.unknown_1 = struct.unpack("!4s", data_set[offset + 4 : offset + 8])[0]
-        drive_entry.unknown_2 = struct.unpack("!L", data_set[offset + 8 : offset + 12])[0]
-
+        drive_entry.size = struct.unpack("!L", data_set[offset : offset + 4])[0]
+        drive_entry.timestamp = decode_timestamp(data_set[offset + 4 : offset + 8])
+        drive_entry.attributes = data_set[offset + 8 : offset + 12]
         if chr(data_set[offset + fixed_length]) == ":":
             drive_entry.name = ba_to_ustr(data_set[offset + 12 : offset + 17])
             offset += fixed_length + 2
         else:
             drive_entry.name = ba_to_ustr(data_set[offset + 12 : offset + 19])
             offset += fixed_length + 2
+
         drive_entries.append(drive_entry)
 
     return drive_entries

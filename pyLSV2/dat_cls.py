@@ -148,6 +148,28 @@ class VersionInfo:
         """return ```True``` if control is a TNC7"""
         return self._control_type == ControlType.TNC7
 
+    @property
+    def nc_sw_base(self) -> int:
+        """base nc software as integer"""
+        return int(self.nc_sw[:5]) * 10
+
+    @property
+    def nc_sw_type(self) -> int:
+        """nc software type"""
+        return int(self.nc_sw[5:6])
+
+    @property
+    def nc_sw_version(self) -> int:
+        """nc software version number"""
+        return int(self.nc_sw[7:9])
+
+    @property
+    def nc_sw_service_pack(self) -> int:
+        """service pack number"""
+        if len(self.nc_sw) > 9:
+            return int(self.nc_sw[12:])
+        return 0
+
 
 class SystemParameters:
     """data class for system parameters"""
@@ -884,37 +906,10 @@ class DriveEntry:
 
     def __init__(self):
         """init with default values"""
-        self.unknown_0 = -1
-        self.unknown_1 = ""
-        self.unknown_2 = -1
         self.name = ""
-
-    @property
-    def unknown_0(self) -> int:
-        """unknown numerical value"""
-        return self._unknown_0
-
-    @unknown_0.setter
-    def unknown_0(self, value: int):
-        self._unknown_0 = value
-
-    @property
-    def unknown_1(self) -> str:
-        """unknown string value"""
-        return self._unknown_1
-
-    @unknown_1.setter
-    def unknown_1(self, value: str):
-        self._unknown_1 = value
-
-    @property
-    def unknown_2(self) -> int:
-        """unknown numerical value"""
-        return self._unknown_2
-
-    @unknown_2.setter
-    def unknown_2(self, value: int):
-        self._unknown_2 = value
+        self.size = -1
+        self.timestamp = datetime.fromtimestamp(0)
+        self.attributes = bytearray()
 
     @property
     def name(self) -> str:
@@ -924,6 +919,33 @@ class DriveEntry:
     @name.setter
     def name(self, value: str):
         self._name = value
+
+    @property
+    def size(self) -> int:
+        """file size in bytes"""
+        return self._size
+
+    @size.setter
+    def size(self, value: int):
+        self._size = value
+
+    @property
+    def timestamp(self) -> datetime:
+        """timestamp of last file change"""
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, value: datetime):
+        self._timestamp = value
+
+    @property
+    def attributes(self) -> bytearray:
+        """byte array of file attributes"""
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: bytearray):
+        self._attributes = value
 
 
 class LSV2Error:

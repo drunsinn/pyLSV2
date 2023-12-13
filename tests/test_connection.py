@@ -27,6 +27,12 @@ def test_read_versions(address: str, timeout: float):
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
     lsv2.connect()
     assert (len(lsv2.versions.control) > 1) is True
+
+    assert isinstance(lsv2.versions.nc_sw_base, int)
+    assert isinstance(lsv2.versions.nc_sw_type, int)
+    assert isinstance(lsv2.versions.nc_sw_version, int)
+    assert isinstance(lsv2.versions.nc_sw_service_pack, int)
+
     lsv2.disconnect()
 
 
