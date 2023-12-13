@@ -47,6 +47,7 @@ def comprehensive_demo():
 
         print("Basics:")
         print("# Connected to a '{:s}' running software version '{:s}'".format(con.versions.control, con.versions.nc_sw))
+        print("# Version as numeric values base:{:d} type:{:d} version:{:d} service pack:{:d}".format(con.versions.nc_sw_base, con.versions.nc_sw_type, con.versions.nc_sw_version, con.versions.nc_sw_service_pack))
         print(
             "# Using LSV2 version '{:d}' with version flags '0x{:02x}' and '0x{:02x}'".format(
                 con.parameters.lsv2_version,
@@ -58,12 +59,15 @@ def comprehensive_demo():
         print("# Time and date: {:}".format(con.get_remote_datetime()))
 
         # read error messages via LSV2, works only on iTNC controls
-        print("# read error messages, only available on iTNC530")
+        print("# read error messages, only available on some iTNC530 versions")
         if con.versions.is_itnc():
-            e_m = con.get_error_messages()
-            print("## Number of currently active error messages: {:d}".format(len(e_m)))
-            for i, msg in enumerate(e_m):
-                print("### Error {:d} : {:s}".format(i, str(msg)))
+            if con.versions.nc_sw_base == 340490 and con.versions.nc_sw_version <= 2:
+                print("### control is iTNC but does not support this function")
+            else:
+                e_m = con.get_error_messages()
+                print("## Number of currently active error messages: {:d}".format(len(e_m)))
+                for i, msg in enumerate(e_m):
+                    print("### Error {:d} : {:s}".format(i, str(msg)))
         else:
             print("## function 'get_error_messages()' not suportet for this control")
 
@@ -94,20 +98,26 @@ def comprehensive_demo():
         print("## input: {}".format(con.read_plc_memory(0, MemoryType.INPUT, 5)))
         print("## output: {}".format(con.read_plc_memory(0, MemoryType.OUTPUT_WORD, 5)))
 
-        print("# data values via data path, only available on iTNC530")
+        print("# data values via data path, only available on some iTNC530")
         if con.versions.is_itnc():
-            print("## marker 0: {}".format(con.read_data_path("/PLC/memory/M/0")))
-            print("## marker 1: {}".format(con.read_data_path("/PLC/memory/M/1")))
-            print("## string 0: {}".format(con.read_data_path("/PLC/memory/S/0")))
-            print("## word 10908: {}".format(con.read_data_path("/PLC/memory/W/10908")))
+            if con.versions.nc_sw_base == 340490 and con.versions.nc_sw_version <= 2:
+                print("### control is iTNC but does not support this function")
+            else:
+                print("## marker 0: {}".format(con.read_data_path("/PLC/memory/M/0")))
+                print("## marker 1: {}".format(con.read_data_path("/PLC/memory/M/1")))
+                print("## string 0: {}".format(con.read_data_path("/PLC/memory/S/0")))
+                print("## word 10908: {}".format(con.read_data_path("/PLC/memory/W/10908")))
         else:
             print("## function 'read_data_path()' not suportet for this control")
-        print("# table values via data path, only available on iTNC530")
+        print("# table values via data path, only available on some iTNC530")
         if con.versions.is_itnc():
-            print("## values from tool table for tool T1:")
-            print("## DOC column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/DOC")))
-            print("## L column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/L")))
-            print("## R column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/R")))
+            if con.versions.nc_sw_base == 340490 and con.versions.nc_sw_version <= 2:
+                print("### control is iTNC but does not support this function")
+            else:
+                print("## values from tool table for tool T1:")
+                print("## DOC column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/DOC")))
+                print("## L column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/L")))
+                print("## R column: {}".format(con.read_data_path("/TABLE/TOOL/T/1/R")))
         else:
             print("## function 'read_data_path()' not suportet for this control")
 
@@ -123,7 +133,7 @@ def comprehensive_demo():
         if con.versions.is_tnc7():
             print("UI Interface test not available on TNC7?")
         else:
-            print("UI Interface")
+            print("UI Interface:")
             print("# switch to mode manual")
             con.set_keyboard_access(False)
             con.send_key_code(pyLSV2.KeyCode.MODE_MANUAL)
@@ -135,7 +145,7 @@ def comprehensive_demo():
             con.send_key_code(pyLSV2.KeyCode.MODE_PGM_EDIT)
             con.set_keyboard_access(True)
 
-        print("File access")
+        print("File access:")
         drv_info = con.drive_info()
         print("# names of disk drives: {:s}".format(", ".join([drv.name for drv in drv_info])))
         dir_info = con.directory_info()
@@ -153,9 +163,13 @@ def comprehensive_demo():
         for file_entry in only_dir:
             print("## directory name: {:s}, date {:}".format(file_entry.name, file_entry.timestamp))
 
+        #con.change_directory("TNC:/smartNC")
+        #print([c.name for c in con.directory_content()])
+
         print("# file search")
         h_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[hH]$")
         print("## found {:d} klartext programs on TNC drive".format(len(h_files)))
+        print([f for f in h_files])
         i_files = con.get_file_list(path="TNC:", pattern=r"[\$A-Za-z0-9_-]*\.[iI]$")
         print("## found {:d} ISO programs on TNC drive".format(len(i_files)))
 

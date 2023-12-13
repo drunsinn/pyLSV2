@@ -208,7 +208,7 @@ class LSV2:
             self._logger.debug("no response expected")
             return False
 
-        self._logger.warning("received unexpected response %s", self._llcom.last_response)
+        self._logger.info("received unexpected response %s", self._llcom.last_response)
         return False
 
     def _send_recive_block(
@@ -264,7 +264,7 @@ class LSV2:
                 lsv_content = self._llcom.telegram(command=lc.RSP.T_OK)
             return response_buffer
 
-        self._logger.warning(
+        self._logger.info(
             "received unexpected response %s, with data %s",
             self._llcom.last_response,
             lsv_content,
@@ -419,7 +419,7 @@ class LSV2:
                     raise LSV2DataException("expected boolean")
                 self._sys_par.turbo_mode_active = data
             else:
-                self._logger.warning("an error occurred while querying system information on turbo mode")
+                self._logger.debug("could not read system information on turbo mode")
 
             payload = struct.pack("!L", lc.ParRCI.DNC_ALLOWED)
             result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
@@ -429,14 +429,14 @@ class LSV2:
                     raise LSV2DataException("expected boolean")
                 self._sys_par.dnc_mode_allowed = data
             else:
-                self._logger.warning("an error occurred while querying system information on dnc mode")
+                self._logger.debug("could not read system information on dnc mode")
 
             payload = struct.pack("!L", lc.ParRCI.AXES_SAMPLING_RATE)
             result = self._send_recive(lc.CMD.R_CI, payload, lc.RSP.S_CI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 self._sys_par.axes_sampling_rate = lm.decode_system_information(result)
             else:
-                self._logger.warning("an error occurred while querying system information on axes samling rate")
+                self._logger.debug("could not read system information on axes samling rate")
         return self._sys_par
 
     def _read_version(self, force: bool = False) -> ld.VersionInfo:
@@ -616,13 +616,19 @@ class LSV2:
             return False
 
         dir_path = remote_directory.replace("/", lc.PATH_SEP)
+
         payload = lm.ustr_to_ba(dir_path)
 
         result = self._send_recive(lc.CMD.C_DC, payload, lc.RSP.T_OK)
         if isinstance(result, (bool,)) and result is True:
             self._logger.debug("changed working directory to %s", dir_path)
             return True
-        self._logger.warning("an error occurred while changing directory")
+        
+        if remote_directory == self.directory_info().path:
+            self._logger.info("control responded as if the dir change did not work but path is still correct...")
+            return True
+
+        self._logger.warning("an error occurred while changing directory to %s", dir_path)
         return False
 
     def file_info(self, remote_file_path: str) -> Union[ld.FileEntry, None]:
@@ -690,6 +696,8 @@ class LSV2:
         """
         Read info all drives and partitions from the control.
         Requires access level ``FILETRANSFER`` to work.
+
+        Might not work on older controls or on old windows programming stations?
         """
 
         if not self.login(lc.Login.FILETRANSFER):
@@ -703,7 +711,7 @@ class LSV2:
             for entry in result:
                 drives_list.extend(lm.decode_drive_info(entry))
 
-            self._logger.debug(
+            self._logger.debug(  
                 "successfully received %d packages for drive information %s",
                 len(result),
                 drives_list,
@@ -713,6 +721,10 @@ class LSV2:
                 "an error occurred while reading drive info: '%s'",
                 lt.get_error_text(self.last_error),
             )
+
+        if "TNC:" not in [d.name for d in drives_list]:
+            self._logger.warning("an error occured while parsing drive info. this might be either a problem with the decoding or the control does not support this function!")
+            return []
         return drives_list
 
     def make_directory(self, dir_path: str) -> bool:
@@ -1037,7 +1049,7 @@ class LSV2:
                         else:
                             #if len(result) == 2:
 
-                            self._logger.warning(
+                            self._logger.info(
                                 "could not send data, received unexpected response '%s' with data 0x%s",
                                 self._llcom.last_response,
                                 result.hex()
@@ -1572,8 +1584,9 @@ class LSV2:
             self._logger.warning("clould not log in as user FILE")
             return []
 
-        current_path = self.directory_info().path
+        current_path = self.directory_info().path.replace("/", lc.PATH_SEP)
         content: List[str] = []
+
         for entry in self.directory_content():
             if entry.name == "." or entry.name == ".." or entry.name.endswith(":"):
                 continue
@@ -1600,9 +1613,9 @@ class LSV2:
             return []
 
         if self.change_directory(path) is False:
-            self._logger.warning("could not change to directory")
+            self._logger.warning("could not change to directory %s" % path)
             return []
-
+        
         if len(pattern) == 0:
             file_list = self._walk_dir(descend)
         else:
