@@ -299,7 +299,7 @@ class NCTable:
             raise FileNotFoundError("Could not open file %s" % table_path)
 
         try:
-            with table_file.open(mode="r", encoding="utf-8") as tfp:
+            with table_file.open(mode="r", encoding="ansi") as tfp:
                 header_line = tfp.readline().strip()
                 logger.debug("Checking line for header: %s", header_line)
                 header = re.match(
