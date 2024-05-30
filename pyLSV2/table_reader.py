@@ -6,7 +6,7 @@ import json
 import logging
 import pathlib
 import re
-from typing import Union
+from typing import Union, List, Dict, Any
 
 
 class NCTable:
@@ -29,8 +29,8 @@ class NCTable:
         self.version = version
         self.has_unit = has_unit
         self.is_metric = is_metric
-        self._content = []
-        self._columns = []
+        self._content: List[Dict[str, str]] = []
+        self._columns: List[str] = []
         self._column_format = {}
 
     def __len__(self):
@@ -83,16 +83,16 @@ class NCTable:
         self._is_metric = value
 
     @property
-    def rows(self) -> list:
+    def rows(self) -> List[Dict[str, str]]:
         """data entries in this table"""
         return self._content
 
     @property
-    def column_names(self) -> list:
+    def column_names(self) -> List[str]:
         """list of columns used in this table"""
         return self._columns
 
-    def append_column(self, name: str, start: int, end: int, width: int = 0, empty_value=None):
+    def append_column(self, name: str, start: int, end: int, width: int = 0, empty_value: Any = None):
         """add column to the table format"""
         self._columns.append(name)
         if width == 0:
@@ -115,31 +115,31 @@ class NCTable:
         self._columns.remove(name)
         del self._column_format[name]
 
-    def get_column_start(self, name: str):
+    def get_column_start(self, name: str) -> int:
         """get start index of column"""
         return self._column_format[name]["start"]
 
-    def get_column_end(self, name: str):
+    def get_column_end(self, name: str) -> int:
         """get end index of column"""
         return self._column_format[name]["end"]
 
-    def get_column_width(self, name: str):
+    def get_column_width(self, name: str) -> int:
         """get width if column"""
         return self._column_format[name]["width"]
 
-    def get_column_empty_value(self, name: str):
+    def get_column_empty_value(self, name: str) -> Any:
         """get value define as default value for column"""
         if "empty_value" in self._column_format[name]:
             return self._column_format[name]["empty_value"]
         return None
 
-    def set_column_empty_value(self, name, value):
+    def set_column_empty_value(self, name: str, value: Any):
         """set the default value of a column"""
         if len(str(value)) > self._column_format[name]["width"]:
             raise ValueError("value to long for column")
         self._column_format[name]["empty_value"] = value
 
-    def update_column_format(self, name: str, parameters: dict):
+    def update_column_format(self, name: str, parameters: Dict):
         """takes a column name and a dictionaly to update the current table configuration"""
         for key, value in parameters.items():
             if key == "unit":
@@ -167,11 +167,11 @@ class NCTable:
         """get list of columns used in this table"""
         raise DeprecationWarning("Do not use this function anymore! Use ```column_names```")
 
-    def append_row(self, row):
+    def append_row(self, row: Dict[str, str]):
         """add a data entry to the table"""
         self._content.append(row)
 
-    def extend_rows(self, rows):
+    def extend_rows(self, rows: List[Dict[str, str]]):
         """add multiple data entries at onec"""
         self._content.extend(rows)
 
@@ -184,7 +184,7 @@ class NCTable:
         json_data["column_config"] = self._column_format
         return json.dumps(json_data, ensure_ascii=False, indent=2)
 
-    def dump_native(self, file_path: pathlib.Path, renumber_column=None):
+    def dump_native(self, file_path: pathlib.Path, renumber_column: Union[str, None] = None):
         """write table data to a file in the format used by the controls"""
         row_counter = 0
         file_name = file_path.name.upper()
@@ -276,7 +276,7 @@ class NCTable:
         else:
             if isinstance(search_value, (str,)):
                 search_results = [itm for itm in self._content if search_value in itm[column_name]]
-            elif isinstance(search_value, (re.Pattern,)):
+            else:
                 search_results = [itm for itm in self._content if search_value.match(itm[column_name]) is not None]
         return search_results
 
