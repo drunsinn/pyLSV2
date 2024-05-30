@@ -1366,35 +1366,23 @@ class LSV2:
             )
         return plc_values
 
-    def read_plc_address(self, value_address: str) -> Union[None, int, float, str]:
+    def read_plc_address(self, address: str) -> Union[None, int, float, str]:
         """
         read from plc memory using the nativ addressing scheme of the control
         Requires access level ``PLCDEBUG`` to work.
 
-        :param value_address: address of the plc memory location in the format used by the nc like W1090, M0 or S20
+        :param address: address of the plc memory location in the format used by the nc like W1090, M0 or S20
 
         :raises LSV2InputException: if unknowns memory type is requested or if the to many elements are requested
         :raises LSV2DataException: if number of received values does not match the number of expected
         """
-        if result := re.fullmatch(r"(?P<type>[MBWDS])(?P<num>\d+)", value_address):
-            if result.group("type") == "M":
-                val_num = int(result.group("num"))
-                val_type = lc.MemoryType.MARKER
-            elif result.group("type") == "B":
-                val_num = int(result.group("num"))
-                val_type = lc.MemoryType.BYTE
-            elif result.group("type") == "W":
-                val_num = int(result.group("num")) / 2
-                val_type = lc.MemoryType.WORD
-            elif result.group("type") == "D":
-                val_num = int(result.group("num")) / 4
-                val_type = lc.MemoryType.DWORD
-            else:  # "S"
-                val_num = int(result.group("num"))
-                val_type = lc.MemoryType.STRING
-        else:
-            return None
-        return self.read_plc_memory(int(val_num), val_type, 1)[0]
+
+        m_type, m_num = lm.decode_plc_memory_address(address)
+
+        if m_type is None or m_num is None:
+            raise ValueError()
+
+        return self.read_plc_memory(m_num, m_type, 1)[0]
 
     def set_keyboard_access(self, unlocked: bool) -> bool:
         """
