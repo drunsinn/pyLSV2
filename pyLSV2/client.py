@@ -175,7 +175,8 @@ class LSV2:
                 self._logger.debug("unknown or unsupported system command %s", bytes_to_send)
                 return False
 
-        lsv_content = self._llcom.telegram(command, bytes_to_send)
+        wait_for_response = bool(expected_response is not lc.RSP.NONE)
+        lsv_content = self._llcom.telegram(command, bytes_to_send, wait_for_response)
 
         if self._llcom.last_response is lc.RSP.UNKNOWN:
             self._logger.error("unknown response received")
@@ -1070,7 +1071,7 @@ class LSV2:
                     )
                     return False
             else:
-                if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.T_ER):
+                if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.NONE):
                     self._logger.warning(
                         "could not send end of transmission telegram, got response '%s'",
                         self._llcom.last_response,
