@@ -1280,6 +1280,16 @@ class LSV2:
             max_elements = self._sys_par.number_of_output_words
             mem_byte_count = 2
             unpack_string = "<H"
+        elif mem_type is lc.MemoryType.OUTPUT_DWORD:
+            start_address = self._sys_par.output_words_start_address
+            max_elements = self._sys_par.number_of_output_words / 4
+            mem_byte_count = 4
+            unpack_string = "<l"
+        elif mem_type is lc.MemoryType.INPUT_DWORD:
+            start_address = self._sys_par.input_words_start_address
+            max_elements = self._sys_par.number_of_input_words / 4
+            mem_byte_count = 4
+            unpack_string = "<l"
         else:
             raise LSV2InputException("unknown address type")
 
