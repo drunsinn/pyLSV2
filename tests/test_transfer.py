@@ -93,25 +93,9 @@ def test_file_transfer_comp_mode(address: str, timeout: float):
 
         assert lsv2.file_info(remote_path) is not True
 
-        assert (
-            lsv2.send_file(
-                local_path=local_send_path,
-                remote_path=remote_path,
-                override_file=True,
-                binary_mode=True
-            )
-            is True
-        )
+        assert lsv2.send_file(local_path=local_send_path, remote_path=remote_path, override_file=True, binary_mode=True) is True
 
-        assert (
-            lsv2.recive_file(
-                local_path=str(local_recive_path),
-                remote_path=remote_path,
-                override_file=True,
-                binary_mode=True
-            )
-            is True
-        )
+        assert lsv2.recive_file(local_path=str(local_recive_path), remote_path=remote_path, override_file=True, binary_mode=True) is True
 
         assert lsv2.delete_file(remote_path) is True
 
