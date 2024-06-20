@@ -1070,7 +1070,7 @@ class LSV2:
                     )
                     return False
             else:
-                if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.NONE):
+                if not self._send_recive(lc.RSP.T_FD, None, lc.RSP.T_ER):
                     self._logger.warning(
                         "could not send end of transmission telegram, got response '%s'",
                         self._llcom.last_response,
