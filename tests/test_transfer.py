@@ -81,7 +81,8 @@ def test_file_transfer_binary(address: str, timeout: float):
 
 
 def test_file_transfer_comp_mode(address: str, timeout: float):
-    """test if transferring a file in binary mode with active compatibility mode works"""
+    """test if transferring a file with active compatibility mode works. This is to test if transfer without
+    secure file transfer works as expected."""
     lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True, compatibility_mode=True)
     lsv2.connect()
 
@@ -97,7 +98,7 @@ def test_file_transfer_comp_mode(address: str, timeout: float):
                 local_path=local_send_path,
                 remote_path=remote_path,
                 override_file=True,
-                binary_mode=True,
+                binary_mode=True
             )
             is True
         )
@@ -107,7 +108,7 @@ def test_file_transfer_comp_mode(address: str, timeout: float):
                 local_path=str(local_recive_path),
                 remote_path=remote_path,
                 override_file=True,
-                binary_mode=True,
+                binary_mode=True
             )
             is True
         )
