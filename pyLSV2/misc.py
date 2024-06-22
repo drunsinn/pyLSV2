@@ -360,12 +360,18 @@ def decode_plc_memory_address(address: str):
             elif s_type == "W":
                 val_num = int(val_num / 2)
                 val_type = MemoryType.INPUT_WORD
+            elif s_type == "D":
+                val_num = int(val_num / 4)
+                val_type = MemoryType.INPUT_DWORD
         elif m_type == "O":
             if s_type is None:
                 val_type = MemoryType.OUTPUT
             elif s_type == "W":
                 val_num = int(val_num / 2)
                 val_type = MemoryType.OUTPUT_WORD
+            elif s_type == "D":
+                val_num = int(val_num / 4)
+                val_type = MemoryType.OUTPUT_DWORD
         elif m_type == "S" and s_type is None:
             val_type = MemoryType.STRING
 
