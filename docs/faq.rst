@@ -10,6 +10,11 @@ For iTNC 530:
 - open the MOD dialog and enable the external access by toggling the soft key "External access"
 - restart control
 
+For iTNC 530 programming station:
+- open the MOD dialog and enable the external access by toggling the soft key "External access"
+- close and disable virtual keyboard (only one MONITOR connection can be active at a time)
+- restart control
+
 For TNC 320, 620, 640
 - open the MOD dialog
 - navigate to Machine settings/External access

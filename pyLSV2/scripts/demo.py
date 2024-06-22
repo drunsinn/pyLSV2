@@ -100,7 +100,11 @@ def comprehensive_demo():
         print("## double word: {}".format(con.read_plc_memory(0, MemoryType.DWORD, 5)))
         print("## string: {}".format(con.read_plc_memory(0, MemoryType.STRING, 5)))
         print("## input: {}".format(con.read_plc_memory(0, MemoryType.INPUT, 5)))
-        print("## output: {}".format(con.read_plc_memory(0, MemoryType.OUTPUT_WORD, 5)))
+        print("## output: {}".format(con.read_plc_memory(0, MemoryType.OUTPUT, 5)))
+        print("## input word: {}".format(con.read_plc_memory(0, MemoryType.INPUT_WORD, 5)))
+        print("## output word: {}".format(con.read_plc_memory(0, MemoryType.OUTPUT_WORD, 5)))
+        print("## input dword: {}".format(con.read_plc_memory(0, MemoryType.INPUT_DWORD, 5)))
+        print("## output dword: {}".format(con.read_plc_memory(0, MemoryType.OUTPUT_DWORD, 5)))
 
         print("# data values via data path, only available on some iTNC530")
         if con.versions.is_itnc():

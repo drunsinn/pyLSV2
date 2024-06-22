@@ -189,6 +189,8 @@ class MemoryType(IntEnum):
     STRING = 9
     INPUT_WORD = 10
     OUTPUT_WORD = 11
+    OUTPUT_DWORD = 12
+    INPUT_DWORD = 13
 
 
 class LSV2StatusCode(IntEnum):

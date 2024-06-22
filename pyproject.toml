@@ -54,6 +54,10 @@ log_cli = true
 log_cli_level = "INFO"
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
+addopts = "--address 192.168.56.101"
+#addopts = "--address 192.168.56.102"
+#addopts = "--address 192.168.56.103"
+#addopts = "--address localhost"
 
 [tool.codespell]
 skip = "*.po,*.ts,./docs/_build,./docs/_static,./.git"

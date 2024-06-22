@@ -16,8 +16,11 @@ def test_plc_read(address: str, timeout: float):
     assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.WORD, 1) is not False
     assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.DWORD, 1) is not False
     assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.STRING, 1) is not False
-    assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.INPUT, 1) is not False
     assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.OUTPUT_WORD, 1) is not False
+    assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.OUTPUT_DWORD, 1) is not False
+    assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.INPUT, 1) is not False
+    assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.INPUT_WORD, 1) is not False
+    assert lsv2.read_plc_memory(0, pyLSV2.MemoryType.INPUT_DWORD, 1) is not False
 
     lsv2.logout(pyLSV2.Login.PLCDEBUG)
 
