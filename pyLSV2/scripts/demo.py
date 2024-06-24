@@ -63,7 +63,7 @@ def comprehensive_demo():
         if con.versions.nc_sw_type == 4:
             print("# Reading time and date on a windows programming station is not supported")
         elif con.versions.nc_sw_base == 538950:
-             print("# Reading time and date on a windows MILLplusIT programming station is not supported")
+            print("# Reading time and date on a windows MILLplusIT programming station is not supported")
         else:
             print("# Time and date: {:}".format(con.get_remote_datetime()))
 

@@ -31,7 +31,6 @@ class VersionInfo:
 
         self._ncsw_reg = re.compile(r"(?P<base>\d{5})(?P<type>\d)(?:[ -])(?P<version>\d+)(?: (?P<sp>.*))?")
 
-
     def __str__(self) -> str:
         return "%s / %s" % (self.control, self.nc_sw)
 

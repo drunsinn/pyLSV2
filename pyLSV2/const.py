@@ -98,6 +98,7 @@ class ControlType(Enum):
     MILLPLUS = 6
     """the MILLPlusIT V600 is officially"""
 
+
 class Login(str, Enum):
     """Enum for the different login roles"""
 

@@ -70,7 +70,7 @@ class LSV2:
         """version information of the connected control"""
         return self._versions
 
-    @property 
+    @property
     def parameters(self) -> ld.SystemParameters:
         """system parameters of the connected control"""
         return self._sys_par
