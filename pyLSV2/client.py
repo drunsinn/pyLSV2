@@ -1377,6 +1377,24 @@ class LSV2:
             )
         return plc_values
 
+    def read_plc_address(self, address: str) -> Union[None, int, float, str]:
+        """
+        read from plc memory using the nativ addressing scheme of the control
+        Requires access level ``PLCDEBUG`` to work.
+
+        :param address: address of the plc memory location in the format used by the nc like W1090, M0 or S20
+
+        :raises LSV2InputException: if unknowns memory type is requested or if the to many elements are requested
+        :raises LSV2DataException: if number of received values does not match the number of expected
+        """
+
+        m_type, m_num = lm.decode_plc_memory_address(address)
+
+        if m_type is None or m_num is None:
+            raise LSV2InputException("could not translate address %s to valid memory location" % address)
+
+        return self.read_plc_memory(m_num, m_type, 1)[0]
+
     def set_keyboard_access(self, unlocked: bool) -> bool:
         """
         Enable or disable the keyboard on the control.
@@ -1629,7 +1647,7 @@ class LSV2:
             return []
 
         if self.change_directory(path) is False:
-            self._logger.warning("could not change to directory %s" % path)
+            self._logger.warning("could not change to directory %s", path)
             return []
 
         if len(pattern) == 0:
