@@ -95,6 +95,9 @@ class ControlType(Enum):
     TNC7 = 5
     """the TNC7 is the new control that behaves just a bit different again so we need a special case for it"""
 
+    MILLPLUS = 6
+    """the MILLPlusIT V600 is officially"""
+
 
 class Login(str, Enum):
     """Enum for the different login roles"""

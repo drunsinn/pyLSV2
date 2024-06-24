@@ -160,25 +160,32 @@ These changes where made intentionally to make further development easier. See t
  been tested:
 
 ### Programming Stations
-| Control     | Software       |
-|-------------|----------------|
-| TNC640      | 340595 08 SP1  |
-| TNC640      | 340595 10 SP2  |
-| TNC640      | 340595 11 SP1  |
-| TNC640      | 340595 11 SP4  |
-| iTNC530     | 606425 04 SP20 |
-| iTNC530     | 340494 08 SP2  |
-| CNCpilot640 | 1230521 03 SP1 |
-| TNC7        | 817625 17      |
+| Control         | Software       | Notes |
+|-----------------|----------------|-------|
+| TNC320          | 340554 04 SP1  | 1     |
+| TNC640          | 340594 01      |       |
+| TNC640          | 340595 08 SP1  |       |
+| TNC640          | 340595 10 SP2  |       |
+| TNC640          | 340595 11 SP1  |       |
+| TNC640          | 340595 11 SP4  |       |
+| iTNC530         | 606425 04 SP20 |       |
+| iTNC530         | 340494 08 SP2  |       |
+| MANUALplus620   | 634130 02 SP7  |       |
+| CNCpilot640     | 1230521 03 SP1 |       |
+| TNC7            | 817625 17      |       |
+| MillPlusIT V600 | 538956 03 SP15 | 1, 2  |
+
+1) some tests are failing and have not been analysed yet (screendump and rw_machine_parameter)
+2) this control is not officially supported by any other Heidenhain tool but seems to be at least somewhat compatible
 
 ### Machines
-| Control     | Software       |
-|-------------|----------------|
-| TNC620      | 817605 04 SP1  |
-| TNC640      | 340595 08 SP1  |
-| iTNC530     | 340480 14 SP4  |
-| iTNC530     | 606420 02 SP14 |
-| iTNC530     | 606420 02 SP3  |
+| Control         | Software       | Notes |
+|-----------------|----------------|-------|
+| TNC620          | 817605 04 SP1  |       |
+| TNC640          | 340595 08 SP1  |       |
+| iTNC530         | 340480 14 SP4  |       |
+| iTNC530         | 606420 02 SP14 |       |
+| iTNC530         | 606420 02 SP3  |       |
 
  If you have tested it on one of your machines with a different software version, please let us know!
 
