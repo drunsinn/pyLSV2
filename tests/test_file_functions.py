@@ -14,6 +14,8 @@ def test_read_info(address: str, timeout: float):
         mdi_path = "TNC:\\$MDI.H"
     elif lsv2.versions.is_pilot():
         mdi_path = "TNC:\\nc_prog\\ncps\\PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_path = "TNC:\\mdi\\mdi.pm"
     else:
         mdi_path = "TNC:\\nc_prog\\$mdi.h"
 
@@ -65,6 +67,9 @@ def test_remote_file_functions(address: str, timeout: float):
     elif lsv2.versions.is_pilot():
         mdi_dir = "TNC:\\nc_prog\\ncps\\"
         mdi_name = "PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_dir = "TNC:\\mdi\\"
+        mdi_name = "mdi.pm"
     else:
         mdi_dir = "TNC:\\nc_prog\\"
         mdi_name = "$mdi.h"
@@ -113,6 +118,8 @@ def test_path_formating(address: str, timeout: float):
         mdi_path = "TNC:/$MDI.H"
     elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_path = "TNC:/mdi/mdi.pm"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"
 

@@ -19,6 +19,9 @@ def test_file_recive(address: str, timeout: float):
     elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
         tool_t_path = "TNC:/table/toolturn.htt"
+    elif lsv2.versions.is_millplus():
+        mdi_path = "TNC:/mdi/mdi.pm"
+        tool_t_path = "TNC:/table/tool.t"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"
         tool_t_path = "TNC:/table/tool.t"
@@ -121,6 +124,8 @@ def test_recive_with_path_formating(address: str, timeout: float):
         mdi_path = "TNC:/$MDI.H"
     elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_path = "TNC:/mdi/mdi.pm"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"
 

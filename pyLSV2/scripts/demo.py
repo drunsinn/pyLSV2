@@ -60,7 +60,12 @@ def comprehensive_demo():
             )
         )
 
-        print("# Time and date: {:}".format(con.get_remote_datetime()))
+        if con.versions.nc_sw_type == 4:
+            print("# Reading time and date on a windows programming station is not supported")
+        elif con.versions.nc_sw_base == 538950:
+             print("# Reading time and date on a windows MILLplusIT programming station is not supported")
+        else:
+            print("# Time and date: {:}".format(con.get_remote_datetime()))
 
         # read error messages via LSV2, works only on iTNC controls
         print("# read error messages, only available on some iTNC530 versions")
