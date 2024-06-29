@@ -10,7 +10,6 @@ file manipulation is blocked by a lockout parameter. Use at your own risk!
 TODO: research and implement support for `self._sys_par.turbo_mode_active`
 TODO: research and implement support for `self._sys_par.dnc_mode_allowed`
 TODO: fix unknown parameter type warnings in scope function `real_time_readings`
-TODO: add wrapper for `read_plc_memory` to support addressing with named addresses like W0 or D2
 TODO: add serial mode to low level com
 
 """
