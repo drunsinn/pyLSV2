@@ -38,7 +38,7 @@ from .err import (
 
 
 class LSV2:
-    """implements functions for communicationg with CNC controls via LSV2"""
+    """implements functions for communicating with CNC controls via LSV2"""
 
     def __init__(self, hostname: str, port: int = 0, timeout: float = 15.0, safe_mode: bool = True, compatibility_mode: bool = False):
         """

@@ -905,7 +905,7 @@ class DirectoryEntry:
 
     @property
     def dir_attributes(self) -> List[str]:
-        """attriutes of this directory"""
+        """attributes of this directory"""
         return self._dir_attributes
 
     @dir_attributes.setter

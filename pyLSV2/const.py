@@ -319,7 +319,7 @@ class LSV2StatusCode(IntEnum):
     T_USER_ERROR = 255
 
     T_ER_NON = -1
-    """not an valid error code. devault value if no error occurred"""
+    """not an valid error code. default value if no error occurred"""
 
 
 class KeyCode(IntEnum):
