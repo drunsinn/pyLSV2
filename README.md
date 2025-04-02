@@ -57,6 +57,7 @@
  - npalmerDNX
  - Andreas-strg
  - oxbown
+ - patrickschultes
 
 ## Usage
  See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for a demonstration of some of the functions.
