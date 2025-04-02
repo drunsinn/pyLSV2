@@ -58,7 +58,7 @@ def decode_signal_description(data_set: bytearray) -> List[ld.ScopeSignal]:
     if not data_set[6:8] == bytearray(b"\x00\x00"):
         raise LSV2DataException("unexpected values in bytes 6 and 7: %s" % data_set[6:8])
     if channel_type in [lc.ChannelType.TYPE1, lc.ChannelType.TYPE4]:
-        if len(data_set) not in [98, 106]:
+        if len(data_set) not in [90, 98, 106]:
             raise LSV2DataException("unexpected length of data for channel type 1 or 4")
 
         signal_labels = lm.ba_to_ustr(data_set[59:]).split(chr(0x00))

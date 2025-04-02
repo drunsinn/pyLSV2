@@ -203,11 +203,35 @@ def scope_demo():
 
         availible_signals = con.read_scope_signals()
 
+        # Building a dict with the Channel and Signal name to add them to the selected list
+        availible_signals_name_dict = {}
+        for signal in availible_signals:
+            availible_signals_name_dict[f'{signal.channel_name} - {signal.signal_name}'] = signal
+
+
         # build list with selected signals
         selected_signals = list()
-        selected_signals.append(availible_signals[0])
-        selected_signals.append(availible_signals[1])
-        selected_signals.append(availible_signals[2])
+        try:
+            selected_signals.append(availible_signals_name_dict['s ist - X'])
+            selected_signals.append(availible_signals_name_dict['s ist - Y'])
+            selected_signals.append(availible_signals_name_dict['s ist - Z'])
+        except:
+            print(f'The follwoing signals are available on your control:')
+            for key in list(availible_signals_name_dict.keys()):
+                print(key)
+            exit(1)
+
+        # Spinde Revolution: v ist - S
+        # Just guessing: 
+        #   channel s = position
+        #   channel v = velocity / revolution
+        #   channel p mech = Power Mechanical
+        #   channel p el. = Power Electrical
+
+        ### For Searching a Signal / Printing the complete Available list with index: 
+        # print(f'The follwoing signals are available on your control:')
+        # for key in list(availible_signals_name_dict.keys()):
+        #     print(key)
 
         print("selected signals:")
         for sig in selected_signals:

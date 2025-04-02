@@ -169,6 +169,8 @@ These changes where made intentionally to make further development easier. See t
 | TNC640          | 340595 11 SP4  |       |
 | iTNC530         | 606425 04 SP20 |       |
 | iTNC530         | 340494 08 SP2  |       |
+| iTNC530         | 340490 05 SP6  |       |
+| iTNC530         | 340490 08 SP6  |       |
 | MANUALplus620   | 634130 02 SP7  |       |
 | CNCpilot640     | 1230521 03 SP1 |       |
 | TNC7            | 817625 17      |       |
@@ -226,6 +228,9 @@ These changes where made intentionally to make further development easier. See t
  the packported modules argparse, enum and typing. While argpares is only used in the demo script
  the other two are necessary. Therefore it should be possible to use pyLSV2 with the current version
  of [IronPython](https://ironpython.net/) if you install these two modules.
+
+# Contribution for Dummies
+[Github Contribution Tutorial](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project)
 
 # Resources
  - [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst)
