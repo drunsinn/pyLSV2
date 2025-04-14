@@ -14,7 +14,8 @@ lint:
 	uv run ruff check
 
 format:
-	uv run ruff format
+#	uv run ruff format
+	uv run black . --config ./pyproject.toml
 
 build:
 	uv build

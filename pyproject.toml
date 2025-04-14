@@ -37,6 +37,8 @@ dev = [
     "sphinx-autodoc-typehints>=2.3"
 ]
 lint = ["ruff>=0.9.7"]
+format = ["black>=25.0"]
+ssh = ["sshtunnel>=0.4"]
 
 [tool.hatch.version]
 path = "pyLSV2/__init__.py"
