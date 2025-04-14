@@ -8,9 +8,9 @@ import pyLSV2
 import pyLSV2.misc
 
 
-def test_grab_screen_dump(address: str, timeout: float):
+def test_grab_screen_dump(address: str, timeout: float, port:int):
     """test if creating a screen dump works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:

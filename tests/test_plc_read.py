@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """test to see if plc functions work"""
+
 import pytest
 import pyLSV2
 
 
-def test_plc_read(address: str, timeout: float):
+def test_plc_read(address: str, timeout: float, port:int):
     """test to see if reading of plc data works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     assert lsv2.login(pyLSV2.Login.PLCDEBUG) is True
@@ -27,9 +28,9 @@ def test_plc_read(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_plc_read_marker(address: str, timeout: float):
+def test_plc_read_marker(address: str, timeout: float, port:int):
     """test reading of plc markers"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     marker_data_0 = lsv2.read_plc_memory(0, pyLSV2.MemoryType.MARKER, 1)
@@ -48,9 +49,9 @@ def test_plc_read_marker(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_plc_read_string(address: str, timeout: float):
+def test_plc_read_string(address: str, timeout: float, port:int):
     """test reading of plc strings"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     data_0 = lsv2.read_plc_memory(0, pyLSV2.MemoryType.STRING, 1)
@@ -69,9 +70,9 @@ def test_plc_read_string(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_plc_read_errors(address: str, timeout: float):
+def test_plc_read_errors(address: str, timeout: float, port:int):
     """test error states for reading plc data"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     num_words = lsv2.parameters.number_of_words
@@ -85,9 +86,9 @@ def test_plc_read_errors(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_data_path_read(address: str, timeout: float):
+def test_data_path_read(address: str, timeout: float, port:int):
     """test to see if reading via data path works. run only on iTNC"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
@@ -112,9 +113,9 @@ def test_data_path_read(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_comapare_values(address: str, timeout: float):
+def test_comapare_values(address: str, timeout: float, port:int):
     """test to see if reading via data path and plc memory returns the same value. run only on iTNC"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
@@ -136,10 +137,10 @@ def test_comapare_values(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_plc_mem_access(address: str, timeout: float):
+def test_plc_mem_access(address: str, timeout: float, port:int):
     """test to see if reading via plc address and plc memory returns the same value"""
 
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     for mem_address in [0, 1, 2, 4, 8, 12, 68, 69, 151, 300, 420]:

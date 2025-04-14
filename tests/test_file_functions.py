@@ -5,9 +5,9 @@
 import pyLSV2
 
 
-def test_read_info(address: str, timeout: float):
+def test_read_info(address: str, timeout: float, port:int):
     """test if reading of file information works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
@@ -28,9 +28,9 @@ def test_read_info(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_directory_functions(address: str, timeout: float):
+def test_directory_functions(address: str, timeout: float, port:int):
     """test if functions to change, create and delete directories work"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
 
     test_dir = "TNC:\\nc_prog\\pyLSV2_test_dir_func\\"
 
@@ -54,9 +54,9 @@ def test_directory_functions(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_remote_file_functions(address: str, timeout: float):
+def test_remote_file_functions(address: str, timeout: float, port:int):
     """test if functions for manipulating the remote file system work"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     test_dir = "TNC:\\nc_prog\\pyLSV2_test_file_func\\"
@@ -109,9 +109,9 @@ def test_remote_file_functions(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_path_formating(address: str, timeout: float):
+def test_path_formating(address: str, timeout: float, port:int):
     """test if reading of file information with / instead of \\ as path separator"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
@@ -128,9 +128,9 @@ def test_path_formating(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_file_search(address: str, timeout: float):
+def test_file_search(address: str, timeout: float, port:int):
     """test if searching for files works. assumes that at least one file is present in root directory"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     result1 = len(lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=False))
