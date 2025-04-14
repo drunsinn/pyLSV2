@@ -5,7 +5,7 @@
 import pyLSV2
 
 
-def test_login(address: str, timeout: float, port:int):
+def test_login(address: str, timeout: float, port: int):
     """test to see if login and safe mode works"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
@@ -22,7 +22,7 @@ def test_login(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_read_versions(address: str, timeout: float, port:int):
+def test_read_versions(address: str, timeout: float, port: int):
     """test if login and basic query works"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
@@ -36,13 +36,13 @@ def test_read_versions(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_context_manager(address: str, timeout: float, port:int):
+def test_context_manager(address: str, timeout: float, port: int):
     """test if login and basic query works"""
     with pyLSV2.LSV2(address, port=port, timeout=timeout) as lsv2:
         assert lsv2.versions.type is not pyLSV2.ControlType.UNKNOWN
 
 
-def test_switching_safe_mode(address: str, timeout: float, port:int):
+def test_switching_safe_mode(address: str, timeout: float, port: int):
     """check if enabling and diabeling safe mode works"""
     with pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True) as lsv2:
         assert lsv2.login(login=pyLSV2.Login.DNC) is False
@@ -53,7 +53,7 @@ def test_switching_safe_mode(address: str, timeout: float, port:int):
         assert lsv2.login(login=pyLSV2.Login.DNC) is False
 
 
-def test_login_with_password(address: str, timeout: float, port:int):
+def test_login_with_password(address: str, timeout: float, port: int):
     """check if logging in with a password works"""
     with pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False) as lsv2:
         if not (lsv2.versions.control.startswith("iTNC530 Program") or lsv2.versions.control.startswith("iTNC530Program")):
@@ -63,7 +63,7 @@ def test_login_with_password(address: str, timeout: float, port:int):
             assert lsv2.login(login=pyLSV2.Login.FILEPLC, password="807667") is True
 
 
-def test_unsafe_logins(address: str, timeout: float, port:int):
+def test_unsafe_logins(address: str, timeout: float, port: int):
     """test to see if login without safe mode works"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()

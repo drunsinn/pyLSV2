@@ -29,6 +29,7 @@ def timeout(request):
         seconds = 5.0
     return float(seconds)
 
+
 @pytest.fixture
 def port(request):
     """process commandline option 'port'"""

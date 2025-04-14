@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """misc helper functions for the scope part of pyLSV2"""
+
 import struct
 from typing import List
 import logging

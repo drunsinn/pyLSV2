@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Constant values used in LSV2"""
+
 from enum import Enum, IntEnum
 
 #: enable/disable binary file transfer for C_FL and R_FL

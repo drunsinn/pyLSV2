@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """low level communication functions for LSV2"""
+
 import logging
 import socket
 import struct

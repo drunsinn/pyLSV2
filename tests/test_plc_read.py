@@ -6,7 +6,7 @@ import pytest
 import pyLSV2
 
 
-def test_plc_read(address: str, timeout: float, port:int):
+def test_plc_read(address: str, timeout: float, port: int):
     """test to see if reading of plc data works"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -28,7 +28,7 @@ def test_plc_read(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_plc_read_marker(address: str, timeout: float, port:int):
+def test_plc_read_marker(address: str, timeout: float, port: int):
     """test reading of plc markers"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -49,7 +49,7 @@ def test_plc_read_marker(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_plc_read_string(address: str, timeout: float, port:int):
+def test_plc_read_string(address: str, timeout: float, port: int):
     """test reading of plc strings"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -70,7 +70,7 @@ def test_plc_read_string(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_plc_read_errors(address: str, timeout: float, port:int):
+def test_plc_read_errors(address: str, timeout: float, port: int):
     """test error states for reading plc data"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -86,7 +86,7 @@ def test_plc_read_errors(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_data_path_read(address: str, timeout: float, port:int):
+def test_data_path_read(address: str, timeout: float, port: int):
     """test to see if reading via data path works. run only on iTNC"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -113,7 +113,7 @@ def test_data_path_read(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_comapare_values(address: str, timeout: float, port:int):
+def test_comapare_values(address: str, timeout: float, port: int):
     """test to see if reading via data path and plc memory returns the same value. run only on iTNC"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
@@ -137,7 +137,7 @@ def test_comapare_values(address: str, timeout: float, port:int):
     lsv2.disconnect()
 
 
-def test_plc_mem_access(address: str, timeout: float, port:int):
+def test_plc_mem_access(address: str, timeout: float, port: int):
     """test to see if reading via plc address and plc memory returns the same value"""
 
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)

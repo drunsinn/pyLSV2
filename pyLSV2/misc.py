@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """misc helper functions for pyLSV2"""
+
 import struct
 import re
 from datetime import datetime

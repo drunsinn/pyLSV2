@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """This script lets you use some of the functions included in pyLSV2 via
-   the command line.
+the command line.
 """
+
 import os
 import sys
 import logging

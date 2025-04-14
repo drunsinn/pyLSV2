@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """module with reader and writer for TNC tables"""
+
 import csv
 import json
 import logging

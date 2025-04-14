@@ -3,6 +3,7 @@
 """This script contains examples on how to use different functions of pyLSV2
 Not all functions are shown here
 """
+
 import sys
 import argparse
 import logging
@@ -228,7 +229,7 @@ def scope_demo():
         #   channel p el. = Power Electrical
 
         ### For Searching a Signal / Printing the complete Available list with index:
-        # print(f'The follwoing signals are available on your control:')
+        # print(f'The following signals are available on your control:')
         # for key in list(availible_signals_name_dict.keys()):
         #     print(key)
 

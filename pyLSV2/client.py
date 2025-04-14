@@ -13,6 +13,7 @@ TODO: fix unknown parameter type warnings in scope function `real_time_readings`
 TODO: add serial mode to low level com
 
 """
+
 import logging
 import math
 import pathlib

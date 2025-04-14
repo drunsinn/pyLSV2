@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""With this script you can read scope values from a iTNC control and save the data as a csv file
-"""
+"""With this script you can read scope values from a iTNC control and save the data as a csv file"""
+
 import sys
 import logging
 import argparse
