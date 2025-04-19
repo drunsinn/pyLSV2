@@ -58,6 +58,7 @@
  - Andreas-strg
  - oxbown
  - patrickschultes
+ - Klikini
 
 ## Usage
  See [demo.py](pyLSV2/scripts/demo.py) for a demonstration of some of the functions.
