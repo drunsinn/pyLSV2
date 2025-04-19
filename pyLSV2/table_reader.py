@@ -54,7 +54,10 @@ class NCTable:
 
     @suffix.setter
     def suffix(self, value: str):
-        self._suffix = value.lower()
+        if value is not None:
+            self._suffix = value.lower()
+        else:
+            self._suffix = None
 
     @property
     def version(self) -> str:
@@ -272,7 +275,7 @@ class NCTable:
         :param search_value: the value to check for, can be string or regular expression
         """
         search_results = []
-        if not column_name in self._columns:
+        if column_name not in self._columns:
             self._logger.error("column with name %s not part of this table", column_name)
         else:
             if isinstance(search_value, (str,)):
@@ -296,22 +299,23 @@ class NCTable:
         header_line = header_line.strip()
         logger.debug("Checking line for header: %s", header_line)
         result = re.fullmatch(
-            r"BEGIN (?P<name>[a-zA-Z_ 0-9-]*)\.(?P<suffix>[A-Za-z0-9\.]*)(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)(?: Date:(?P<date>\d{4}-\d{2}-\d{2}))?\')?(?: (?P<mark>U))?",
+            r"BEGIN (?P<name>[a-zA-Z_ 0-9-]*(?= MM|INCH|\.))(?P<suffix>\.[A-Za-z0-9\.]*)?(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)(?: Date:(?P<date>\d{4}-\d{2}-\d{2}))?\')?(?: (?P<mark>U))?",
             header_line,
         )
 
         if result is None:
-            raise ValueError("File has wrong format: incorrect header")
+            raise ValueError("File has wrong format: incorrect header: %s" % header_line)
 
         header_data["name"] = result.group("name").strip()
-        header_data["suffix"] = result.group("suffix")
+        header_data["suffix"] = None
+        if result.group("suffix") is not None:
+            header_data["suffix"] = result.group("suffix").lstrip(".")
         header_data["version"] = result.group("version")
         header_data["date"] = result.group("date")
         header_data["mark"] = result.group("mark")
+        header_data["unit"] = ""
 
-        if result.group("unit") is None:
-            header_data["unit"] = ""
-        else:
+        if result.group("unit") is not None:
             if "MM" in result.group("unit"):
                 header_data["unit"] = "MM"
             else:
@@ -340,7 +344,7 @@ class NCTable:
             raise FileNotFoundError("Could not open file %s" % table_path)
 
         try:
-            with table_file.open(mode="r", encoding="ansi") as tfp:
+            with table_file.open(mode="r", encoding="latin1") as tfp:
                 header_data = NCTable.parse_header(tfp.readline())
                 nctable.name = header_data["name"]
                 nctable.suffix = header_data["suffix"]

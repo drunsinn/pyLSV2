@@ -143,3 +143,4 @@ scripts/test.py
 docs/README.md
 
 uv.lock
+download/

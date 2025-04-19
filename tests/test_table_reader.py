@@ -78,3 +78,11 @@ def test_header_parser():
     assert data["date"] is None
     assert data["mark"] is None
     assert data["unit"] == "MM"
+
+    data = pyLSV2.table_reader.NCTable.parse_header("BEGIN SIMTOOLT_M MM")
+    assert data["name"] == "SIMTOOLT_M"
+    assert data["suffix"] is None
+    assert data["version"] is None
+    assert data["date"] is None
+    assert data["mark"] is None
+    assert data["unit"] == "MM"
