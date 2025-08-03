@@ -1,6 +1,5 @@
 # pyLSV2
 
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 [![PyPI version fury.io](https://badge.fury.io/py/pyLSV2.svg)](https://pypi.python.org/pypi/pyLSV2/)
 [![Documentation Status](https://readthedocs.org/projects/pylsv2/badge/?version=latest)](https://pylsv2.readthedocs.io/en/latest/?badge=latest)
 
@@ -57,9 +56,12 @@
  - Md-aliy7
  - npalmerDNX
  - Andreas-strg
+ - oxbown
+ - patrickschultes
+ - Klikini
 
 ## Usage
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for a demonstration of some of the functions.
+ See [demo.py](pyLSV2/scripts/demo.py) for a demonstration of some of the functions.
 
  Since the whole protocol isn't documented there can always be problems with certain corner cases. Especially during file transfer a lot of stuff can go wrong.
  In case the control doesn't accept a command it returns an error. Some of these errors are checked internally but not everything is covered as of now. It is therefore
@@ -108,7 +110,7 @@ These changes where made intentionally to make further development easier. See t
 ```
  con.read_plc_memory(32, pyLSV2.MemoryType.MARKER, 15)
 ```
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for more examples.
+ See [demo.py](pyLSV2/scripts/demo.py#L101) for more examples.
 
  The available memory areas and their python data type
 | Memory Type              | Python Type |
@@ -136,7 +138,7 @@ These changes where made intentionally to make further development easier. See t
  con.read_data_path('/TABLE/TOOL/T/1/DOC')
 ```
 
- See [lsv2_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/lsv2_demo.py) for more examples.
+ See [demo.py](pyLSV2/scripts/demo.py#L130) for more examples.
 
  Note that reading values from memory does not take into account the actual size in the control memory. This leads to an offset between the values read with `read_data_path` and `read_plc_memory`. As a workaround you have to multiply the address value with the number of bytes the data type requires. The following example tries to show how this can be accomplished:
 
@@ -149,7 +151,7 @@ These changes where made intentionally to make further development easier. See t
 
 ### SSH Tunnel
  Newer controls allow the use of ssh to encrypt the communication via LSV2. 
- See [ssh_tunnel_demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/ssh_tunnel.py) for an example on
+ See [ssh_tunnel.py](pyLSV2/scripts/ssh_tunnel.py) for an example on
  how to use the python library [sshtunnel](https://github.com/pahaz/sshtunnel) to achieve a secure connection.
 
 ## Compatibility
@@ -159,32 +161,41 @@ These changes where made intentionally to make further development easier. See t
  been tested:
 
 ### Programming Stations
-| Control     | Software       |
-|-------------|----------------|
-| TNC640      | 340595 08 SP1  |
-| TNC640      | 340595 10 SP2  |
-| TNC640      | 340595 11 SP1  |
-| TNC640      | 340595 11 SP4  |
-| iTNC530     | 606425 04 SP20 |
-| iTNC530     | 340494 08 SP2  |
-| CNCpilot640 | 1230521 03 SP1 |
-| TNC7        | 817625 17      |
+| Control         | Software       | Notes |
+|-----------------|----------------|-------|
+| TNC320          | 340554 04 SP1  | 1     |
+| TNC640          | 340594 01      |       |
+| TNC640          | 340595 08 SP1  |       |
+| TNC640          | 340595 10 SP2  |       |
+| TNC640          | 340595 11 SP1  |       |
+| TNC640          | 340595 11 SP4  |       |
+| iTNC530         | 606425 04 SP20 |       |
+| iTNC530         | 340494 08 SP2  |       |
+| iTNC530         | 340490 05 SP6  |       |
+| iTNC530         | 340490 08 SP6  |       |
+| MANUALplus620   | 634130 02 SP7  |       |
+| CNCpilot640     | 1230521 03 SP1 |       |
+| TNC7            | 817625 17      |       |
+| MillPlusIT V600 | 538956 03 SP15 | 1, 2  |
+
+1) some tests are failing and have not been analysed yet (screendump and rw_machine_parameter)
+2) this control is not officially supported by any other Heidenhain tool but seems to be at least somewhat compatible
 
 ### Machines
-| Control     | Software       |
-|-------------|----------------|
-| TNC620      | 817605 04 SP1  |
-| TNC640      | 340595 08 SP1  |
-| iTNC530     | 340480 14 SP4  |
-| iTNC530     | 606420 02 SP14 |
-| iTNC530     | 606420 02 SP3  |
+| Control         | Software       | Notes |
+|-----------------|----------------|-------|
+| TNC620          | 817605 04 SP1  |       |
+| TNC640          | 340595 08 SP1  |       |
+| iTNC530         | 340480 14 SP4  |       |
+| iTNC530         | 606420 02 SP14 |       |
+| iTNC530         | 606420 02 SP3  |       |
 
  If you have tested it on one of your machines with a different software version, please let us know!
 
 # Tables
  Included in this library is also functionality to work with Tables used by different NC Controls. This includes for example TNC controls as well as Anilam 6000i CNC. As these controls and there software versions use different table formats, it is also possible to dreive the format form an existing table and export the format to a json file.
 
- See [tab2csv.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/demos/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
+ See [tab2csv.py](pyLSV2/scripts/tab2csv.py) for a demonstration on how to read a table and convert it to a csv file.
 
  This script can also be used as a command line tool
 ```
@@ -215,10 +226,13 @@ These changes where made intentionally to make further development easier. See t
 ```
  vermin --no-parse-comments .
 ```
- The results indicate that pyLSV2 should work with python 3.5 and even with 3.4 if you install
+ The results indicate that pyLSV2 should work with python 3.6 and even with older versions if you install
  the packported modules argparse, enum and typing. While argpares is only used in the demo script
  the other two are necessary. Therefore it should be possible to use pyLSV2 with the current version
  of [IronPython](https://ironpython.net/) if you install these two modules.
+
+# Contribution for Dummies
+[Github Contribution Tutorial](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project)
 
 # Resources
  - [protocol.rst](https://github.com/drunsinn/pyLSV2/blob/master/docs/package.rst)

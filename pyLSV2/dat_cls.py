@@ -8,9 +8,11 @@ after migration to python 3.7+ these will be changed to @dataclass!
 
 from datetime import datetime
 import struct
+import re
 from typing import List
 
 from .const import ControlType, LSV2StatusCode, ChannelType
+from .err import LSV2DataException
 
 
 class VersionInfo:
@@ -26,6 +28,8 @@ class VersionInfo:
         self.option_bits = ""
         self.id_number = ""
         self.release = ""
+
+        self._ncsw_reg = re.compile(r"(?P<base>\d{5})(?P<type>\d)(?:[ -])(?P<version>\d+)(?: (?P<sp>.*))?")
 
     def __str__(self) -> str:
         return "%s / %s" % (self.control, self.nc_sw)
@@ -57,10 +61,14 @@ class VersionInfo:
             self.type = ControlType.MILL_NEW
         elif value.startswith("TNC128"):
             self.type = ControlType.MILL_NEW
+        elif value.startswith("MANUALPLUS"):
+            self.type = ControlType.LATHE_NEW
         elif value.startswith("CNCPILOT640"):
             self.type = ControlType.LATHE_NEW
         elif value.startswith("TNC7"):
             self.type = ControlType.TNC7
+        elif value.startswith("MILLPLUS"):
+            self.type = ControlType.MILLPLUS
         else:
             self.type = ControlType.UNKNOWN
 
@@ -144,6 +152,14 @@ class VersionInfo:
         """return ``True`` if control is a CNCPILOT640"""
         return self._control_type == ControlType.LATHE_NEW
 
+    def is_manualplus(self) -> bool:
+        """return ``True`` if control is a MANUALplus620"""
+        return self._control_type == ControlType.LATHE_NEW
+
+    def is_millplus(self) -> bool:
+        """return ``True`` if control is a MillPlus"""
+        return self._control_type == ControlType.MILLPLUS
+
     def is_tnc7(self) -> bool:
         """return ```True``` if control is a TNC7"""
         return self._control_type == ControlType.TNC7
@@ -151,24 +167,38 @@ class VersionInfo:
     @property
     def nc_sw_base(self) -> int:
         """base nc software as integer"""
-        return int(self.nc_sw[:5]) * 10
+        result = self._ncsw_reg.fullmatch(self.nc_sw)
+        if result is None or "base" not in result.groupdict():
+            raise LSV2DataException("could not parse nc software base version from '%s'" % self.nc_sw)
+        return int(result.group("base")) * 10
 
     @property
     def nc_sw_type(self) -> int:
         """nc software type"""
-        return int(self.nc_sw[5:6])
+        result = self._ncsw_reg.fullmatch(self.nc_sw)
+        if result is None or "type" not in result.groupdict():
+            raise LSV2DataException("could not parse nc software type from '%s'" % self.nc_sw)
+        return int(result.group("type"))
 
     @property
     def nc_sw_version(self) -> int:
         """nc software version number"""
-        return int(self.nc_sw[7:9])
+        result = self._ncsw_reg.fullmatch(self.nc_sw)
+        if result is None or "version" not in result.groupdict():
+            raise LSV2DataException("could not parse nc software version from '%s'" % self.nc_sw)
+        return int(result.group("version"))
 
     @property
     def nc_sw_service_pack(self) -> int:
         """service pack number"""
-        if len(self.nc_sw) > 9:
-            return int(self.nc_sw[12:])
-        return 0
+        result = self._ncsw_reg.fullmatch(self.nc_sw)
+        if result is None:
+            raise LSV2DataException("could not parse service pack from '%s'" % self.nc_sw)
+        if result.group("sp") is None:
+            return 0
+        sp_str = result.group("sp").lower()
+        sp_str = sp_str.lstrip("sp")
+        return int(sp_str)
 
 
 class SystemParameters:
@@ -875,7 +905,7 @@ class DirectoryEntry:
 
     @property
     def dir_attributes(self) -> List[str]:
-        """attriutes of this directory"""
+        """attributes of this directory"""
         return self._dir_attributes
 
     @dir_attributes.setter

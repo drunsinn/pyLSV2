@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Constant values used in LSV2"""
+
 from enum import Enum, IntEnum
 
 #: enable/disable binary file transfer for C_FL and R_FL
@@ -94,6 +95,9 @@ class ControlType(Enum):
 
     TNC7 = 5
     """the TNC7 is the new control that behaves just a bit different again so we need a special case for it"""
+
+    MILLPLUS = 6
+    """the MILLPlusIT V600 is officially"""
 
 
 class Login(str, Enum):
@@ -189,6 +193,8 @@ class MemoryType(IntEnum):
     STRING = 9
     INPUT_WORD = 10
     OUTPUT_WORD = 11
+    OUTPUT_DWORD = 12
+    INPUT_DWORD = 13
 
 
 class LSV2StatusCode(IntEnum):
@@ -314,7 +320,7 @@ class LSV2StatusCode(IntEnum):
     T_USER_ERROR = 255
 
     T_ER_NON = -1
-    """not an valid error code. devault value if no error occurred"""
+    """not an valid error code. default value if no error occurred"""
 
 
 class KeyCode(IntEnum):

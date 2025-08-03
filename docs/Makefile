@@ -4,10 +4,10 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
+SPHINXBUILD   ?= uv run sphinx-build
 #SPHINXBUILD   = python3.11 -msphinx
 SOURCEDIR     = .
-BUILDDIR      = _build
+BUILDDIR      = ../dist/sphinx-build
 
 
 # Put it first so that "make" without argument is like "make help".

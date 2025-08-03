@@ -1,14 +1,12 @@
 [build-system]
-requires = ["setuptools", "wheel", "setuptools_scm[toml]>=6.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pyLSV2"
 authors = [{ name = "drunsinn", email = "dr.unsinn@googlemail.com" }]
 description = "A pure Python3 implementation of the LSV2 protocol"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 keywords = ["LSV2", "CNC", "PLC"]
 dynamic = ["version", "readme"]
 dependencies = []
@@ -31,29 +29,40 @@ lsv2scope2csv = "pyLSV2.scripts.scope2csv:main"
 lsv2tab2csv = "pyLSV2.scripts.tab2csv:main"
 lsv2cmd = "pyLSV2.scripts.cmd:main"
 
-[tool.setuptools]
-packages = [
-    "pyLSV2",
-    "pyLSV2.scripts",
-    "pyLSV2.locales.en.LC_MESSAGES",
-    "pyLSV2.locales.de.LC_MESSAGES",
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "sphinx>=7.2",
+    "myst-parser>=3.0",
+    "sphinx-autodoc-typehints>=2.3"
 ]
+lint = ["ruff>=0.9.7"]
+format = ["black>=25.0"]
+ssh = ["sshtunnel>=0.4"]
 
-[tool.setuptools.dynamic]
-version = { attr = "pyLSV2.__version__" }
-readme = { file = ["README.md"], content-type = "text/markdown" }
+[tool.hatch.version]
+path = "pyLSV2/__init__.py"
 
 [tool.black]
 line-length = 140
-target-version = ["py36"]
+target-version = ["py39"]
 include = "\\.pyi?$"
 verbose = true
+
+[tool.ruff]
+line-length = 140
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
+#addopts = "--address localhost"
 
 [tool.codespell]
 skip = "*.po,*.ts,./docs/_build,./docs/_static,./.git"
@@ -68,7 +77,7 @@ ignore-patterns = ["^\\.#"]
 jobs = 0
 limit-inference-results = 100
 persistent = true
-py-version = "3.6"
+py-version = "3.9"
 suggestion-mode = true
 
 [tool.pylint.basic]

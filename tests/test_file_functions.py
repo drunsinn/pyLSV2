@@ -5,15 +5,17 @@
 import pyLSV2
 
 
-def test_read_info(address: str, timeout: float):
+def test_read_info(address: str, timeout: float, port: int):
     """test if reading of file information works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
         mdi_path = "TNC:\\$MDI.H"
     elif lsv2.versions.is_pilot():
         mdi_path = "TNC:\\nc_prog\\ncps\\PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_path = "TNC:\\mdi\\mdi.pm"
     else:
         mdi_path = "TNC:\\nc_prog\\$mdi.h"
 
@@ -26,9 +28,9 @@ def test_read_info(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_directory_functions(address: str, timeout: float):
+def test_directory_functions(address: str, timeout: float, port: int):
     """test if functions to change, create and delete directories work"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
 
     test_dir = "TNC:\\nc_prog\\pyLSV2_test_dir_func\\"
 
@@ -52,9 +54,9 @@ def test_directory_functions(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_remote_file_functions(address: str, timeout: float):
+def test_remote_file_functions(address: str, timeout: float, port: int):
     """test if functions for manipulating the remote file system work"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     test_dir = "TNC:\\nc_prog\\pyLSV2_test_file_func\\"
@@ -65,6 +67,9 @@ def test_remote_file_functions(address: str, timeout: float):
     elif lsv2.versions.is_pilot():
         mdi_dir = "TNC:\\nc_prog\\ncps\\"
         mdi_name = "PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_dir = "TNC:\\mdi\\"
+        mdi_name = "mdi.pm"
     else:
         mdi_dir = "TNC:\\nc_prog\\"
         mdi_name = "$mdi.h"
@@ -104,15 +109,17 @@ def test_remote_file_functions(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_path_formating(address: str, timeout: float):
+def test_path_formating(address: str, timeout: float, port: int):
     """test if reading of file information with / instead of \\ as path separator"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     if lsv2.versions.is_itnc():
         mdi_path = "TNC:/$MDI.H"
     elif lsv2.versions.is_pilot():
         mdi_path = "TNC:/nc_prog/ncps/PGM01.nc"
+    elif lsv2.versions.is_millplus():
+        mdi_path = "TNC:/mdi/mdi.pm"
     else:
         mdi_path = "TNC:/nc_prog/$mdi.h"
 
@@ -121,9 +128,9 @@ def test_path_formating(address: str, timeout: float):
     lsv2.disconnect()
 
 
-def test_file_search(address: str, timeout: float):
+def test_file_search(address: str, timeout: float, port: int):
     """test if searching for files works. assumes that at least one file is present in root directory"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=True)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     result1 = len(lsv2.get_file_list(pyLSV2.DriveName.TNC, descend=False))

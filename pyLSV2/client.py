@@ -10,10 +10,10 @@ file manipulation is blocked by a lockout parameter. Use at your own risk!
 TODO: research and implement support for `self._sys_par.turbo_mode_active`
 TODO: research and implement support for `self._sys_par.dnc_mode_allowed`
 TODO: fix unknown parameter type warnings in scope function `real_time_readings`
-TODO: add wrapper for `read_plc_memory` to support addressing with named addresses like W0 or D2
 TODO: add serial mode to low level com
 
 """
+
 import logging
 import math
 import pathlib
@@ -39,7 +39,7 @@ from .err import (
 
 
 class LSV2:
-    """implements functions for communicationg with CNC controls via LSV2"""
+    """implements functions for communicating with CNC controls via LSV2"""
 
     def __init__(self, hostname: str, port: int = 0, timeout: float = 15.0, safe_mode: bool = True, compatibility_mode: bool = False):
         """
@@ -175,7 +175,8 @@ class LSV2:
                 self._logger.debug("unknown or unsupported system command %s", bytes_to_send)
                 return False
 
-        lsv_content = self._llcom.telegram(command, bytes_to_send)
+        wait_for_response = bool(expected_response is not lc.RSP.NONE)
+        lsv_content = self._llcom.telegram(command, bytes_to_send, wait_for_response)
 
         if self._llcom.last_response is lc.RSP.UNKNOWN:
             self._logger.error("unknown response received")
@@ -1279,6 +1280,16 @@ class LSV2:
             max_elements = self._sys_par.number_of_output_words
             mem_byte_count = 2
             unpack_string = "<H"
+        elif mem_type is lc.MemoryType.OUTPUT_DWORD:
+            start_address = self._sys_par.output_words_start_address
+            max_elements = self._sys_par.number_of_output_words / 4
+            mem_byte_count = 4
+            unpack_string = "<l"
+        elif mem_type is lc.MemoryType.INPUT_DWORD:
+            start_address = self._sys_par.input_words_start_address
+            max_elements = self._sys_par.number_of_input_words / 4
+            mem_byte_count = 4
+            unpack_string = "<l"
         else:
             raise LSV2InputException("unknown address type")
 
@@ -1365,6 +1376,24 @@ class LSV2:
                 "number of received values %d is not equal to number of requested %d" % (len(plc_values), number_of_elements)
             )
         return plc_values
+
+    def read_plc_address(self, address: str) -> Union[None, int, float, str]:
+        """
+        read from plc memory using the nativ addressing scheme of the control
+        Requires access level ``PLCDEBUG`` to work.
+
+        :param address: address of the plc memory location in the format used by the nc like W1090, M0 or S20
+
+        :raises LSV2InputException: if unknowns memory type is requested or if the to many elements are requested
+        :raises LSV2DataException: if number of received values does not match the number of expected
+        """
+
+        m_type, m_num = lm.decode_plc_memory_address(address)
+
+        if m_type is None or m_num is None:
+            raise LSV2InputException("could not translate address %s to valid memory location" % address)
+
+        return self.read_plc_memory(m_num, m_type, 1)[0]
 
     def set_keyboard_access(self, unlocked: bool) -> bool:
         """
@@ -1618,7 +1647,7 @@ class LSV2:
             return []
 
         if self.change_directory(path) is False:
-            self._logger.warning("could not change to directory %s" % path)
+            self._logger.warning("could not change to directory %s", path)
             return []
 
         if len(pattern) == 0:

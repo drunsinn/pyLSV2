@@ -7,9 +7,9 @@ import time
 import pyLSV2
 
 
-def test_key_press_sim(address: str, timeout: float):
+def test_key_press_sim(address: str, timeout: float, port: int):
     """test to see if reading of machine parameters works"""
-    lsv2 = pyLSV2.LSV2(address, port=19000, timeout=timeout, safe_mode=False)
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=False)
     lsv2.connect()
 
     lsv2.login(pyLSV2.Login.MONITOR)

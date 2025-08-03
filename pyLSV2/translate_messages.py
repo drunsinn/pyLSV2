@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """error code definitions and decoding, translation of status information into readable text"""
+
 import gettext
 import os
 from typing import Union

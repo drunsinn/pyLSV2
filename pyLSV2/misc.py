@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """misc helper functions for pyLSV2"""
+
 import struct
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Union, List, Dict
 
 from . import dat_cls as ld
-from .const import BIN_FILES, PATH_SEP, ControlType
+from .const import BIN_FILES, PATH_SEP, ControlType, MemoryType
 from .err import LSV2DataException
 
 
@@ -328,3 +330,50 @@ def decode_timestamp(data_set: bytearray) -> datetime:
     """
     timestamp = struct.unpack("!L", data_set[0:4])[0]
     return datetime.fromtimestamp(timestamp)
+
+
+def decode_plc_memory_address(address: str):
+    """
+    Decode memory address location from the format used by the plc program to
+    sequential representation.
+    """
+    val_num = None
+    val_type = None
+    if result := re.fullmatch(r"(?P<m_type>[MBWDSIO])(?P<s_type>[WD])?(?P<num>\d+)", address):
+        m_type = result.group("m_type")
+        s_type = result.group("s_type")
+        num = int(result.group("num"))
+        val_num = num
+
+        if m_type == "M" and s_type is None:
+            val_type = MemoryType.MARKER
+        elif m_type == "B" and s_type is None:
+            val_type = MemoryType.BYTE
+        elif m_type == "W" and s_type is None:
+            val_num = int(val_num / 2)
+            val_type = MemoryType.WORD
+        elif m_type == "D" and s_type is None:
+            val_num = int(val_num / 4)
+            val_type = MemoryType.DWORD
+        elif m_type == "I":
+            if s_type is None:
+                val_type = MemoryType.INPUT
+            elif s_type == "W":
+                val_num = int(val_num / 2)
+                val_type = MemoryType.INPUT_WORD
+            elif s_type == "D":
+                val_num = int(val_num / 4)
+                val_type = MemoryType.INPUT_DWORD
+        elif m_type == "O":
+            if s_type is None:
+                val_type = MemoryType.OUTPUT
+            elif s_type == "W":
+                val_num = int(val_num / 2)
+                val_type = MemoryType.OUTPUT_WORD
+            elif s_type == "D":
+                val_num = int(val_num / 4)
+                val_type = MemoryType.OUTPUT_DWORD
+        elif m_type == "S" and s_type is None:
+            val_type = MemoryType.STRING
+
+    return val_type, val_num

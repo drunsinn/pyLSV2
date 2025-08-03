@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-""" this is a demo script to show how to use lsv2 via an sshtunnel and paramiko
+"""this is a demo script to show how to use lsv2 via an sshtunnel and paramiko
 For this to work you have to:
 1. enable ssh connections on the control
 2. create a ssh key pair on your computer
@@ -9,6 +9,7 @@ For this to work you have to:
 5. install the python library 'sshtunnel'
 6. edit this file and set address, user name and path to the key file
 """
+
 import logging
 from sshtunnel import SSHTunnelForwarder
 import pyLSV2

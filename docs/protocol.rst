@@ -128,7 +128,7 @@ After selecting the signals, the interval and the number of readings the signals
 Scope protocol description
 ++++++++++++++++++++++++++
 For all scope functions it is necessary to log in as user ``SCOPE``.
-On conrols with TNC640 the login password is sent encrypted. It is therefore not possible to use the scope functions.
+On controls with TNC640 the login password is sent encrypted. It is therefore not possible to use the scope functions.
 
 The available channels on the control can be read by sending R_OC. Each package contains one or more signal descriptions.
 

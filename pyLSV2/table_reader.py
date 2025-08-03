@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """module with reader and writer for TNC tables"""
+
 import csv
 import json
 import logging
@@ -53,7 +54,10 @@ class NCTable:
 
     @suffix.setter
     def suffix(self, value: str):
-        self._suffix = value.lower()
+        if value is not None:
+            self._suffix = value.lower()
+        else:
+            self._suffix = None
 
     @property
     def version(self) -> str:
@@ -271,7 +275,7 @@ class NCTable:
         :param search_value: the value to check for, can be string or regular expression
         """
         search_results = []
-        if not column_name in self._columns:
+        if column_name not in self._columns:
             self._logger.error("column with name %s not part of this table", column_name)
         else:
             if isinstance(search_value, (str,)):
@@ -279,6 +283,47 @@ class NCTable:
             else:
                 search_results = [itm for itm in self._content if search_value.match(itm[column_name]) is not None]
         return search_results
+
+    @staticmethod
+    def parse_header(header_line: str) -> Dict[str, Any]:
+        """parse the first line of a table file and return the data as a dict
+
+        :param header_line: first line of the file
+        :type header_line: str
+        :raises ValueError: is raised if the header could not be parsed
+        :return: a dictionary with all the information read from the header
+        :rtype: Dict[str, Any]
+        """
+        header_data: Dict[str, Any] = {}
+        logger = logging.getLogger("NCTable header parser")
+        header_line = header_line.strip()
+        logger.debug("Checking line for header: %s", header_line)
+        result = re.fullmatch(
+            r"BEGIN (?P<name>[a-zA-Z_ 0-9-]*(?= MM|INCH|\.))(?P<suffix>\.[A-Za-z0-9\.]*)?(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)(?: Date:(?P<date>\d{4}-\d{2}-\d{2}))?\')?(?: (?P<mark>U))?",
+            header_line,
+        )
+
+        if result is None:
+            raise ValueError("File has wrong format: incorrect header: %s" % header_line)
+
+        header_data["name"] = result.group("name").strip()
+        header_data["suffix"] = None
+        if result.group("suffix") is not None:
+            header_data["suffix"] = result.group("suffix").lstrip(".")
+        header_data["version"] = result.group("version")
+        header_data["date"] = result.group("date")
+        header_data["mark"] = result.group("mark")
+        header_data["unit"] = ""
+
+        if result.group("unit") is not None:
+            if "MM" in result.group("unit"):
+                header_data["unit"] = "MM"
+            else:
+                header_data["unit"] = "INCH"
+
+        logger.debug("Header Information for table '%s'", header_data["name"])
+
+        return header_data
 
     @staticmethod
     def parse_table(table_path: pathlib.Path) -> "NCTable":
@@ -299,48 +344,18 @@ class NCTable:
             raise FileNotFoundError("Could not open file %s" % table_path)
 
         try:
-            with table_file.open(mode="r", encoding="ansi") as tfp:
-                header_line = tfp.readline().strip()
-                logger.debug("Checking line for header: %s", header_line)
-                header = re.match(
-                    r"^BEGIN (?P<name>[a-zA-Z_ 0-9]*)\.(?P<suffix>[A-Za-z0-9]{1,4})(?P<unit> MM| INCH)?(?: (Version|VERSION): \'Update:(?P<version>\d+\.\d+)(?: Date:(?P<date>\d{4}-\d{2}-\d{2}))?\')?(?P<mark> U)?$",
-                    header_line,
-                )
-
-                if header is None:
-                    raise ValueError("File has wrong format: incorrect header for file %s" % table_path)
-
-                nctable.name = header.group("name").strip()
-                nctable.suffix = header.group("suffix")
-                nctable.version = header.group("version")
-
-                if header.group("unit") is not None:
-                    nctable.has_unit = True
-                    if "MM" in header.group("unit"):
-                        nctable.is_metric = True
-                        logger.debug(
-                            'Header Information for file "%s" Name "%s", file is metric, Version: "%s"',
-                            table_file,
-                            nctable.name,
-                            nctable.version,
-                        )
-                    else:
-                        nctable.is_metric = False
-                        logger.debug(
-                            'Header Information for file "%s" Name "%s", file is inch, Version: "%s"',
-                            table_file,
-                            nctable.name,
-                            nctable.version,
-                        )
-                else:
+            with table_file.open(mode="r", encoding="latin1") as tfp:
+                header_data = NCTable.parse_header(tfp.readline())
+                nctable.name = header_data["name"]
+                nctable.suffix = header_data["suffix"]
+                nctable.version = header_data["version"]
+                if len(header_data["name"]) < 1:
                     nctable.has_unit = False
+                else:
+                    nctable.has_unit = True
                     nctable.is_metric = False
-                    logger.debug(
-                        'Header Information for file "%s" Name "%s", file has no units, Version: "%s"',
-                        table_file,
-                        nctable.name,
-                        nctable.version,
-                    )
+                    if header_data["name"] == "MM":
+                        nctable.is_metric = True
 
                 next_line = tfp.readline()
                 if "#STRUCTBEGIN" in next_line:
