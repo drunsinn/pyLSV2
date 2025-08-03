@@ -159,9 +159,11 @@ class NCTable:
             elif key == "readonly":
                 self._column_format[name]["read_only"] = value
             elif key == "key":
-                pass
+                pass # dont update key
             elif key == "width":
                 pass
+            elif key == "decimals":
+                pass # TODO work out how to store number of decimal places
             elif key == "unitIsInch":
                 self._column_format[name]["is_inch"] = value
             else:
@@ -349,24 +351,29 @@ class NCTable:
                 nctable.name = header_data["name"]
                 nctable.suffix = header_data["suffix"]
                 nctable.version = header_data["version"]
-                if len(header_data["name"]) < 1:
+                if len(header_data["unit"]) < 1:
                     nctable.has_unit = False
                 else:
                     nctable.has_unit = True
                     nctable.is_metric = False
-                    if header_data["name"] == "MM":
+                    if header_data["unit"] == "MM":
                         nctable.is_metric = True
 
                 next_line = tfp.readline()
                 if "#STRUCTBEGIN" in next_line:
+                    tab_desc = []
+                    tab_desc.append(next_line.strip())
                     in_preamble = True
                     next_line = tfp.readline()
                     while in_preamble:
+                        tab_desc.append(next_line.strip())
                         if next_line.startswith("#"):
                             in_preamble = False
                         else:
                             next_line = tfp.readline()
                     next_line = tfp.readline()
+                    table_config = NCTable.parse_table_structure(tab_desc)
+
                 elif "TableDescription" in next_line:
                     tab_desc = []
                     tab_desc.append(next_line.strip())
@@ -384,9 +391,10 @@ class NCTable:
                 column_pattern = re.compile(r"([A-Za-z-\d_:\.]+)(?:\s+)")
                 for column_match in column_pattern.finditer(next_line):
                     if column_match.group().endswith("\n"):
-                        cl_end = column_match.end() - 1
+                        cl_end = -1
                     else:
                         cl_end = column_match.end()
+
                     nctable.append_column(
                         name=column_match.group().strip(),
                         start=column_match.start(),
@@ -412,16 +420,17 @@ class NCTable:
                         cfg_column_name = c_d["CfgColumnDescription"]["key"]
                         if cfg_column_name not in nctable.column_names:
                             raise ValueError("found unexpected column %s" % cfg_column_name)
-                        if c_d["CfgColumnDescription"]["width"] != nctable.get_column_width(cfg_column_name):
-                            raise ValueError(
-                                "found difference in column width for colmun %s: %d : %d"
-                                % (
-                                    cfg_column_name,
-                                    c_d["CfgColumnDescription"]["width"],
-                                    nctable.get_column_width(cfg_column_name),
-                                )
-                            )
+                        # if c_d["CfgColumnDescription"]["width"] != nctable.get_column_width(cfg_column_name):
+                        #     print(
+                        #         "found difference in column width for colmun %s: %d : %d"
+                        #         % (
+                        #             cfg_column_name,
+                        #             c_d["CfgColumnDescription"]["width"],
+                        #             nctable.get_column_width(cfg_column_name),
+                        #         )
+                        #     )
                         nctable.update_column_format(cfg_column_name, c_d["CfgColumnDescription"])
+
 
         except UnicodeDecodeError:
             logger.error("File has invalid utf-8 encoding")
@@ -496,6 +505,50 @@ class NCTable:
                     else:
                         raise ValueError("no keyname??")
                         # last_object["value_%d" % id_counter] = line
+
+        return config_data
+
+    @staticmethod
+    def parse_table_structure(lines: list):
+        """
+        parse the old style header of a table to get the table configuration
+
+        :param list lines: list of strings cut from the table header
+        """
+        config_data = {}
+        config_data["TableDescription"] = dict()
+        config_data["TableDescription"]["columns"] = list()
+        current_obj = None
+
+        for line in lines:
+            if line.startswith("NAME = "):
+                if current_obj is not None:
+                    config_data["TableDescription"]["columns"].append(current_obj)
+                current_obj = {}
+                current_obj["CfgColumnDescription"] = dict()
+                current_obj["CfgColumnDescription"]["key"] = line.split("=")[1].strip()
+            elif line.startswith("TYPE = "):
+                type_str = line.split("=")[1].strip()
+                if type_str == "N":
+                    current_obj["CfgColumnDescription"]["unit"] = "FLOAT"
+                elif type_str == "C":
+                    current_obj["CfgColumnDescription"]["unit"] = "INT"
+                else:
+                    raise NotImplementedError("type not implemented '%s'", line)
+            elif line.startswith("WIDTH = "):
+                current_obj["CfgColumnDescription"]["width"] = int(line.split("=")[1].strip()) + 1
+            elif line.startswith("DEC = "):
+                current_obj["CfgColumnDescription"]["decimals"] = int(line.split("=")[1].strip())
+            elif line.startswith("DIA-"):
+                pass
+            elif line.startswith("#STRUCTBEGIN"):
+                pass
+            elif line.startswith("#STRUCTEND"):
+                config_data["TableDescription"]["columns"].append(current_obj)
+            elif line.startswith("*"):
+                pass
+            else:
+                raise NotImplementedError("no pattern for line '%s'", line)
 
         return config_data
 
