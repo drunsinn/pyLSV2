@@ -1,0 +1,56 @@
+BEGIN PALLETMAG.TAB MM
+TableDescription (
+  columns:= [
+    CfgColumnDescription (
+      key:="KEY",
+      width:=8,
+      unit:=INT,
+      initial:="+0",
+      minimum:="+0",
+      maximum:="+99999999",
+      unique:=TRUE,
+      readonly:=TRUE
+    ),
+    CfgColumnDescription (
+      key:="NAME",
+      width:=15,
+      unit:=TEXT,
+      unique:=FALSE,
+      readonly:=FALSE
+    ),
+    CfgColumnDescription (
+      key:="PAL_NR",
+      width:=8,
+      unit:=INT,
+      initial:="+0",
+      minimum:="+0",
+      maximum:="+9999",
+      unique:=FALSE,
+      readonly:=FALSE
+    ),
+    CfgColumnDescription (
+      key:="STATUS",
+      width:=8,
+      unit:=TEXT,
+      unique:=FALSE,
+      readonly:=FALSE
+    ),
+    CfgColumnDescription (
+      key:="PROGRAM",
+      width:=80,
+      unit:=TEXT,
+      unique:=FALSE,
+      readonly:=FALSE
+    )
+  ],
+  primaryKey:="KEY"
+)
+KEY     NAME           PAL_NR  STATUS  PROGRAM                                                                         
+0       Machine        90      Milling v:\program\4711.pm                                                              
+1       Setup          3       Busy    test.pm                                                                         
+2       Transport      47      Busy    4321.pm                                                                         
+3       Storage1       1       Reject  n9001.pm                                                                        
+4       Storage2       4       Ready   n900.pm                                                                         
+5       Storage3       +0      Empty                                                                                   
+6       Storage4       1       Empty                                                                                   
+[END]
