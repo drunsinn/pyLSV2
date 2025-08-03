@@ -159,11 +159,11 @@ class NCTable:
             elif key == "readonly":
                 self._column_format[name]["read_only"] = value
             elif key == "key":
-                pass # dont update key
+                pass  # dont update key
             elif key == "width":
                 pass
             elif key == "decimals":
-                pass # TODO work out how to store number of decimal places
+                pass  # TODO work out how to store number of decimal places
             elif key == "unitIsInch":
                 self._column_format[name]["is_inch"] = value
             else:
@@ -430,7 +430,6 @@ class NCTable:
                         #         )
                         #     )
                         nctable.update_column_format(cfg_column_name, c_d["CfgColumnDescription"])
-
 
         except UnicodeDecodeError:
             logger.error("File has invalid utf-8 encoding")

@@ -91,6 +91,7 @@ def test_header_parser():
     assert data["mark"] is None
     assert data["unit"] == "MM"
 
+
 def test_tab_read():
     # Tool table from TNC640 programming station
     files = importlib.resources.files(test_files)
@@ -188,4 +189,3 @@ def test_tab_read():
     assert tformat["column_config"]["F2"]["unit"] == "FLOAT"
     assert tformat["column_config"]["F2"]["start"] == 66
     assert tformat["column_config"]["F2"]["end"] == -1
-
