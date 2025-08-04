@@ -457,35 +457,19 @@ class LSV2:
         else:
             info_data = ld.VersionInfo()
 
-            result = self._send_recive(lc.CMD.R_VR, struct.pack("!B", lc.ParRVR.CONTROL), lc.RSP.S_VR)
+            result = self._send_recive(lc.CMD.R_VR, None, lc.RSP.S_VR)
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.control = lm.ba_to_ustr(result)
+                result_parts = result.rstrip(b"\x00").split(b"\x00")
+                if len(result_parts) != 4:
+                    raise NotImplementedError(
+                        "Version info could not be parsed from bytes '%s' because of unsupported length %d", result, len(result_parts)
+                    )
+                info_data.control = lm.ba_to_ustr(result_parts[0])
+                info_data.nc_sw = lm.ba_to_ustr(result_parts[1])
+                info_data.plc = lm.ba_to_ustr(result_parts[2])
+                info_data.option_bits = lm.ba_to_ustr(result_parts[3])
             else:
-                raise LSV2DataException("Could not read version information from control")
-
-            result = self._send_recive(
-                lc.CMD.R_VR,
-                struct.pack("!B", lc.ParRVR.NC_VERSION),
-                lc.RSP.S_VR,
-            )
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.nc_sw = lm.ba_to_ustr(result)
-
-            result = self._send_recive(
-                lc.CMD.R_VR,
-                struct.pack("!B", lc.ParRVR.PLC_VERSION),
-                lc.RSP.S_VR,
-            )
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.plc = lm.ba_to_ustr(result)
-
-            result = self._send_recive(
-                lc.CMD.R_VR,
-                struct.pack("!B", lc.ParRVR.OPTIONS),
-                lc.RSP.S_VR,
-            )
-            if isinstance(result, (bytearray,)) and len(result) > 0:
-                info_data.option_bits = lm.ba_to_ustr(result)
+                raise LSV2DataException("Could not read basic version information from control")
 
             result = self._send_recive(
                 lc.CMD.R_VR,
@@ -494,6 +478,8 @@ class LSV2:
             )
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 info_data.id_number = lm.ba_to_ustr(result)
+            else:
+                info_data.id_number = "not supported"
 
             if "itnc" in info_data.control.lower():
                 info_data.release = "not supported"
@@ -505,6 +491,8 @@ class LSV2:
                 )
                 if isinstance(result, (bytearray,)) and len(result) > 0:
                     info_data.release = lm.ba_to_ustr(result)
+                else:
+                    info_data.release = "not supported"
 
             result = self._send_recive(
                 lc.CMD.R_VR,
