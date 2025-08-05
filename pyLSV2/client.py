@@ -460,14 +460,23 @@ class LSV2:
             result = self._send_recive(lc.CMD.R_VR, None, lc.RSP.S_VR)
             if isinstance(result, (bytearray,)) and len(result) > 0:
                 result_parts = result.rstrip(b"\x00").split(b"\x00")
-                if len(result_parts) != 4:
+                if len(result_parts) == 4:
+                    info_data.control = lm.ba_to_ustr(result_parts[0])
+                    info_data.nc_sw = lm.ba_to_ustr(result_parts[1])
+                    info_data.plc = lm.ba_to_ustr(result_parts[2])
+                    info_data.option_bits = lm.ba_to_ustr(result_parts[3])
+                elif len(result_parts) == 5:
+                    info_data.control = lm.ba_to_ustr(result_parts[0])
+                    info_data.nc_sw = lm.ba_to_ustr(result_parts[1])
+                    info_data.plc = lm.ba_to_ustr(result_parts[2])
+                    #info_data.splc = lm.ba_to_ustr(result_parts[3])
+                    info_data.option_bits = lm.ba_to_ustr(result_parts[4])
+                   
+                else:
                     raise NotImplementedError(
-                        "Version info could not be parsed from bytes '%s' because of unsupported length %d", result, len(result_parts)
+                        "Version info could not be parsed from bytes '%s' because of unsupported length %d %s", result, len(result_parts), result_parts
                     )
-                info_data.control = lm.ba_to_ustr(result_parts[0])
-                info_data.nc_sw = lm.ba_to_ustr(result_parts[1])
-                info_data.plc = lm.ba_to_ustr(result_parts[2])
-                info_data.option_bits = lm.ba_to_ustr(result_parts[3])
+
             else:
                 raise LSV2DataException("Could not read basic version information from control")
 

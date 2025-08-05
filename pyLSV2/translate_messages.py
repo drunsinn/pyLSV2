@@ -38,7 +38,7 @@ def get_error_text(t_error: LSV2Error, language: str = "", locale_path: Union[st
         )
     _ = translate.gettext
 
-    if t_error.e_type != 1:
+    if t_error.e_type not in [1, -1]:
         raise NotImplementedError("Unknown error type: %d" % t_error.e_type)
     return {
         LSV2StatusCode.T_ER_BAD_FORMAT: _("LSV2_ERROR_T_ER_BAD_FORMAT"),
