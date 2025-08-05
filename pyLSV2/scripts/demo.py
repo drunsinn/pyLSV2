@@ -215,8 +215,8 @@ def scope_demo():
             selected_signals.append(availible_signals_name_dict["s ist - X"])
             selected_signals.append(availible_signals_name_dict["s ist - Y"])
             selected_signals.append(availible_signals_name_dict["s ist - Z"])
-        except:
-            print(f"The following signals are available on your control:")
+        except Exception as _:
+            print("The following signals are available on your control:")
             for key in list(availible_signals_name_dict.keys()):
                 print(key)
             exit(1)

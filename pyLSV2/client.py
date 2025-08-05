@@ -469,12 +469,15 @@ class LSV2:
                     info_data.control = lm.ba_to_ustr(result_parts[0])
                     info_data.nc_sw = lm.ba_to_ustr(result_parts[1])
                     info_data.plc = lm.ba_to_ustr(result_parts[2])
-                    #info_data.splc = lm.ba_to_ustr(result_parts[3])
+                    # info_data.splc = lm.ba_to_ustr(result_parts[3])
                     info_data.option_bits = lm.ba_to_ustr(result_parts[4])
-                   
+
                 else:
                     raise NotImplementedError(
-                        "Version info could not be parsed from bytes '%s' because of unsupported length %d %s", result, len(result_parts), result_parts
+                        "Version info could not be parsed from bytes '%s' because of unsupported length %d %s",
+                        result,
+                        len(result_parts),
+                        result_parts,
                     )
 
             else:
