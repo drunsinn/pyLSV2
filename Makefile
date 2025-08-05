@@ -13,6 +13,9 @@ lint:
 format:
 	uv run black . --config ./pyproject.toml
 
+fix_spelling:
+	uv run codespell --toml pyproject.toml
+
 build:
 	uv build
 
@@ -24,3 +27,6 @@ msgfmt:
 
 doc:
 	cd docs && $(MAKE) html
+
+
+all: lint format fix_spelling msgfmt doc build

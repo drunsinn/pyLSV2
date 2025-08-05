@@ -34,7 +34,8 @@ dev = [
     "pytest>=8.3",
     "sphinx>=7.2",
     "myst-parser>=3.0",
-    "sphinx-autodoc-typehints>=2.3"
+    "sphinx-autodoc-typehints>=2.3",
+    "codespell>=2.4",
 ]
 lint = ["ruff>=0.9.7"]
 format = ["black>=25.0"]
@@ -57,6 +58,11 @@ indent-width = 4
 quote-style = "double"
 indent-style = "space"
 
+[tool.ruff.lint]
+ignore = [
+    "F403", # wildcard import
+]
+
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
@@ -65,10 +71,10 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 #addopts = "--address localhost"
 
 [tool.codespell]
-skip = "*.po,*.ts,./docs/_build,./docs/_static,./.git"
-count = ""
+skip = ["./.*", "*.po", "./dist/*", "./download/*"]
 quiet-level = 3
-ignore-words-list = "spindel"
+ignore-words-list = ["spindel", "ist"]
+write-changes = true
 
 [tool.pylint.main]
 fail-under = 9
