@@ -7,7 +7,7 @@ import socket
 import struct
 from typing import Union
 
-from .const import CMD, RSP, LSV2StatusCode
+from .const import CMD, RSP, BYTE_STX, BYTE_ETX, BYTE_EOT, BYTE_DLE, BYTE_ENQ, BYTE_ACK, BYTE_NAK
 from .dat_cls import LSV2Error
 from .err import LSV2StateException, LSV2ProtocolException
 
@@ -250,15 +250,29 @@ class LSV2RS232:
     DEFAULT_BUFFER_SIZE = 256
     # Default size of send and receive buffer
 
-    def __init__(self, port: str, speed: int, timeout: float = 15.0):
+    def __init__(self, port: str, speed: int, timeout: float = 1.0):
         self._logger = logging.getLogger("LSV2 RS232")
         self.buffer_size = LSV2RS232.DEFAULT_BUFFER_SIZE
 
-        self._is_connected = False
+        import serial
+
+        try:
+            self._rs232 = serial.Serial(port=port, baudrate=speed, timeout=timeout)
+            self._rs232.bytesize = serial.EIGHTBITS
+            self._rs232.parity = serial.PARITY_NONE
+            self._rs232.stopbits = serial.STOPBITS_ONE
+            self._rs232.xonxoff = False  # disable software flow control
+            self._rs232.rtscts = False  # disable hardware flow control
+            self._rs232.dsrdtr = False  # disable hardware flow control
+            self._rs232.timeout = timeout
+            self._rs232.write_timeout = self.buffer_size
+
+        except serial.SerialException as err:
+            self._logger.error("serial port creation failed with error %s", err)
+            raise
+
         self._last_lsv2_response = RSP.NONE
         self._last_error = LSV2Error()
-        raise NotImplementedError()
-        # import serial
 
     @property
     def last_response(self) -> RSP:
@@ -291,13 +305,41 @@ class LSV2RS232:
         """
         Establish connection to control
         """
-        raise NotImplementedError()
+        try:
+            self._rs232.open()
+        except serial.SerialException as err:
+            self._logger.error("could not open serial port: %s", err)
+            raise
+
+        self._last_lsv2_response = RSP.NONE
+        self._last_error = LSV2Error()
+
+        self._logger.debug("Connected to serial port %s", self._rs232.port)
 
     def disconnect(self):
         """
         Close connection
         """
-        raise NotImplementedError()
+        if self._rs232 is not None:
+            self._rs232.close()
+
+        self._last_lsv2_response = RSP.NONE
+        self._last_error = LSV2Error()
+
+        self._logger.debug("Connection to %s closed", self._rs232.port)
+
+    @staticmethod
+    def calculate_bcc(payload: bytearray):
+        """helper function to calculate the block check character
+        - taken from github project Sistema-Flexivel-Heidenhain
+        """
+        result = 0
+        for character in payload:
+            if character not in [int.from_bytes(BYTE_DLE), int.from_bytes(BYTE_STX)]:
+                # dont include <DLE> and <STX> in checksum
+                result ^= character
+        # result ^= 3 # Why???? # not sure what this was supposed to do......
+        return result
 
     def telegram(
         self,
@@ -312,4 +354,141 @@ class LSV2RS232:
         :param payload: command payload
         :param wait_for_response: switch for waiting for response from control.
         """
-        raise NotImplementedError()
+
+        if self._rs232.is_open is False:
+            raise LSV2StateException("connection is not open!")
+
+        retry_counter = 0
+        while retry_counter < 3:
+            self.__rest_phase()
+            if self.__request_phase() is False:
+                if self.__transfer_phase(command, payload) is False:
+                    break
+            
+            retry_counter += 1
+        if retry_counter >= 3:
+            self._logger.error("could not send telegram after 3 retries, returning to rest phase")
+            self.__rest_phase()
+            raise LSV2StateException("could not send telegram after 3 retries")
+
+    def __rest_phase(self):
+        """
+        rest phase of transfer, nothing is sent or received
+        reset everything
+        """
+        self._rs232.reset_input_buffer()
+        self._rs232.reset_output_buffer()
+
+    def __request_phase(self):
+        """
+        request phase
+        send <ENQ> to control
+        read response
+        """
+        stat = self._rs232.write(BYTE_ENQ)
+        if stat != 1:
+            self._logger.error("could not send <ENQ> to control")
+            raise LSV2StateException("could not send <ENQ> to control")
+
+        # wait/read for response
+        ## send <ENQ>  and receive response
+        ## <DLE><0> control is ready -> start transfer phase
+        ## <NAK> control is not ready -> send <EOT> and return to rest phase
+        ## <DLE><1> control is still busy with transfer -> send <EOT> and return to rest phase
+        ## <ENQ> control also wants to send data -> postpone transmission, acknowledge receive with <DLE><0> and receive data. Only after receive is finished, retry send
+        ## X X X any other text is ignored, retry for (duration1), if no valid response is received, return to rest phase
+
+        response = self._rs232.read(self._buffer_size)
+        if len(response) == 0:
+            self._logger.error("serial connection timed out, no response received")
+            raise LSV2StateException("serial connection timed out, no response received")
+        elif len(response) == 1:
+            if response[0] == BYTE_NAK:
+                # control is not ready -> send <EOT> and return to rest phase
+                self._logger.debug("control is not ready, sending <EOT> and returning to rest phase")
+                self._rs232.write(BYTE_EOT)
+                return False
+            elif response[0] == BYTE_ENQ:
+                # control also wants to send data -> postpone transmission, acknowledge receive with <DLE><0> and receive data. Only after receive is finished, retry send
+                self._logger.debug("control also wants to send data, acknowledging with <DLE><0>")
+                payload = bytearray()
+                payload.extend(BYTE_DLE)
+                payload.extend(bytes([0x30]))  # <0> for acknowledge
+                stat = self._rs232.write(payload)
+                if stat != 2:
+                    self._logger.error("could not send <DLE><0> to control")
+                    raise LSV2StateException("could not send <DLE><0> to control")
+                return False
+            else:
+                raise LSV2ProtocolException("unexpected response received: %s" % response)
+        elif len(response) == 2:
+            if response[0] == BYTE_DLE:
+                if response[1] == 0x30:
+                    # control is ready -> start transfer phase
+                    raise NotImplementedError()
+                elif response[1] == 0x31:
+                    # control is still busy with transfer -> send <EOT> and return to rest phase
+                    raise NotImplementedError()
+                else:
+                    raise LSV2ProtocolException("unexpected response received: %s" % response)
+            else:
+                raise LSV2ProtocolException("unexpected response received: %s" % response)
+        else:
+            # any other text is ignored, retry for (duration1), if no valid response is received, return to rest phase
+            raise LSV2StateException("")
+        return True
+
+    def __transfer_phase(
+        self,
+        command: Union[CMD, RSP],
+        payload: bytearray = bytearray(),
+    ):
+        """
+        Transfer phase:
+        send <DLE><STX>Telegram<DLE><ETX>BCC
+            BCC = calculate_bcc(<DLE><STX>Telegram<DLE><ETX>)
+        receive
+            - <ACK> control acknowledges received telegram, as well as a correct BCC
+            - 3*<NAK> control is not ready, send <EOT> and return to rest phase
+            - X X X any other text is ignored, retry for (duration2), if no valid response is received, return to rest pahse
+            - nothing if nothing is received for (duration1), return to request phase. If this happens three times in a row, send <EOT> and return to rest phase
+        send <EOT> to notify control about successful transmission, return to rest phase
+        """
+
+        data = bytearray()
+        data.extend(BYTE_DLE)
+        data.extend(BYTE_STX)
+        data.extend(map(ord, command))
+        if len(payload) > 0:
+            data.extend(payload)
+        data.extend(BYTE_DLE)
+        data.extend(BYTE_ETX)
+        bcc = self.calculate_bcc(data)
+        data.extend(bcc)
+
+        # send
+        stat = self._rs232.write(data)
+        if stat != 1:
+            self._logger.error("could not send <ENQ> to control")
+            raise LSV2StateException("could not send <ENQ> to control")
+
+        # receive
+        response = self._rs232.read(self._buffer_size)
+        if len(response) == 0:
+            # nothing if nothing is received for (duration1), return to request phase. If this happens three times in a row, send <EOT> and return to rest phase
+            raise NotImplementedError()
+        elif len(response) == 1:
+            if response[0] == BYTE_ACK:
+                # control acknowledges received telegram, as well as a correct BCC
+                raise NotImplementedError()
+            else:
+                raise LSV2StateException()
+        elif len(response) == 3:
+            if response == bytearray([BYTE_NAK, BYTE_NAK, BYTE_NAK]):
+                # 3*<NAK> control is not ready, send <EOT> and return to rest phase
+                raise NotImplementedError()
+            else:
+                raise LSV2StateException("")
+        else:
+            # any other text is ignored, retry for (duration1), if no valid response is received, return to rest phase
+            raise LSV2StateException("")

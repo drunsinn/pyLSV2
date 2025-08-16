@@ -58,6 +58,14 @@ BIN_FILES = (
     ".zip",
 )
 
+# Byte constants for LSV2 protocol used in serial communication
+BYTE_STX = bytes([0x02])  # Start of Text
+BYTE_ETX = bytes([0x03])  # End of Text
+BYTE_EOT = bytes([0x04])  # End of Transmission
+BYTE_ENQ = bytes([0x05])  # Enquiry
+BYTE_ACK = bytes([0x06])  # Acknowledge
+BYTE_DLE = bytes([0x10])  # Data Link Escape
+BYTE_NAK = bytes([0x15])  # Negative Acknowledge
 
 class DriveName(str, Enum):
     """Enum for drive names found on TNC controls"""
