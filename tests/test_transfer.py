@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 """tests for file transfer functions"""
 
+import importlib
 import tempfile
 from pathlib import Path
 import hashlib
+
 import pyLSV2
+from . import test_files
 
 
 def test_file_recive(address: str, timeout: float, port: int):
@@ -38,11 +41,13 @@ def test_file_recive(address: str, timeout: float, port: int):
 
 def test_file_transfer_binary(address: str, timeout: float, port: int):
     """test if transferring a file in binary mode works"""
+    files = importlib.resources.files(test_files)
+    local_send_path = files.joinpath("testdata.bmp")
+
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
     lsv2.connect()
 
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
-        local_send_path = Path("./data/testdata.bmp")
         local_recive_path = Path(tmp_dir_name).joinpath("test.bmp")
         remote_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + local_send_path.name
 
@@ -86,11 +91,12 @@ def test_file_transfer_binary(address: str, timeout: float, port: int):
 def test_file_transfer_comp_mode(address: str, timeout: float, port: int):
     """test if transferring a file with active compatibility mode works. This is to test if transfer without
     secure file transfer works as expected."""
+    files = importlib.resources.files(test_files)
+    local_send_path = files.joinpath("testdata.bmp")
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True, compatibility_mode=True)
     lsv2.connect()
 
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
-        local_send_path = Path("./data/testdata.bmp")
         local_recive_path = Path(tmp_dir_name).joinpath("test.bmp")
         remote_path = pyLSV2.DriveName.TNC + pyLSV2.PATH_SEP + local_send_path.name
 
