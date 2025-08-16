@@ -136,3 +136,112 @@ General sequence of setting up and starting real time recording of data:
 1. select reading interval and signals with R_OP
 2. set trigger and interval (again?) with R_OD
 3. repeatedly read new data with T_OK until no more data is received
+
+
+How to set up two capture serial traffic with Wireshark
+-------------------------------------------------------
+To analyse the RS232 communication, two VMs where used.
+- one Windows XP VM with TNCremo 
+- one TNC320 VM
+
+VirtualBox can simulate serial communication over a TCP connection. This makes capturing the data much easier than using a real RS232 connection.
+
+To set up the connection, one VM has to be set up as the server and one as the client. It doesn't matter which one is the server, you only have to remember to start this VM first. The selection of the server also has implications for the captured traffic for the direction of the traffic.
+
+Setup VM1 (TNC320)
+++++++++++++++++++
+- start VM to configure the serial connection
+- enter machine parameters with key number ``123`` and set them up as follows:
+
+  - Release of the RS-232-C/V.24 interface in the file manager: ``FALSE``
+  - Data transfer rate in bauds: ``BAUD_57600`` (Default)
+  - Communications protocol: ``BLOCKWISE`` (Default)
+  - Data bits in each transferred character: ``8 Bits``
+  - Type of parity checking: ``EVEN`` (Default)
+  - Number of stop bits: ``1 Stop-Bit`` (Default)
+  - Type of data-flow checking: ``NONE``
+  - File system for file operation via serial interface: ``FE1`` (Default)
+  - Block Check Character (BCC) is not a control character: ``FALSE`` (Default)
+  - Status of the RTS line: ``FALSE`` (Default)
+  - Define behavior after receipt of ETX: ``FALSE`` (Default)
+
+- Enable Serial Port 1
+- Select Port Mode ``TCP``
+- leave ``connect to pipe/socket`` unchecked
+- enter a port number eg. ``8000`` for path/address
+This VM has to be started first, otherwise you get an error message
+
+Setup VM2 (WinXP)
++++++++++++++++++
+- Enable Serial Port 1
+- Select Port Mode ``TCP``
+- check ``connect to pipe/socket``
+- enter ``localhost:8000`` for path/address
+
+Capture data
+++++++++++++
+- Start VM1
+- Start VM2
+- Start Wireshark
+- In Wireshark, set the filter to ``port 8000`` and start the capture
+- Start TNCremo and select ``Serial connection LSV-2`` as connection type
+- In the ``Settings`` tab, select COM1 and make sure that for tansmission speed ``automatic detection`` is selected
+- Click ``Connect`` and start the communication with the control
+
+
+::
+
+   >....0x05
+   <....0x10 0x30
+   >....0x05
+   <....0x10 0x30
+   >....0x10 0x02
+   >....0x41 0x5f 0x4c 0x47 0x49 0x4e 0x53 0x50 0x45 0x43 0x54 0x00 0x10 0x03 0x40 (A_LGINSPECT0x000x100x03@)
+   <....0x10 0x31
+   >....0x04
+   <....0x05
+   >....0x10 0x30
+   <....0x10 0x02 0x54 0x5f 0x4f 0x4b 0x10 0x03 (0x100x02T_OK0x100x03) 
+   <....0x0c
+   >....0x10 0x31
+   <....0x04
+   >....0x05
+   <....0x10 0x30
+   >....0x10 0x02
+   >....0x52 0x5f 0x56 0x52 0x10 0x03 0x0a (R_VR0x100x030x01)
+   <....0x10 31
+   >....0x04
+   <....0x05
+   >....0x10 0x30
+   <....0x10 0x02 0x53 0x5f 0x56 0x52 0x54 0x4e (..S_VRTN= 
+   <....0x43 0x33 0x32 0x30 0x00 0x37 0x37 0x31 0x38 0x35 0x35 0x20 0x31 0x38 0x20 0x53 (C320.771 855 18 S)
+        0x50 0x31 0x00 0x42 0x61 0x73 0x69 0x63 0x20 0x56 0x31 0x38 0x2d 0x30 0x30 0x00 (P1.Basic  V18-00.)
+        0x4e 0x6f 0x20 0x76 0x65 0x72 0x73 0x69 0x6f 0x6e 0x20 0x67 0x69 0x76 0x65 0x6e (No versi on given)
+        0x00 0x30 0x30 0x30 0x30 0x30 0x30 0x30 0x31 0x30 0x30 0x30 0x30 0x30 0x31 0x30 (.0000000 10000010)
+        0x30 0x00 0x10 0x03 0x71 (0...q)
+   >....0x10 0x31
+   <....0x04
+   >....0x05
+   <....0x10 0x30
+   >....0x10 0x02
+   >....0x52 0x5f 0x50 0x52 0x10 0x03 0x0c (R_PR...)
+   <....0x10
+   <....0x31
+   >....0x04
+   <....0x05
+
+
+
+
+Findings for serial communication
+---------------------------------
+Each telegram is enclosed in one or more control characters. Besides signaling the start an end of a telegram, they also indicate the state or intention of the sender.
+
+Compared to the Ethernet communication, LSV-2 over serial does not indicate the length of the telegram. Instead, controlcharacters are used to indicate the end of a telegram.
+
+BCC check sum character
++++++++++++++++++++++++
+In addition to the control characters, each telegram is also protected by a checksum. The checksum is calculated over the payload of the telegram by XORing all bytes of the payload and is sent as the last byte of the telegram.
+
+The implementation of the BCC calculation was taken from the [Sistema-Flexivel-Heidenhain](https://github.com/pcosta18/Sistema-Flexivel-Heidenhain-) by pcosta18.
+
