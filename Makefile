@@ -1,14 +1,6 @@
-test-101:
-	uv run pytest --timeout 2.0 --address 192.168.56.101
 
-test-102:
-	uv run pytest --timeout 2.0 --address 192.168.56.102
-
-test-103:
-	uv run pytest --timeout 2.0 --address 192.168.56.103
-
-test-104:
-	uv run pytest --timeout 2.0 --address 192.168.56.104
+test-ip:
+	uv run pytest --timeout 5.0 --address $(IP)
 
 lint:
 	uv run ruff check
@@ -28,3 +20,6 @@ msgfmt:
 
 doc:
 	cd docs && $(MAKE) html
+
+.PHONY: 
+
