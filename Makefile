@@ -3,11 +3,11 @@ test-ip:
 	uv run pytest --timeout 5.0 --address $(IP)
 
 lint:
-	uv run ruff check
+	uvx ruff check --fix --config ./pyproject.toml .
 
 format:
 #	uv run ruff format
-	uv run black . --config ./pyproject.toml
+	uvx black . --config ./pyproject.toml
 
 build:
 	uv build

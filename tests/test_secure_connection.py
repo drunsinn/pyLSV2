@@ -9,14 +9,15 @@ from sshtunnel import SSHTunnelForwarder, BaseSSHTunnelForwarderError
 import pyLSV2
 from . import test_files
 
+
 @pytest.mark.skip(reason="no way of currently testing this")
 def test_ssh_tunnel(address: str, timeout: float, port: int):
     """test if establishing a connection via ssh tunnel
 
     To create the ssh key pair for this test, run the following command in the base directory of this project:
-    
+
     ```ssh-keygen -C "user@pyLSV2" -f pyLSV2_test -N "pyLSV2" -f ./tests/test_files/pyLSV2_test```
-    
+
     After that, copy the public key (pyLSV2_test.pub) to the control and use the user settings to add the public key to the authorized keys of the user.
     """
     files = importlib.resources.files(test_files)
