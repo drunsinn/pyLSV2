@@ -67,6 +67,11 @@ BYTE_ACK = bytes([0x06])  # Acknowledge
 BYTE_DLE = bytes([0x10])  # Data Link Escape
 BYTE_NAK = bytes([0x15])  # Negative Acknowledge
 
+
+BYTES_DLE0 = bytearray(BYTE_DLE + b"\x30")
+BYTES_DLE1 = bytearray(BYTE_DLE + b"\x31")
+
+
 class DriveName(str, Enum):
     """Enum for drive names found on TNC controls"""
 
