@@ -144,3 +144,7 @@ docs/README.md
 
 uv.lock
 download/
+
+# Public and private keys for testing with ssh encryption
+tests/test_files/pyLSV2_test
+tests/test_files/pyLSV2_test.pub
