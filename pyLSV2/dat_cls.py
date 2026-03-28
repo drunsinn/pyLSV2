@@ -232,7 +232,7 @@ class SystemParameters:
 
         self.lsv2_version = -1
         self.lsv2_version_flags = -1
-        self.sv2_version_flags_ex = -1
+        self.lsv2_version_flags_ex = -1
 
         self.max_block_length = -1
 
