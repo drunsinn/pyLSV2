@@ -1,17 +1,18 @@
-test-101:
-	uv run pytest --timeout 2.0 --address 192.168.56.101
 
 test-102:
 	uv run pytest --timeout 2.0 --address 192.168.56.102
 
 test-activ-vm:
 	tests/run_test_on_vm.sh
+test-ip:
+	uv run pytest --timeout 5.0 --address $(IP)
 
 lint:
-	uv run ruff check
+	uvx ruff check --fix --config ./pyproject.toml .
 
 format:
-	uv run black . --config ./pyproject.toml
+#	uv run ruff format
+	uvx black . --config ./pyproject.toml
 
 fix_spelling:
 	uv run codespell --toml pyproject.toml
