@@ -214,6 +214,12 @@ These changes where made intentionally to make further development easier. See t
    -v, --verbose         enable log level INFO
 ```
 
+# Setup dev environment
+```
+ uv python pin 3.9
+ uv sync --group serial --group ssh --group lint --group format
+```
+
 # Testing
  To run the test you either need a machine or a programming station. The control has to be on and the 
  PLC program has to be running. The IP address and timeout are set via command line parameters.
@@ -239,3 +245,4 @@ These changes where made intentionally to make further development easier. See t
  - https://www.inventcom.net/support/heidenhain/read-tnc-plc-data
  - https://www.inventcom.net/s1/_pdf/Heidenhain_TNC_Machine_Data.pdf
  - https://www.yumpu.com/en/document/read/18882603/-f-heidenhain
+ - [Sistema Flexivel Heidenhain](https://github.com/pcosta18/Sistema-Flexivel-Heidenhain-)
