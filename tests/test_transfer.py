@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """tests for file transfer functions"""
 
-import importlib
+from importlib import resources as res
 import tempfile
 from pathlib import Path
 import hashlib
@@ -41,7 +41,7 @@ def test_file_recive(address: str, timeout: float, port: int):
 
 def test_file_transfer_binary(address: str, timeout: float, port: int):
     """test if transferring a file in binary mode works"""
-    files = importlib.resources.files(test_files)
+    files = res.files(test_files)
     local_send_path = files.joinpath("testdata.bmp")
 
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
@@ -91,7 +91,7 @@ def test_file_transfer_binary(address: str, timeout: float, port: int):
 def test_file_transfer_comp_mode(address: str, timeout: float, port: int):
     """test if transferring a file with active compatibility mode works. This is to test if transfer without
     secure file transfer works as expected."""
-    files = importlib.resources.files(test_files)
+    files = res.files(test_files)
     local_send_path = files.joinpath("testdata.bmp")
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True, compatibility_mode=True)
     lsv2.connect()

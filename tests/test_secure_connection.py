@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """tests for lsv2 over ssh tunnel"""
 
-import importlib
+from importlib import resources as res
 import pytest
 from sshtunnel import SSHTunnelForwarder, BaseSSHTunnelForwarderError
 
@@ -10,7 +10,7 @@ import pyLSV2
 from . import test_files
 
 
-@pytest.mark.skip(reason="no way of currently testing this")
+@pytest.mark.ssh(reason="no way of currently testing this")
 def test_ssh_tunnel(address: str, timeout: float, port: int):
     """test if establishing a connection via ssh tunnel
 
@@ -20,7 +20,7 @@ def test_ssh_tunnel(address: str, timeout: float, port: int):
 
     After that, copy the public key (pyLSV2_test.pub) to the control and use the user settings to add the public key to the authorized keys of the user.
     """
-    files = importlib.resources.files(test_files)
+    files = res.files(test_files)
     priv_key = files.joinpath("pyLSV2_test")
 
     ssh_forwarder = SSHTunnelForwarder(
