@@ -7,7 +7,7 @@ import socket
 import struct
 from typing import Union
 
-from .const import CMD, RSP, BYTE_STX, BYTE_ETX, BYTE_EOT, BYTE_DLE, BYTE_ENQ, BYTE_ACK, BYTE_NAK, BYTES_DLE0, BYTES_DLE1
+from .const import CMD, RSP, BYTE_STX, BYTE_ETX, BYTE_EOT, BYTE_DLE, BYTE_ENQ, BYTE_NAK, BYTES_DLE0, BYTES_DLE1
 from .dat_cls import LSV2Error
 from .err import LSV2StateException, LSV2ProtocolException
 
@@ -284,7 +284,7 @@ class LSV2RS232:
     @property
     def last_response(self) -> RSP:
         """get the response to the last telegram"""
-        return self._last_lsv2_responses
+        return self._last_lsv2_response
 
     @property
     def last_error(self) -> LSV2Error:
@@ -337,30 +337,30 @@ class LSV2RS232:
 
         self._logger.debug("Connection to %s closed", self._rs232.port)
 
-    def calculate_bcc(self, payload: Union[bytes, bytearray]) -> bytes:
+    def calculate_bcc(self, payload: bytearray) -> int:
         """helper function to calculate the block check character
         - taken from github project Sistema-Flexivel-Heidenhain
         """
-        if isinstance(payload, bytes):
-            payload = bytearray(payload)
-
         result = 0
-        for character in payload:
-            if character not in [int.from_bytes(BYTE_DLE), int.from_bytes(BYTE_STX)]:
+
+        for i, character in enumerate(payload):
+            if character in [BYTE_DLE, BYTE_STX]:
+                if i not in [0, 1, len(payload) - 2]:
+                    result ^= character
                 # dont include <DLE> and <STX> in checksum
+            else:
                 result ^= character
-        self._logger.debug("BCC for payload %s: %s", payload, hex(result))
-        return bytes([result])
+        # self._logger.debug("BCC for payload %s: %s", payload, hex(result))
+        return result
 
     def _send_handshake(self, count: int = 3):
         """send handshake to control and wait for response"""
         for i in range(count):
-            payload = bytearray()
-            payload.extend(BYTE_ENQ)
-            self._rs232.write(payload)
-            if (response := self._rs232.read(self.buffer_size)) != BYTES_DLE0:
-                raise LSV2StateException("Unexpected response %s to payload %s", response, payload)
-        self._logger.debug("Handshake successful after %d tries", count)
+            self._rs232.write(bytearray((BYTE_ENQ,)))
+            response = bytearray(self._rs232.read(self.buffer_size))
+            if response != BYTES_DLE0:
+                raise LSV2StateException("Unexpected handshake response %s" % (response))
+        self._logger.debug("%d successful handshakes" % count)
 
     def telegram(
         self,
@@ -379,12 +379,18 @@ class LSV2RS232:
         if not self._rs232.is_open:
             raise LSV2StateException("connection is not open!")
 
+        if len(payload) > 0 and payload[-1] == 0x00:
+            self._logger.debug("stripp trailing zero byte of payload '%s' for rs232" % payload)
+            payload = payload[:-1]
+
+        data = None
         retry_counter = 0
         while retry_counter < 3:
             self._rest_phase()
             if self._request_phase() is not False:
                 if self._transfer_phase(command, payload) is not False:
-                    if self._response_phase() is not None:
+                    data = self._response_phase()
+                    if data is not None:
                         break
 
             retry_counter += 1
@@ -392,6 +398,7 @@ class LSV2RS232:
             self._logger.error("could not send telegram after 3 retries, returning to rest phase")
             self._rest_phase()
             raise LSV2StateException("could not send telegram after 3 retries")
+        return data
 
     def _rest_phase(self):
         """
@@ -405,14 +412,14 @@ class LSV2RS232:
         """
         Request phase
         send <ENQ>
-        response <DLE><0x30> control is ready to recive data
+        response <DLE><0x30> control is ready to receive data
         """
-        stat = self._rs232.write(BYTE_ENQ)
+        stat = self._rs232.write(bytearray((BYTE_ENQ,)))
         if stat != 1:
             self._logger.error("could not send <ENQ> to control")
             return False
 
-        response = self._rs232.read(self._buffer_size)
+        response = bytearray(self._rs232.read(self._buffer_size))
 
         if len(response) == 0:
             raise NotImplementedError()
@@ -437,49 +444,61 @@ class LSV2RS232:
     ):
         """
         Transfer phase:
-        send <DLE><STX>Telegram<DLE><ETX>BCC
-        receive <DLE><0x31> control recived data successfully
-        send <EOT> to notify control about successful transmission, return to rest phase
+        send
+            <DLE><STX>Telegram<DLE><ETX>BCC
+        receive
+            <DLE><0x31> control received data successfully send <EOT> to notify control about successful transmission, return to rest phase
+            <NAK> control is not ready to receive or data was incorrect, send <EOT> and return to rest phase
         """
 
         data = bytearray()
-        data.extend(BYTE_DLE)
-        data.extend(BYTE_STX)
+        data.extend((BYTE_DLE, BYTE_STX))
         data.extend(bytearray(map(ord, command)))
         if len(payload) > 0:
             data.extend(payload)
-        data.extend(BYTE_DLE)
-        data.extend(BYTE_ETX)
+        data.extend((BYTE_DLE, BYTE_ETX))
         bcc = self.calculate_bcc(data)
-        data.extend(bcc)
+        data.append(bcc)
 
         # send command
+        self._logger.debug("data ready to send: '%s'" % data)
         stat = self._rs232.write(data)
         if stat != len(data):
             self._logger.error("could not send command with payload to control")
             # raise LSV2StateException("could not send <ENQ to control")
             return False
 
+        next_phase = False
         # receive
-        response = self._rs232.read(self._buffer_size)
-        if response != BYTES_DLE1:
-            raise LSV2ProtocolException("recived unexpected response during transphere phase '%s'" % response)
+        response = bytearray(self._rs232.read(self._buffer_size))
+        if len(response) == 2:
+            if response == BYTES_DLE1:
+                next_phase = True
+            else:
+                raise LSV2ProtocolException("received unexpected response during transphere phase '%s'" % response)
+        elif len(response) == 1:
+            if response[0] == BYTE_NAK:
+                self._logger.info("Received <NAK>, return to rest phase")
+            else:
+                raise NotImplementedError()
 
         # send EOT to finish up transfer phase
-        self._rs232.write(BYTE_EOT)
-        response = self._rs232.read(self._buffer_size)
-        if response != BYTE_ENQ:
-            raise LSV2ProtocolException("did not recive correct response during end of transfer pahse '%s'" % response)
+        self._rs232.write(bytearray((BYTE_EOT,)))
+        response = bytearray(self._rs232.read(self._buffer_size))
+        self._logger.debug("received response %s with length %d to end of transfer phase" % (response, len(response)))
+        if len(response) != 1 and response[0] == BYTE_ENQ:
+            self._logger.warning("did not receive correct response during end of transfer phase '%s'" % response)
+            next_phase = False
 
-        return True
+        return next_phase
 
     def _response_phase(self):
         """
         Response phase
         send <DLE><0x30>
-        recive <DLE><STX>Telegram<DLE><ETX>BCC
+        receive <DLE><STX>Telegram<DLE><ETX>BCC
         send <DLE><0x31>
-        recive <EOT>
+        receive <EOT>
         """
 
         self._last_lsv2_response = RSP.NONE
@@ -489,15 +508,53 @@ class LSV2RS232:
             self._logger.error("could not send <ENQ> to control")
             return False
 
-        response = self._rs232.read(self._buffer_size)
-        if response[-1] != int.from_bytes(self.calculate_bcc(response[:-1])):
-            raise Exception("Checksum error for response %s", response)
+        response = bytearray(self._rs232.read(self._buffer_size))
+        if len(response) < (2 + 4 + 2 + 1):
+            raise Exception("response to short %s" % response)
+
+        bcc = response[-1]
+        corrected_response = self._strip_escaped_bytes(response[:-1])
+
+        # self._logger.debug("response_data %s" % (data))
+        # self._logger.debug("end_code is %s, total size %d" % (corrected_response[-3:], len(corrected_response)))
+
+        if bcc != self.calculate_bcc(corrected_response):
+            self._logger.warning(
+                "Checksum error: received %d calculated %d for data %s" % (bcc, self.calculate_bcc(corrected_response), corrected_response)
+            )
+        else:
+            self._logger.debug("checksum of response content is correct")
+
+        self._last_lsv2_response = RSP(corrected_response[2:6].decode(encoding="ascii", errors="strict"))
+        self._logger.debug("received response header %s" % self._last_lsv2_response)
+
+        data = corrected_response[6:-2]
+        # self._logger.debug("data after strip: %s" % data)
 
         # confirm received data
         # send EOT to finish up transfer phase
         self._rs232.write(BYTES_DLE1)
-        response = self._rs232.read(self._buffer_size)
-        if response != BYTE_EOT:
-            raise LSV2ProtocolException("did not recive correct response during end of transfer pahse '%s'" % response)
+        response = bytearray(self._rs232.read(self._buffer_size))
+        if len(response) != 1 and response[0] == BYTE_EOT:
+            raise LSV2ProtocolException("did not receive correct response during end of transfer pahse '%s'" % response)
 
-        return True
+        self._logger.debug("received response '%s' with data %s" % (self._last_lsv2_response, corrected_response))
+
+        return data
+
+    def _strip_escaped_bytes(self, payload: bytearray) -> bytearray:
+        result = bytearray()
+        if len(payload) < 2:
+            self._logger.debug("nothing to do for striping of bytes")
+        else:
+            for i, _ in enumerate(payload[:-1]):
+                if payload[i] == BYTE_DLE:
+                    if payload[i + 1] != BYTE_DLE:
+                        result.append(payload[i])
+                    else:
+                        self._logger.debug("found duplicated byte %s at position %d" % (payload[i], i))
+                else:
+                    result.append(payload[i])
+            result.append(payload[-1])
+            self._logger.debug("corrected length is %d, was %d" % (len(result), len(payload)))
+        return result

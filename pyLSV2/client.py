@@ -29,7 +29,7 @@ from . import dat_cls as ld
 from . import misc as lm
 from . import misc_scope as lms
 from . import translate_messages as lt
-from .low_level_com import LSV2TCP
+from .low_level_com import LSV2TCP, LSV2RS232
 from .err import (
     LSV2DataException,
     LSV2InputException,
@@ -41,7 +41,9 @@ from .err import (
 class LSV2:
     """implements functions for communicating with CNC controls via LSV2"""
 
-    def __init__(self, hostname: str, port: int = 0, timeout: float = 15.0, safe_mode: bool = True, compatibility_mode: bool = False):
+    def __init__(
+        self, hostname: str, port: int = 0, timeout: float = 15.0, safe_mode: bool = True, compatibility_mode: bool = False, **kwargs
+    ):
         """
         Implementation of the LSV2 protocol used to communicate with certain CNC controls
 
@@ -53,7 +55,13 @@ class LSV2:
         """
         self._logger = logging.getLogger("LSV2 Client")
 
-        self._llcom = LSV2TCP(hostname, port, timeout)
+        if hostname != "":
+            self._llcom = LSV2TCP(hostname, port=port, timeout=timeout)
+        else:
+            if "ser_speed" in kwargs:
+                self._llcom = LSV2RS232(kwargs["ser_url"], speed=kwargs["ser_speed"], timeout=timeout)
+            else:
+                self._llcom = LSV2RS232(kwargs["ser_url"], speed=57600, timeout=timeout)
 
         self._active_logins = []
 
@@ -147,7 +155,7 @@ class LSV2:
         """
         Takes a command and optional payload, sends it to the control and checks if the next telegram contains the
         expected response. If the correct response is received, returns response content if available, or ``True`` if
-        no content was received. Otherwiese returns ``False`` on error.
+        no content was received. Otherwise returns ``False`` on error.
 
         Use :py:attr:`~pyLSV2.LSV2.last_error` to check the cause of the last error.
 
@@ -217,7 +225,7 @@ class LSV2:
         """
         Takes a command and optional payload, sends it to the control and continues reading telegrams until a
         telegram contains the expected response or an error response. If the correct response is received, returns
-        the accumulated response content. Otherwiese returns ``False`` on error.
+        the accumulated response content. Otherwise returns ``False`` on error.
 
         Use :py:attr:`~pyLSV2.LSV2.last_error` to check the cause of the last error.
 
