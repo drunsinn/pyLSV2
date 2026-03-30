@@ -337,7 +337,7 @@ class LSV2RS232:
 
         self._logger.debug("Connection to %s closed", self._rs232.port)
 
-    def calculate_bcc(self, payload: bytes | bytearray) -> bytes:
+    def calculate_bcc(self, payload: Union[bytes, bytearray]) -> bytes:
         """helper function to calculate the block check character
         - taken from github project Sistema-Flexivel-Heidenhain
         """
