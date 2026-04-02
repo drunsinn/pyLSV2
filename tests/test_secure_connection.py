@@ -2,11 +2,7 @@
 # -*- coding: utf-8 -*-
 """tests for lsv2 over ssh tunnel"""
 
-try:
-    import importlib.resources as importlib_resources
-except (ImportError, AttributeError):
-    import importlib_resources
-
+import importlib
 import pytest
 from sshtunnel import SSHTunnelForwarder, BaseSSHTunnelForwarderError
 
@@ -24,7 +20,7 @@ def test_ssh_tunnel(address: str, timeout: float, port: int):
 
     After that, copy the public key (pyLSV2_test.pub) to the control and use the user settings to add the public key to the authorized keys of the user.
     """
-    files = importlib_resources.files(test_files)
+    files = importlib.resources.files(test_files)
     priv_key = files.joinpath("pyLSV2_test")
 
     ssh_forwarder = SSHTunnelForwarder(
