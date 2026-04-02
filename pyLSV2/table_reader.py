@@ -329,11 +329,12 @@ class NCTable:
 
     @staticmethod
     def parse_table(table_path: pathlib.Path) -> "NCTable":
-        """Parse a file of one of the common table formats
+        """Parse a file of one of the common table formats.
 
-        :param str or Path table_path: Path to the table file
+        :param table_path: path to a table file (Path-like object)
+        :type table_path: pathlib.Path
 
-        :returns: list of dictionaries. key is the column name, value the content of the table cell
+        :returns: NCTable object containing parsed rows and columns
         :rtype: NCTable
         """
         logger = logging.getLogger("NCTable parser")
@@ -436,11 +437,14 @@ class NCTable:
         return nctable
 
     @staticmethod
-    def parse_table_description(lines: list):
-        """
-        parse the header of a table to get the table configuration
+    def parse_table_description(lines: List[str]) -> Dict[str, Any]:
+        """Parse a table description section from the header into config data.
 
-        :param list lines: list of strings cut from the table header
+        :param lines: lines from the table description header section
+        :type lines: list[str]
+
+        :returns: parsed nested dictionary representation of the table description
+        :rtype: dict
         """
         config_data = {}
         object_list = []
@@ -508,11 +512,14 @@ class NCTable:
         return config_data
 
     @staticmethod
-    def parse_table_structure(lines: list):
-        """
-        parse the old style header of a table to get the table configuration
+    def parse_table_structure(lines: List[str]) -> Dict[str, Any]:
+        """Parse the old-style table structure header into config data.
 
-        :param list lines: list of strings cut from the table header
+        :param lines: lines from #STRUCTBEGIN/#STRUCTEND table description block
+        :type lines: list[str]
+
+        :returns: parsed `TableDescription` config dict
+        :rtype: dict
         """
         config_data = {}
         config_data["TableDescription"] = dict()
