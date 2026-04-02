@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pyLSV2
 
-
 __author__ = "Md-aliy7 & drunsinn"
 __license__ = "MIT"
 __version__ = "1.0"

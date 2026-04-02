@@ -7,7 +7,7 @@ import socket
 import struct
 from typing import Union
 
-from .const import CMD, RSP, LSV2StatusCode
+from .const import CMD, RSP
 from .dat_cls import LSV2Error
 from .err import LSV2StateException, LSV2ProtocolException
 

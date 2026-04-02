@@ -11,7 +11,6 @@ from . import misc as lm
 from . import dat_cls as ld
 from .err import LSV2DataException
 
-
 logger = logging.getLogger("LSV2 Client Scope")
 
 
