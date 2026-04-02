@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 """tests for reading file system information"""
 
-import pytest
-import importlib
-
 import pyLSV2
 
 
@@ -43,10 +40,11 @@ def test_serial_bcc():
     assert bcc == 68
 
 
-@pytest.mark.skipif(not importlib.util.find_spec("serial"), reason="requires the pyserial library")
+# @pytest.mark.skip()
+# @pytest.mark.skipif(not importlib.util.find_spec("serial"), reason="requires the pyserial library")
 def test_serial_version_read(address: str, timeout: float, port: int):
     """test if establishing a connection via rs232 works"""
-    lsv2 = pyLSV2.LSV2(hostname="", port=port, timeout=timeout, safe_mode=True, ser_url="socket://localhost:8888")
+    lsv2 = pyLSV2.LSV2(hostname="", port=port, timeout=0.5, safe_mode=True, ser_url="socket://localhost:8888")
     lsv2.connect()
     assert (len(lsv2.versions.control) > 1) is True
 
@@ -56,4 +54,3 @@ def test_serial_version_read(address: str, timeout: float, port: int):
     assert isinstance(lsv2.versions.nc_sw_service_pack, int)
 
     lsv2.disconnect()
-

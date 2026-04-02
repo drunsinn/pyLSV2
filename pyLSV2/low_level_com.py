@@ -254,6 +254,13 @@ class LSV2RS232:
         self._logger = logging.getLogger("LSV2 RS232")
         self.buffer_size = LSV2RS232.DEFAULT_BUFFER_SIZE
 
+        if timeout <= 0:
+            self._logger.warning("timeout value %f is to low, set to default of 1.0 seconds", timeout)
+            timeout = 1.0
+        elif timeout > 3.0:
+            self._logger.warning("timeout value %f is to high, set to default of 1.0 seconds", timeout)
+            timeout = 1.0
+
         try:
             import serial
 
@@ -267,7 +274,7 @@ class LSV2RS232:
             # self._rs232.timeout = timeout
 
             # self._rs232 = serial.serial_for_url(url=port, baudrate=speed, timeout=timeout, do_not_open=True)
-            self._rs232 = serial.serial_for_url(url=port, timeout=timeout, do_not_open=True)
+            self._rs232 = serial.serial_for_url(url=port, timeout=timeout, do_not_open=True, baudrate=9600)
         except ImportError:
             self._logger.error("pyserial library not installed. Install with: pip install pyserial")
             raise
@@ -339,18 +346,16 @@ class LSV2RS232:
 
     def calculate_bcc(self, payload: bytearray) -> int:
         """helper function to calculate the block check character
-        - taken from github project Sistema-Flexivel-Heidenhain
+        - taken and adapted from github project Sistema-Flexivel-Heidenhain
         """
         result = 0
-
         for i, character in enumerate(payload):
+            # dont include <DLE> and <STX> in checksum but only if they are in first, second and second to last place
             if character in [BYTE_DLE, BYTE_STX]:
                 if i not in [0, 1, len(payload) - 2]:
                     result ^= character
-                # dont include <DLE> and <STX> in checksum
             else:
                 result ^= character
-        # self._logger.debug("BCC for payload %s: %s", payload, hex(result))
         return result
 
     def _send_handshake(self, count: int = 3):
@@ -379,18 +384,18 @@ class LSV2RS232:
         if not self._rs232.is_open:
             raise LSV2StateException("connection is not open!")
 
-        if len(payload) > 0 and payload[-1] == 0x00:
-            self._logger.debug("stripp trailing zero byte of payload '%s' for rs232" % payload)
-            payload = payload[:-1]
+        # if len(payload) > 0 and payload[-1] == 0x00:
+        #    self._logger.debug("stripp trailing zero byte of payload '%s' for rs232" % payload)
+        #    payload = payload[:-1]
 
-        data = None
+        response_content = None
         retry_counter = 0
         while retry_counter < 3:
             self._rest_phase()
             if self._request_phase() is not False:
                 if self._transfer_phase(command, payload) is not False:
-                    data = self._response_phase()
-                    if data is not None:
+                    response_content = self._response_phase()
+                    if response_content is not None:
                         break
 
             retry_counter += 1
@@ -398,7 +403,17 @@ class LSV2RS232:
             self._logger.error("could not send telegram after 3 retries, returning to rest phase")
             self._rest_phase()
             raise LSV2StateException("could not send telegram after 3 retries")
-        return data
+
+        self._last_error = LSV2Error()
+        if self._last_lsv2_response in [RSP.T_ER, RSP.T_BD]:
+            if len(response_content) == 2:
+                self._last_error = LSV2Error.from_ba(response_content)
+            elif len(response_content) == 0:
+                self._last_error.e_type = 1
+            else:
+                raise Exception(response_content)
+
+        return response_content
 
     def _rest_phase(self):
         """
@@ -408,34 +423,30 @@ class LSV2RS232:
         self._rs232.reset_input_buffer()
         self._rs232.reset_output_buffer()
 
-    def _request_phase(self):
+    def _request_phase(self) -> bool:
         """
-        Request phase
+        Request phase - Has to be run bevor every telegram
         send <ENQ>
         response <DLE><0x30> control is ready to receive data
         """
         stat = self._rs232.write(bytearray((BYTE_ENQ,)))
         if stat != 1:
-            self._logger.error("could not send <ENQ> to control")
+            self._logger.error("could not send <ENQ> to control. Status code is %s" % (stat))
             return False
 
+        next_phase = False
         response = bytearray(self._rs232.read(self._buffer_size))
-
-        if len(response) == 0:
-            raise NotImplementedError()
-        elif len(response) == 1:
-            raise NotImplementedError()
-        elif len(response) == 2:
-            if response == BYTES_DLE0:
-                # control is ready -> start transfer phase
-                return True
-            else:
-                raise LSV2ProtocolException("unexpected response received: %s" % response)
+        if len(response) == 2 and response == BYTES_DLE0:
+            # control is ready -> start transfer phase
+            next_phase = True
+            # else:
+            #    raise LSV2ProtocolException("unexpected response received: %s" % response)
         else:
-            raise NotImplementedError()
+            self._logger.warning("unexpected response %s with length %d received durng request phase" % (response, len(response)))
             # any other text is ignored, retry for (duration1), if no valid response is received, return to rest phase
-            raise LSV2StateException("")
-        return False
+            # raise LSV2StateException("")
+        self._logger.debug("finished request phase with status %s" % next_phase)
+        return next_phase
 
     def _transfer_phase(
         self,
@@ -449,47 +460,69 @@ class LSV2RS232:
         receive
             <DLE><0x31> control received data successfully send <EOT> to notify control about successful transmission, return to rest phase
             <NAK> control is not ready to receive or data was incorrect, send <EOT> and return to rest phase
+        end by sending <EOT> which has to be acknowledged with <ENQ>
         """
 
+        # prepare data package
         data = bytearray()
         data.extend((BYTE_DLE, BYTE_STX))
         data.extend(bytearray(map(ord, command)))
         if len(payload) > 0:
-            data.extend(payload)
+            data.extend(self._escape_dle_bytes(payload))
         data.extend((BYTE_DLE, BYTE_ETX))
         bcc = self.calculate_bcc(data)
         data.append(bcc)
 
-        # send command
-        self._logger.debug("data ready to send: '%s'" % data)
+        # send data
+        self._logger.debug("begin transfer phase by sending command with payload and checksum '%s' length is %d" % (data, len(data)))
         stat = self._rs232.write(data)
+
         if stat != len(data):
-            self._logger.error("could not send command with payload to control")
-            # raise LSV2StateException("could not send <ENQ to control")
+            self._logger.error(
+                "could not send data via rs232, this is likely a local error and not necessary something to do with the control. Status code %s"
+                % stat
+            )
             return False
 
+        # receive response to command
         next_phase = False
-        # receive
         response = bytearray(self._rs232.read(self._buffer_size))
-        if len(response) == 2:
+        # self._logger.debug("received response %s to start of transfer phase" % response)
+        if len(response) == 0:
+            self._logger.error("received empty response during transfer phase")
+        if len(response) == 1:
+            if response[0] == BYTE_NAK:
+                self._logger.warning("received <NAK>, return to rest phase")
+            else:
+                self._logger.warning("received unexpected response of length 1 during transfere phase '%s'" % response)
+        elif len(response) == 2:
             if response == BYTES_DLE1:
+                self._logger.debug("received <DLE><0x31>, data was received successfully")
                 next_phase = True
             else:
-                raise LSV2ProtocolException("received unexpected response during transphere phase '%s'" % response)
-        elif len(response) == 1:
-            if response[0] == BYTE_NAK:
-                self._logger.info("Received <NAK>, return to rest phase")
-            else:
-                raise NotImplementedError()
+                self._logger.warning("received unexpected response of length 12 during transfere phase '%s'" % response)
+        else:
+            self._logger.warning("received unexpected response during transfere phase '%s'" % response)
 
-        # send EOT to finish up transfer phase
-        self._rs232.write(bytearray((BYTE_EOT,)))
+        # send EOT to finish up transfer phase, even if an error happende earlier
+        stat = self._rs232.write(bytearray([BYTE_EOT]))
+        if stat != 1:
+            self._logger.error(
+                "could not send data via rs232, this is likely a local error and not necessary something to do with the control. Status code %s"
+                % stat
+            )
+            return False
         response = bytearray(self._rs232.read(self._buffer_size))
         self._logger.debug("received response %s with length %d to end of transfer phase" % (response, len(response)))
-        if len(response) != 1 and response[0] == BYTE_ENQ:
+        if len(response) == 0:
+            self._logger.error("received empty response to end of transfer phase")
+            next_phase = False
+        elif len(response) == 1 and response == bytearray([BYTE_ENQ]):
+            self._logger.debug("receive correct response byte for end of transfer phase '%s'" % response)
+        else:
             self._logger.warning("did not receive correct response during end of transfer phase '%s'" % response)
             next_phase = False
-
+        self._logger.debug("finished transfer pahse with status %s" % next_phase)
         return next_phase
 
     def _response_phase(self):
@@ -506,7 +539,7 @@ class LSV2RS232:
         stat = self._rs232.write(BYTES_DLE0)
         if stat != 2:
             self._logger.error("could not send <ENQ> to control")
-            return False
+            return None
 
         response = bytearray(self._rs232.read(self._buffer_size))
         if len(response) < (2 + 4 + 2 + 1):
@@ -543,18 +576,28 @@ class LSV2RS232:
         return data
 
     def _strip_escaped_bytes(self, payload: bytearray) -> bytearray:
+        """Strip escaped DLE bytes by removing the escape DLE when two consecutive DLEs are found."""
         result = bytearray()
-        if len(payload) < 2:
-            self._logger.debug("nothing to do for striping of bytes")
-        else:
-            for i, _ in enumerate(payload[:-1]):
-                if payload[i] == BYTE_DLE:
-                    if payload[i + 1] != BYTE_DLE:
-                        result.append(payload[i])
-                    else:
-                        self._logger.debug("found duplicated byte %s at position %d" % (payload[i], i))
-                else:
-                    result.append(payload[i])
-            result.append(payload[-1])
-            self._logger.debug("corrected length is %d, was %d" % (len(result), len(payload)))
+        i = 0
+        while i < len(payload):
+            if i < len(payload) - 1 and payload[i] == BYTE_DLE and payload[i + 1] == BYTE_DLE:
+                # Found escaped DLE: skip the escape DLE, keep the data DLE
+                result.append(payload[i + 1])
+                # self._logger.debug("stripped escape DLE at position %d", i)
+                i += 2
+            else:
+                result.append(payload[i])
+                i += 1
+        self._logger.debug("stripped length is %d, original was %d", len(result), len(payload))
+        return result
+
+    def _escape_dle_bytes(self, payload: bytearray) -> bytearray:
+        """Escape DLE bytes by doubling them for transmission."""
+        result = bytearray()
+        for byte in payload:
+            if byte == BYTE_DLE:
+                result.append(BYTE_DLE)
+                result.append(BYTE_DLE)
+            else:
+                result.append(byte)
         return result
