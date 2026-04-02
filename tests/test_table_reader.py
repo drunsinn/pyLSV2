@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 """tests if table functions work"""
 
-import importlib
+try:
+    import importlib.resources as importlib_resources
+except (ImportError, AttributeError):
+    import importlib_resources
+
 import json
 
 import pyLSV2
@@ -94,7 +98,7 @@ def test_header_parser():
 
 def test_tab_read():
     # Tool table from TNC640 programming station
-    files = importlib.resources.files(test_files)
+    files = importlib_resources.files(test_files)
     path = files.joinpath("tool.t")
     nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
     assert nc_table.has_unit is True
@@ -122,7 +126,7 @@ def test_tab_read():
     assert tformat["column_config"]["OVRTIME"]["end"] == -1
 
     # pallet table from MillPlus programming station
-    files = importlib.resources.files(test_files)
+    files = importlib_resources.files(test_files)
     path = files.joinpath("palletmag.tab")
     nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
     assert nc_table.has_unit is True
@@ -157,7 +161,7 @@ def test_tab_read():
     assert tformat["column_config"]["NAME"]["is_inch"] is False
 
     # Feed/Speed table from iTNC530 programming station
-    files = importlib.resources.files(test_files)
+    files = importlib_resources.files(test_files)
     path = files.joinpath("FRAES_GB.CDT")
     nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
     assert nc_table.has_unit is False
