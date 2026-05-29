@@ -8,6 +8,7 @@ from .dat_cls import *
 from .table_reader import *
 from .translate_messages import *
 from .err import *
+from .fn16_parser import *
 
 __version__ = "1.5"
 __author__ = "drunsinn"
