@@ -117,9 +117,9 @@ class FN16Parser:
         """Convert an FN16 format specifier into a regular expression group."""
         spec = spec.upper()
         if spec.endswith(("D", "I")):
-            return r"(-?\d+)"
+            return r"\s*(-?\d+)"
         if spec.endswith("F"):
-            return r"(-?\d+(?:\.\d+)?)"
+            return r"\s*(-?\d+(?:\.\d+)?)"
         return r"(.+?)"
 
 
@@ -132,7 +132,13 @@ class FN16Parser:
             if SPEC_PATTERN.fullmatch(part):
                 regex += self.spec_to_regex(part)
             else:
-                regex += re.escape(part)
+                escaped = ""
+                for char in part:
+                    if char.isspace():
+                        escaped += r"\s+"
+                    else:
+                        escaped += re.escape(char)
+                regex += escaped
 
         return re.compile(f"^{regex}$")
 

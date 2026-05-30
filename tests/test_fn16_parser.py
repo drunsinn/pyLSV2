@@ -97,3 +97,29 @@ def test_fn16_parser_multiline_with_append():
         assert document.blocks[0].events[1].values == {"Q5": 200}
         assert document.blocks[1].events[0].values == {"QL1": 0}
         assert document.blocks[1].events[1].values == {"Q5": -1}
+
+
+def test_fn16_parser_padded_numeric_values():
+    """Test that padded numeric FN16 output values are parsed correctly."""
+    format_content = '"V1%f V2%15F V3%3.3f V4%1f V5%f V6%15f", Q1, Q2, Q3, Q4, Q5, Q6;\nM_CLOSE;\n'
+    output_content = "V112.000000 V2      23.000000 V334.000 V445.000000 V556.000000 V6      67.000000\n"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        format_path = pathlib.Path(tmp_dir) / "format.txt"
+        output_path = pathlib.Path(tmp_dir) / "output.txt"
+        format_path.write_text(format_content, encoding="utf-8")
+        output_path.write_text(output_content, encoding="utf-8")
+
+        parser = FN16Parser(format_path)
+        document = parser.parse_output(output_path)
+
+        assert len(document.blocks) == 1
+        data_event = document.blocks[0].events[0]
+        assert data_event.values == {
+            "Q1": 12.0,
+            "Q2": 23.0,
+            "Q3": 34.0,
+            "Q4": 45.0,
+            "Q5": 56.0,
+            "Q6": 67.0,
+        }
