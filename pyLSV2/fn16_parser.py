@@ -17,6 +17,10 @@ class InstructionKind(Enum):
     TEXT = "text"
 
 SPEC_PATTERN = re.compile(r"%[^%]*?(?:D|F|I|S|RS)", re.IGNORECASE)
+SPEC_PARSE_PATTERN = re.compile(
+    r"%(?P<flags>[-+ #0]*)(?P<width>\d+)?(?:\.(?P<precision>\d+))?(?P<type>D|F|I|S|RS)$",
+    re.IGNORECASE,
+)
 
 @dataclass
 class FN16Instruction:
@@ -116,10 +120,26 @@ class FN16Parser:
     def spec_to_regex(self, spec: str) -> str:
         """Convert an FN16 format specifier into a regular expression group."""
         spec = spec.upper()
-        if spec.endswith(("D", "I")):
+        match = SPEC_PARSE_PATTERN.match(spec)
+        if not match:
+            return r"(.+?)"
+
+        width = match.group("width")
+        type_code = match.group("type")
+
+        if type_code in ("D", "I"):
+            if width:
+                return r"\s*(-?\d{%s})" % width
             return r"\s*(-?\d+)"
-        if spec.endswith("F"):
+
+        if type_code == "F":
             return r"\s*(-?\d+(?:\.\d+)?)"
+
+        if type_code in ("S", "RS"):
+            if width:
+                return r"\s*(.{1,%s})" % width
+            return r"\s*(.+?)"
+
         return r"(.+?)"
 
 

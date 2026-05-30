@@ -22,14 +22,17 @@ def convert_fn16_output_to_csv(format_file: Path, output_file: Path, csv_file: P
     seen_variables = set()
 
     for block in document.blocks:
+        row: Dict[str, object] = {}
         for event in block.events:
             if event.type != "data" or not event.values:
                 continue
-            rows.append(event.values)
+            row.update(event.values)
             for var in event.values:
                 if var not in seen_variables:
                     seen_variables.add(var)
                     header_order.append(var)
+        if row:
+            rows.append(row)
 
     if not rows:
         raise ValueError(f"No data values found in FN16 output file '{output_file}'")

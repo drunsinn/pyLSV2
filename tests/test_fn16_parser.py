@@ -123,3 +123,22 @@ def test_fn16_parser_padded_numeric_values():
             "Q5": 56.0,
             "Q6": 67.0,
         }
+
+
+def test_fn16_parser_consecutive_widthed_integers():
+    """Test that consecutive width-limited integer fields are parsed separately."""
+    format_content = '"%02d%02d", DAY, MONTH;\nM_CLOSE;\n'
+    output_content = "3005\n"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        format_path = pathlib.Path(tmp_dir) / "format.txt"
+        output_path = pathlib.Path(tmp_dir) / "output.txt"
+        format_path.write_text(format_content, encoding="utf-8")
+        output_path.write_text(output_content, encoding="utf-8")
+
+        parser = FN16Parser(format_path)
+        document = parser.parse_output(output_path)
+
+        assert len(document.blocks) == 1
+        data_event = document.blocks[0].events[0]
+        assert data_event.values == {"DAY": 30, "MONTH": 5}
