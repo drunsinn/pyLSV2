@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""ME101 magnetic tape transfer interface for reading and writing programs."""
+"""ME101 magnetic tape transfer interface for reading and writing programs.
+
+This script is released under the MIT License.
+"""
 
 import argparse
 import logging

@@ -28,6 +28,7 @@ lsv2demo_ssh = "pyLSV2.scripts.ssh_tunnel:main"
 lsv2scope2csv = "pyLSV2.scripts.scope2csv:main"
 lsv2tab2csv = "pyLSV2.scripts.tab2csv:main"
 lsv2cmd = "pyLSV2.scripts.cmd:main"
+me101 = "pyLSV2.scripts.me101:main"
 
 [dependency-groups]
 dev = [
