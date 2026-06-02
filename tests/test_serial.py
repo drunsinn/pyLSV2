@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 """tests for reading file system information"""
 
+import os
+from pathlib import Path
+import tempfile
+import pytest
 import pyLSV2
+from pyLSV2 import misc
 
 
 def test_serial_bcc():
@@ -10,6 +15,8 @@ def test_serial_bcc():
 
     # example taken from the docs
     con = pyLSV2.LSV2(hostname="", ser_url="loopback")
+    assert isinstance(con._llcom, pyLSV2.LSV2RS232)
+
     payload = bytearray()
     payload.extend((pyLSV2.const.BYTE_DLE, pyLSV2.const.BYTE_STX))
     payload.extend("TNC 425".encode("ascii"))
@@ -21,7 +28,7 @@ def test_serial_bcc():
     # example taken captured serial communication
     payload = bytearray()
     payload.extend((pyLSV2.const.BYTE_DLE, pyLSV2.const.BYTE_STX))
-    payload.extend(pyLSV2.misc.ustr_to_ba("A_LGINSPECT"))
+    payload.extend(misc.ustr_to_ba("A_LGINSPECT"))
     payload.extend((pyLSV2.const.BYTE_DLE, pyLSV2.const.BYTE_ETX))
     assert payload == bytearray([0x10, 0x02, 0x41, 0x5F, 0x4C, 0x47, 0x49, 0x4E, 0x53, 0x50, 0x45, 0x43, 0x54, 0x00, 0x10, 0x03])
     bcc = con._llcom.calculate_bcc(payload)
@@ -40,11 +47,14 @@ def test_serial_bcc():
     assert bcc == 68
 
 
-# @pytest.mark.skip()
-# @pytest.mark.skipif(not importlib.util.find_spec("serial"), reason="requires the pyserial library")
+@pytest.mark.skipif(
+    os.environ.get("RUN_SERIAL_TESTS") != "1", reason="Manual serial integration test requiring hardware and user interaction"
+)
 def test_serial_version_read(address: str, timeout: float, port: int):
     """test if establishing a connection via rs232 works"""
     lsv2 = pyLSV2.LSV2(hostname="", port=port, timeout=0.5, safe_mode=True, ser_url="socket://localhost:8888")
+    assert isinstance(lsv2._llcom, pyLSV2.LSV2RS232)
+
     lsv2.connect()
     assert (len(lsv2.versions.control) > 1) is True
 
@@ -52,5 +62,33 @@ def test_serial_version_read(address: str, timeout: float, port: int):
     assert isinstance(lsv2.versions.nc_sw_type, int)
     assert isinstance(lsv2.versions.nc_sw_version, int)
     assert isinstance(lsv2.versions.nc_sw_service_pack, int)
+
+    lsv2.disconnect()
+
+
+@pytest.mark.skipif(
+    os.environ.get("RUN_SERIAL_TESTS") != "1", reason="Manual serial integration test requiring hardware and user interaction"
+)
+def test_serial_file(address: str, timeout: float, port: int):
+    """test if establishing a connection via rs232 works"""
+    lsv2 = pyLSV2.LSV2(hostname="", port=port, timeout=0.5, safe_mode=True, ser_url="socket://localhost:8888")
+    assert isinstance(lsv2._llcom, pyLSV2.LSV2RS232)
+
+    lsv2.connect()
+
+    if lsv2.versions.is_itnc():
+        mdi_path = "TNC:\\$MDI.H"
+    else:
+        mdi_path = "TNC:\\nc_prog\\$mdi.h"
+
+    assert lsv2.change_directory(remote_directory="TNC:\\nc_prog") is True
+    assert lsv2.directory_info() is not False
+    assert lsv2.file_info(remote_file_path=mdi_path) is not None
+    assert lsv2.directory_content() is not False
+    assert lsv2.drive_info() is not False
+
+    with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
+        local_mdi_path = Path(tmp_dir_name).joinpath("mdi.h")
+        assert lsv2.recive_file(local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False) is True
 
     lsv2.disconnect()

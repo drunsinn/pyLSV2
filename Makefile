@@ -4,8 +4,12 @@ test-102:
 
 test-activ-vm:
 	tests/run_test_on_vm.sh
+
 test-ip:
 	uv run pytest --timeout 5.0 --address $(IP)
+
+test-serial:
+	RUN_SERIAL_TESTS=1 uv run pytest --timeout 1.0 -k test_serial_version_read -k test_serial_file
 
 lint:
 	uvx ruff check --fix --config ./pyproject.toml .
@@ -15,7 +19,7 @@ format:
 	uvx black . --config ./pyproject.toml
 
 fix_spelling:
-	uv run codespell --toml pyproject.toml
+	uv run codespell -w --toml pyproject.toml
 
 build:
 	uv build
