@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """tests if table functions work"""
 
-import importlib
+import importlib.resources
 import json
 
 import pyLSV2
@@ -95,7 +95,7 @@ def test_header_parser():
 def test_tab_read():
     # Tool table from TNC640 programming station
     files = importlib.resources.files(test_files)
-    path = files.joinpath("tool.t")
+    path = str(files.joinpath("tool.t"))
     nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
     assert nc_table.has_unit is True
     assert nc_table.is_metric is True
