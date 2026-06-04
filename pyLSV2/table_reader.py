@@ -163,7 +163,7 @@ class NCTable:
         """Unregister a column from this table's schema.
 
         :param str name: Column identifier to remove
-        
+
         :raises: ValueError if column is not present
         """
         self._columns.remove(name)
@@ -173,7 +173,7 @@ class NCTable:
         """Get the starting byte offset of a column.
 
         :param str name: Column identifier
-        
+
         :returns: Starting byte offset in fixed-width rows
         """
         return self._column_format[name]["start"]
@@ -182,7 +182,7 @@ class NCTable:
         """Get the ending byte offset of a column.
 
         :param str name: Column identifier
-        
+
         :return: Ending byte offset (exclusive), or -1 for open-ended final column
         :rtype: int
         """
@@ -201,7 +201,7 @@ class NCTable:
         """Get the default value for a column.
 
         :param str name: Column identifier
-        
+
         :return: Default value or None if not configured
         :rtype: Any
         """
@@ -214,7 +214,7 @@ class NCTable:
 
         :param str name: Column identifier
         :param Any value: Default value to use when column data is missing
-        
+
         :raises: ValueError if value is wider than the column
         """
         if len(str(value)) > self._column_format[name]["width"]:
@@ -236,7 +236,7 @@ class NCTable:
 
         :param str name: Column identifier
         :param Dict parameters: Dict of metadata key-value pairs to apply
-        
+
         :raises: NotImplementedError: If a parameter key is not recognized
         """
         for key, value in parameters.items():
@@ -285,7 +285,7 @@ class NCTable:
 
     def format_to_json(self) -> str:
         """return json configuration representing the table format
-        
+
         :returns: JSON string with table format information (version, suffix, column list, column config)
         :rtype: str
         """
@@ -383,7 +383,7 @@ class NCTable:
 
         :param str column_name: Column identifier to search in
         :param Union[str, re.Pattern] search_value: String (substring match) or compiled regex Pattern
-        
+
         :returns: List of row dicts that match the search criterion
         """
         search_results = []
@@ -403,7 +403,7 @@ class NCTable:
         Expected format: BEGIN <name> [.<suffix>] [MM|INCH] [Version: 'Update:X.Y[ Date:YYYY-MM-DD]'] [U]
 
         :param str header_line: First line of the table file (with leading/trailing whitespace stripped)
-        
+
         :returns: Dict with keys: name, suffix, version, date, mark, unit
         :rtype: Dict[str, Any]
 
@@ -471,9 +471,9 @@ class NCTable:
                 return
             if in_quote:
                 return
-            if character in ('(', '['):
+            if character in ("(", "["):
                 nesting += 1
-            elif character in (')', ']'):
+            elif character in (")", "]"):
                 nesting -= 1
 
         for char in start_line:
@@ -556,7 +556,7 @@ class NCTable:
                 header_line = next_line.rstrip("\n")
                 matches = list(column_pattern.finditer(next_line))
                 for index, column_match in enumerate(matches):
-                    if index == len(matches) - 1 or header_line[column_match.end():].strip() == "":
+                    if index == len(matches) - 1 or header_line[column_match.end() :].strip() == "":
                         cl_end = -1
                         width = len(header_line) - column_match.start()
                     else:
@@ -600,9 +600,7 @@ class NCTable:
                         if cfg_width is not None:
                             nctable._column_format[cfg_column_name]["width"] = cfg_width
                             if nctable._column_format[cfg_column_name]["end"] != -1:
-                                nctable._column_format[cfg_column_name]["end"] = (
-                                    nctable.get_column_start(cfg_column_name) + cfg_width
-                                )
+                                nctable._column_format[cfg_column_name]["end"] = nctable.get_column_start(cfg_column_name) + cfg_width
                         nctable.update_column_format(cfg_column_name, c_d["CfgColumnDescription"])
         except UnicodeDecodeError as exc:
             logger.error("File has invalid utf-8 encoding")
