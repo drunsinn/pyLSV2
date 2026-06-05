@@ -101,6 +101,13 @@ These changes where made intentionally to make further development easier. See t
  ... print(con.versions.control)
 ```
 
+### Example for using a serial connection
+```
+ con = pyLSV2.LSV2(hostname="", port=port, timeout=0.5, safe_mode=True, ser_url="/dev/ttyUSB0")
+ con.connect()
+ con.disconnect()
+```
+
 ### Accessing PLC data
  To read values from the PLC memory you need to know the memory area/type and the memory address. There are two ways to read these values.
  

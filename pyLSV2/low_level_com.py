@@ -251,6 +251,15 @@ class LSV2RS232:
     # Default size of send and receive buffer
 
     def __init__(self, port: str, speed: int, timeout: float = 1.0):
+        """Set connection parameters
+
+        :param str prt: port name, device or url for serial port
+        :param int speed: boud rate for serial transmission
+        :param timeout: number of seconds for time out of connection.
+
+        :raises ImportError: pyserial library not installed
+        :raises serial.SerialException: serial connection could not be created
+        """
         self._logger = logging.getLogger("LSV2 RS232")
         self.buffer_size = LSV2RS232.DEFAULT_BUFFER_SIZE
 
@@ -273,8 +282,7 @@ class LSV2RS232:
             # self._rs232.dsrdtr = False  # disable hardware flow control
             # self._rs232.timeout = timeout
 
-            # self._rs232 = serial.serial_for_url(url=port, baudrate=speed, timeout=timeout, do_not_open=True)
-            self._rs232 = serial.serial_for_url(url=port, timeout=timeout, do_not_open=True, baudrate=9600)
+            self._rs232 = serial.serial_for_url(url=port, timeout=timeout, do_not_open=True, baudrate=speed)
         except ImportError:
             self._logger.error("pyserial library not installed. Install with: pip install pyserial")
             raise

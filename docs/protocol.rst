@@ -169,6 +169,7 @@ Setup VM1 (TNC320)
 - Select Port Mode ``TCP``
 - leave ``connect to pipe/socket`` unchecked
 - enter a port number eg. ``8000`` for path/address
+
 This VM has to be started first, otherwise you get an error message
 
 Setup VM2 (WinXP)
@@ -184,7 +185,7 @@ Capture data
 - Start VM2
 - Start Wireshark
 - In Wireshark, set the filter to ``port 8000`` and start the capture
-- Start TNCremo and select ``Serial connection LSV-2`` as connection type
+- Start TNCremo and select ``Serial connection LSV2`` as connection type
 - In the ``Settings`` tab, select COM1 and make sure that for tansmission speed ``automatic detection`` is selected
 - Click ``Connect`` and start the communication with the control
 
@@ -231,13 +232,11 @@ Capture data
    <....0x05
 
 
-
-
 Findings for serial communication
 ---------------------------------
 Each telegram is enclosed in one or more control characters. Besides signaling the start an end of a telegram, they also indicate the state or intention of the sender.
 
-Compared to the Ethernet communication, LSV-2 over serial does not indicate the length of the telegram. Instead, controlcharacters are used to indicate the end of a telegram.
+Compared to the Ethernet communication, LSV2 over serial does not indicate the length of the telegram. Instead, controlcharacters are used to indicate the end of a telegram.
 
 BCC check sum character
 +++++++++++++++++++++++

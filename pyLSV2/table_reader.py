@@ -414,7 +414,7 @@ class NCTable:
                             raise ValueError("found unexpected column %s" % cfg_column_name)
                         if c_d["CfgColumnDescription"]["width"] != nctable.get_column_width(cfg_column_name):
                             raise ValueError(
-                                "found difference in column width for colmun %s: %d : %d"
+                                "found difference in column width for column %s: %d : %d"
                                 % (
                                     cfg_column_name,
                                     c_d["CfgColumnDescription"]["width"],
