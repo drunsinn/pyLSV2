@@ -1,0 +1,334 @@
+ME101 Magnetic Tape Transfer Interface
+======================================
+
+Overview
+--------
+
+The ME101 is a magnetic tape transfer interface used with Heidenhain TNC controls for reading and writing CNC programs to/from magnetic tape storage. The ``me101.py`` script provides a command-line interface to communicate with ME101 devices via serial connection.
+
+The ME101 uses a simple serial protocol based on control characters and handshaking. It is typically used for:
+
+- Archiving CNC programs on magnetic tape
+- Transferring programs between TNC controls via tape
+- Data backup on tape storage
+
+Installation
+------------
+
+The ME101 script requires the ``pyserial`` package:
+
+.. code-block:: bash
+
+    pip install pyserial
+
+Usage
+-----
+
+Read from Tape
+~~~~~~~~~~~~~~
+
+To read programs from a magnetic tape:
+
+.. code-block:: bash
+
+    python me101.py read -o /path/to/output
+
+The script will:
+
+1. Wait for the ME101 to be ready (rewind and press READ and START on the device)
+2. Receive the tape content via serial connection
+3. Parse program blocks from the tape content
+4. Save programs to individual files (``*.h``) and raw tape content to ``tapecontent.txt``
+
+Write to Tape
+~~~~~~~~~~~~~
+
+To write programs to a magnetic tape:
+
+.. code-block:: bash
+
+    python me101.py write -i program1.h program2.h program3.h
+
+The script will:
+
+1. Wait for the ME101 to be ready (press WRITE and START on the device)
+2. Validate that the data fits on the tape (max 45 KB per side)
+3. Send the program files to the tape device
+4. Signal end of transmission to the ME101
+
+Verbosity Control
+~~~~~~~~~~~~~~~~~
+
+Use the ``-v`` flag to increase logging verbosity:
+
+.. code-block:: bash
+
+    python me101.py -vvvv read -o ./output  # DEBUG level logging
+
+Verbosity levels:
+
+- No flag: CRITICAL
+- ``-v``: ERROR
+- ``-vv``: WARNING
+- ``-vvv``: INFO
+- ``-vvvv``: DEBUG
+
+Serial Port Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The default serial port is ``/dev/ttyUSB0``. To use a different port:
+
+.. code-block:: bash
+
+    python me101.py --port /dev/ttyACM0 read -o ./output
+
+ME101 Protocol
+--------------
+
+Control Characters
+~~~~~~~~~~~~~~~~~~
+
+The ME101 protocol uses the following control characters:
+
+- **NULL (0x00)**: Padding/filler byte
+- **DC1 (0x11)**: XON - Transmission On (receiver ready)
+- **DC3 (0x13)**: XOFF - Transmission Off (receiver not ready)
+- **EXT (0x03)**: End of Text - signals successful transmission completion
+- **ESC (0x1B)**: Escape - indicates tape error, user abort, or device not ready
+- **LF (0x0A)**: Line Feed
+- **CR (0x0D)**: Carriage Return
+
+Serial Connection Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: 
+
+    Baud Rate:    2400
+    Data Bits:    7
+    Parity:       Even
+    Stop Bits:    1
+    Flow Control: None
+
+Read Mode Protocol
+~~~~~~~~~~~~~~~~~~
+
+The read mode handshake:
+
+1. Host sends DC1 (XON) to request transmission start
+2. ME101 begins sending tape data
+3. ME101 sends control characters to indicate state:
+   - **EXT (0x03)**: Successful end of transmission
+   - **ESC (0x1B)**: Tape error or user abort
+   - **DC3 (0x13)**: ME101 interrupted transmission
+4. Host reads until EXT, ESC, or DC3 received
+
+Data Format
+~~~~~~~~~~~
+
+Tape content is stored as 7-bit ASCII text with the following structure:
+
+- Program lines begin with ``BEGIN PGM <name> <unit> [P]``
+- Program lines end with ``END PGM <name> <unit> [P]``
+- ``<name>``: Program name (alphanumeric)
+- ``<unit>``: Measurement unit (``MM`` or ``INCH``)
+- ``[P]``: Optional protection flag
+
+Example:
+
+.. code-block:: text
+
+    0 BEGIN PGM DEMO MM
+    1 ; Heidenhain TNC Program
+    2 ; Simple drilling cycle
+    ...
+    42 M30
+    43 END PGM DEMO MM
+
+Write Mode Protocol
+~~~~~~~~~~~~~~~~~~~
+
+The write mode handshake:
+
+1. Host sends 20 NULL bytes to signal write mode start
+2. ME101 responds with DC1 (XON) when ready
+3. Host sends program data to the device:
+   - Data must be 7-bit ASCII only
+   - Line endings converted to CR+LF
+4. Host signals end with EXT (0x03)
+
+Constraints
+~~~~~~~~~~~
+
+When writing to tape, the following restrictions apply:
+
+- **Maximum tape capacity**: 45 KB per side (45,000 bytes)
+- **Character encoding**: 7-bit ASCII only
+- **Forbidden characters**: DC1 (0x11), DC3 (0x13), EXT (0x03), ESC (0x1B)
+- **No non-ASCII**: Characters with high bit set (>= 128) are rejected
+
+Program Structure
+~~~~~~~~~~~~~~~~~
+
+Programs on tape must follow Heidenhain NC syntax:
+
+- Each line starts with a line number
+- ``BEGIN PGM`` and ``END PGM`` statements must match
+- Metric (MM) or Inch (INCH) units must be specified
+- Optional protection flag (P) prevents modification
+
+Hardware Setup
+--------------
+
+Physical Connection
+~~~~~~~~~~~~~~~~~~~
+
+1. Connect ME101 device to computer via 9-pin or 25-pin serial cable
+2. Identify the serial port (usually ``/dev/ttyUSB0`` on Linux)
+3. Insert magnetic tape into ME101 device
+4. Rewind tape if necessary
+
+Before Reading
+~~~~~~~~~~~~~~
+
+1. Open tape cover
+2. Insert tape
+3. Close tape cover
+4. Press **READ** button
+5. Press **START** button (or wait for automatic start)
+6. Run the read command
+
+Before Writing
+~~~~~~~~~~~~~~
+
+1. Open tape cover
+2. Insert blank or existing tape
+3. Close tape cover
+4. Press **WRITE** button
+5. Press **START** button (or wait for automatic start)
+6. Run the write command
+
+Troubleshooting
+---------------
+
+No data received from tape
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Ensure tape is properly inserted and rewound
+- Check that READ button is pressed on ME101 before starting
+- Verify serial cable is securely connected
+- Check that correct serial port is specified
+- Try higher verbosity level for debugging
+
+Serial port errors
+~~~~~~~~~~~~~~~~~~
+
+- Verify port exists: ``ls /dev/tty*``
+- Check user permissions: ``ls -l /dev/<port_name>``
+- Add user to dialout group: ``sudo usermod -aG dialout $USER``
+- Try different port: ``python me101.py --port /dev/<port_name> read -o ./output``
+
+Data validation errors
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Ensure input files contain only 7-bit ASCII characters
+- Remove or encode any special characters (ñ, ü, etc.)
+- Verify total file size doesn't exceed 45 KB
+- Check for forbidden control characters in input
+
+Program parsing issues
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Ensure BEGIN PGM and END PGM lines are properly formatted
+- Verify program unit (MM or INCH) is specified
+- Check that line numbers are present at start of each line
+- Look at ``tapecontent.txt`` to verify raw tape content
+
+Examples
+--------
+
+Basic read operation
+~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    # Read from tape on default port, save to current directory
+    python me101.py read -o .
+
+    # Read with debug logging to troubleshoot
+    python me101.py -vvvv read -o ./debug_output
+
+Basic write operation
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    # Write single program to tape
+    python me101.py write -i myprogram.h
+
+    # Write multiple programs
+    python me101.py write -i part1.h part2.h part3.h
+
+    # Write with verbose output
+    python me101.py -vv write -i program.h
+
+Using alternate serial port
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    # Read from tape on /dev/ttyACM0
+    python me101.py --port /dev/ttyACM0 read -o ./output
+
+    # Write to tape on /dev/ttyS0
+    python me101.py --port /dev/ttyS0 write -i program.h
+
+Script Functions
+----------------
+
+Main Functions
+~~~~~~~~~~~~~~
+
+**setup_logging(verbosity: int) -> None**
+    Configure logging based on verbosity level (-v flags).
+
+**setup_serial_connection(port: str) -> serial.Serial**
+    Create and configure serial connection for ME101 with proper parameters.
+
+**setup_argument_parser() -> argparse.ArgumentParser**
+    Create and configure the command-line argument parser.
+
+**handle_read_mode(connection: serial.Serial, output_dir: Path) -> None**
+    Handle complete tape read operation: receive data, parse programs, save files.
+
+**handle_write_mode(connection: serial.Serial, input_files) -> None**
+    Handle complete tape write operation: validate, send handshake, transmit data.
+
+Helper Functions
+~~~~~~~~~~~~~~~~
+
+**collect_input_data(input_files) -> bytes**
+    Read and prepare data from input files, normalize line endings to CR+LF.
+
+**validate_write_data(data: bytes) -> None**
+    Validate data before writing: check size and character restrictions.
+
+**wait_for_xon(connection: serial.Serial) -> None**
+    Wait for DC1 (XON) signal from ME101.
+
+**send_write_handshake(connection: serial.Serial) -> None**
+    Send write mode handshake (20 NULL bytes).
+
+**read_from_tape(connection: serial.Serial) -> bytes**
+    Receive data from ME101, handle control characters, return raw tape content.
+
+**parse_programs(tape_content: str) -> dict[str, list[str]]**
+    Parse program blocks from tape content by matching BEGIN/END patterns.
+
+**process_character(byte_data: bytearray, new_char: bytes) -> bool**
+    Process received character and handle control signals. Return True to stop.
+
+**save_tape_content(output_dir: Path, tape_content: str) -> None**
+    Save raw tape content to ``tapecontent.txt``.
+
+**save_programs(output_dir: Path, programs: dict[str, list[str]]) -> None**
+    Save parsed programs to individual ``.h`` files.
