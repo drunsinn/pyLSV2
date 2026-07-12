@@ -35,29 +35,29 @@ def main():
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=args.loglevel)
+    logging.basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     logging.debug('Start logging with level "%s"', logging.getLevelName(args.loglevel))
 
     if args.source.is_file():
         nc_table = NCTable.parse_table(args.source)
-        print("number of rows in table: %d" % len(nc_table))
-        print("columns in table %s" % nc_table.column_names)
+        logging.info("number of rows in table: %d" % len(nc_table))
+        logging.info("columns in table %s" % nc_table.column_names)
         if nc_table.has_unit:
-            print("table file specifies unit system")
+            logging.debug("table file specifies unit system")
             if nc_table.is_metric:
-                print("values are metric")
+                logging.info("values are metric")
             else:
-                print("values are imperial")
+                logging.info("values are imperial")
         else:
-            print("table has no apparent unit system")
+            logging.info("table has no apparent unit system")
 
         csv_file_name = args.source.with_suffix(".csv")
-        print("write table to file %s" % csv_file_name)
+        logging.debug("write table to file %s" % csv_file_name)
         nc_table.dump_csv(csv_file_name, args.decimal_char)
-        print("csv export finished")
+        logging.info("csv export finished %s" % csv_file_name)
 
     else:
-        print("table file does not exits %s" % args.source)
+        logging.error("table file does not exits %s" % args.source)
         sys.exit(-1)
 
     sys.exit(0)
