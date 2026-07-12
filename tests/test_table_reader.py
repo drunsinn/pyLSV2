@@ -4,6 +4,7 @@
 
 import importlib.resources
 import json
+from pathlib import Path
 
 import pyLSV2
 from . import test_files
@@ -96,7 +97,7 @@ def test_tab_read():
     # Tool table from TNC640 programming station
     files = importlib.resources.files(test_files)
     path = str(files.joinpath("tool.t"))
-    nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
+    nc_table = pyLSV2.table_reader.NCTable.parse_table(Path(path))
     assert nc_table.has_unit is True
     assert nc_table.is_metric is True
     assert nc_table.name == "TOOL"
@@ -123,8 +124,8 @@ def test_tab_read():
 
     # pallet table from MillPlus programming station
     files = importlib.resources.files(test_files)
-    path = files.joinpath("palletmag.tab")
-    nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
+    path = str(files.joinpath("palletmag.tab"))
+    nc_table = pyLSV2.table_reader.NCTable.parse_table(Path(path))
     assert nc_table.has_unit is True
     assert nc_table.is_metric is True
     assert nc_table.name == "PALLETMAG"
@@ -158,8 +159,8 @@ def test_tab_read():
 
     # Feed/Speed table from iTNC530 programming station
     files = importlib.resources.files(test_files)
-    path = files.joinpath("FRAES_GB.CDT")
-    nc_table = pyLSV2.table_reader.NCTable.parse_table(path)
+    path = str(files.joinpath("FRAES_GB.CDT"))
+    nc_table = pyLSV2.table_reader.NCTable.parse_table(Path(path))
     assert nc_table.has_unit is False
     assert nc_table.is_metric is False
     assert nc_table.name == "FRAES_GB"

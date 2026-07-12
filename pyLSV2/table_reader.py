@@ -33,8 +33,8 @@ class NCTable:
     """Container for CNC table data with configurable fixed-width columns.
 
     Represents a parsed or constructed table file with metadata about columns (name, position,
-    width, units, constraints) and row data. Supports reading from and writing to CNC-native,
-    CSV, and JSON formats.
+    width, units, constraints) and row data. Supports reading from and writing to CNC-native or
+    CSV. Can read and import table configurations in JSON format.
 
     :param str name: Table identifier from file header
     :param str suffix: File extension/suffix (e.g., 't', 'tab', 'cdt')
@@ -705,6 +705,8 @@ class NCTable:
                 current_obj["CfgColumnDescription"] = dict()
                 current_obj["CfgColumnDescription"]["key"] = line.split("=")[1].strip()
             elif line.startswith("TYPE = "):
+                if current_obj is None:
+                    current_obj = {"CfgColumnDescription": {}}
                 type_str = line.split("=")[1].strip()
                 if type_str == "N":
                     current_obj["CfgColumnDescription"]["unit"] = "FLOAT"
@@ -713,15 +715,20 @@ class NCTable:
                 else:
                     raise NotImplementedError("type not implemented '%s'", line)
             elif line.startswith("WIDTH = "):
+                if current_obj is None:
+                    current_obj = {"CfgColumnDescription": {}}
                 current_obj["CfgColumnDescription"]["width"] = int(line.split("=")[1].strip()) + 1
             elif line.startswith("DEC = "):
+                if current_obj is None:
+                    current_obj = {"CfgColumnDescription": {}}
                 current_obj["CfgColumnDescription"]["decimals"] = int(line.split("=")[1].strip())
             elif line.startswith("DIA-"):
                 pass
             elif line.startswith("#STRUCTBEGIN"):
                 pass
             elif line.startswith("#STRUCTEND"):
-                config_data["TableDescription"]["columns"].append(current_obj)
+                if current_obj is not None:
+                    config_data["TableDescription"]["columns"].append(current_obj)
             elif line.startswith("*"):
                 pass
             else:
