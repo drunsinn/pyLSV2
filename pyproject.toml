@@ -32,11 +32,15 @@ fn16tocsv = "pyLSV2.scripts.fn16_to_csv:main"
 
 [dependency-groups]
 dev = [
+    "ruff>=0.9.7",
+    "black>=25.0",
     "pytest>=8.3",
     "sphinx>=7.2",
     "myst-parser>=3.0",
     "sphinx-autodoc-typehints>=2.3",
     "codespell>=2.4",
+    "sshtunnel>=0.4",
+    "paramiko==3.5.1",
 ]
 lint = ["ruff>=0.9.7"]
 format = ["black>=25.0"]
