@@ -8,7 +8,7 @@ authors = [{ name = "drunsinn", email = "dr.unsinn@googlemail.com" }]
 description = "A pure Python3 implementation of the LSV2 protocol"
 requires-python = ">=3.9"
 keywords = ["LSV2", "CNC", "PLC"]
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 dependencies = []
 classifiers = [
     "Development Status :: 4 - Beta",
