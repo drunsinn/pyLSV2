@@ -11,5 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: psf/black@stable
-      - uses: cclauss/GitHub-Action-for-pylint@0.7.0
   

@@ -23,22 +23,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine tox
+        pip install build twine
 
     - name: msgfmt
       uses: whtsky/msgfmt-action@master
       env:
         WORKDIR: "pyLSV2/locales"
-        
-#    - name: Create Translation Files
-#      uses: docker://textadi/build-language-i18n-action@v2
-#      env:
-#        DIR: pyLSV2/locales
 
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        pip wheel -w dist .
+        python -m build --wheel --outdir dist
         twine upload dist/*
