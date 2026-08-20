@@ -45,9 +45,7 @@ def convert_fn16_output_to_csv(format_file: Path, output_file: Path, csv_file: P
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Convert an FN16 output file into a CSV file using FN16 format definitions."
-    )
+    parser = argparse.ArgumentParser(description="Convert an FN16 output file into a CSV file using FN16 format definitions.")
     parser.add_argument("format_file", help="FN16 format definition file", type=Path)
     parser.add_argument("output_file", help="FN16 output file to parse", type=Path)
     parser.add_argument(

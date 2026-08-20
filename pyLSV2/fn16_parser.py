@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """module with reader for files that where generated with FN16"""
 
-
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -16,15 +15,18 @@ class InstructionKind(Enum):
     FORMAT = "format"
     TEXT = "text"
 
-SPEC_PATTERN = re.compile(r"%[^%]*?(?:D|F|I|S|RS)", re.IGNORECASE)
+
+SPEC_PATTERN = re.compile(r"%[-+ #0]*\d*(?:\.\d+)?(?:D|F|I|S|RS)", re.IGNORECASE)
 SPEC_PARSE_PATTERN = re.compile(
     r"%(?P<flags>[-+ #0]*)(?P<width>\d+)?(?:\.(?P<precision>\d+))?(?P<type>D|F|I|S|RS)$",
     re.IGNORECASE,
 )
 
+
 @dataclass
 class FN16Instruction:
     """Representation of one FN16 format instruction."""
+
     kind: InstructionKind
     raw: str
     specs: Optional[List[str]] = None
@@ -34,6 +36,7 @@ class FN16Instruction:
 @dataclass
 class FN16Event:
     """Represents one parsed FN16 event from the output file."""
+
     type: str
     raw: Optional[str] = None
     values: Optional[Dict[str, Any]] = None
@@ -43,6 +46,7 @@ class FN16Event:
 @dataclass
 class FN16Block:
     """Container for events that belong to a single FN16 block."""
+
     block_id: int
     events: List[FN16Event]
 
@@ -50,7 +54,9 @@ class FN16Block:
 @dataclass
 class FN16Document:
     """Document containing one or more parsed FN16 blocks."""
+
     blocks: List[FN16Block]
+
 
 class FN16Parser:
     """Parser for FN16 format files and FN16 output files."""
@@ -67,28 +73,32 @@ class FN16Parser:
 
         with file_path.open(encoding="utf-8") as infile:
             for line in infile:
-                line = line.strip()
-                if not line or line.startswith("*"):
+                line = line.rstrip("\r\n")
+                stripped_line = line.strip()
+                if not stripped_line or stripped_line.startswith("*"):
                     continue
 
                 # Remove inline comments after the end-of-command semicolon.
                 line = re.sub(r"\s*;\s*\*.*$", ";", line)
-                if line.endswith(";"):
+                if line.rstrip().endswith(";"):
+                    line = line.rstrip()
                     line = line[:-1].rstrip()
 
                 if not line:
                     continue
 
-                if line.startswith("M_"):
-                    instructions.append(FN16Instruction(kind=InstructionKind.CONTROL, raw=line))
+                stripped_line = line.strip()
+
+                if stripped_line.startswith("M_"):
+                    instructions.append(FN16Instruction(kind=InstructionKind.CONTROL, raw=stripped_line.rstrip(";")))
                     continue
 
-                if line.startswith("L_"):
-                    instructions.append(FN16Instruction(kind=InstructionKind.LANGUAGE, raw=line))
+                if stripped_line.startswith("L_"):
+                    instructions.append(FN16Instruction(kind=InstructionKind.LANGUAGE, raw=stripped_line.rstrip(";")))
                     continue
 
-                if line.startswith('"'):
-                    match = re.match(r'^"(?P<text>.*?)"(?:\s*,\s*(?P<variables>.*))?$', line)
+                if stripped_line.startswith('"'):
+                    match = re.match(r'^"(?P<text>(?:\\.|[^"\\])*)"(?:\s*,\s*(?P<variables>.*))?$', stripped_line)
                     if not match:
                         continue
 
@@ -111,37 +121,35 @@ class FN16Parser:
 
         return instructions
 
-
     def is_block_end_command(self, command: str) -> bool:
         """Check if a command ends the current block."""
         return command.startswith("M_CLOSE") or command.startswith("M_APPEND") or command.startswith("M_TRUNCATE")
 
-
     def spec_to_regex(self, spec: str) -> str:
         """Convert an FN16 format specifier into a regular expression group."""
-        spec = spec.upper()
         match = SPEC_PARSE_PATTERN.match(spec)
         if not match:
             return r"(.+?)"
 
         width = match.group("width")
         type_code = match.group("type")
+        normalized_type = type_code.upper()
 
-        if type_code in ("D", "I"):
+        if type_code in ("d", "i", "I"):
             if width:
-                return r"\s*(-?\d{%s})" % width
-            return r"\s*(-?\d+)"
+                return r"\s*([+-]?\d{%s})\s*" % width
+            return r"\s*([+-]?\d+)\s*"
 
-        if type_code == "F":
-            return r"\s*(-?\d+(?:\.\d+)?)"
+        if normalized_type in ("D", "F"):
+            number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?"
+            return r"\s*(%s)\s*" % number
 
-        if type_code in ("S", "RS"):
+        if normalized_type in ("S", "RS"):
             if width:
-                return r"\s*(.{1,%s})" % width
-            return r"\s*(.+?)"
+                return r"\s*(.{1,%s}?)\s*" % width
+            return r"\s*(.+?)\s*"
 
         return r"(.+?)"
-
 
     def build_regex(self, format_text: str) -> re.Pattern:
         """Build a regex pattern from FN16 format text and its specifiers."""
@@ -152,13 +160,8 @@ class FN16Parser:
             if SPEC_PATTERN.fullmatch(part):
                 regex += self.spec_to_regex(part)
             else:
-                escaped = ""
-                for char in part:
-                    if char.isspace():
-                        escaped += r"\s+"
-                    else:
-                        escaped += re.escape(char)
-                regex += escaped
+                literal = part.replace("%%", "%").replace('%\\"', '"').replace("\\\\", "\\").replace("\\n", "\n")
+                regex += "".join(r"\s+" if char.isspace() else re.escape(char) for char in literal)
 
         return re.compile(f"^{regex}$")
 
@@ -200,8 +203,12 @@ class FN16Parser:
                 if line_index >= len(lines):
                     break
 
-                line = lines[line_index]
-                line_index += 1
+                line_count = 1
+                if instr.kind in (InstructionKind.TEXT, InstructionKind.FORMAT):
+                    decoded_text = instr.raw.replace("%%", "%").replace('%\\"', '"').replace("\\\\", "\\").replace("\\n", "\n")
+                    line_count = decoded_text.count("\n") + 1
+                line = "\n".join(lines[line_index : line_index + line_count])
+                line_index += line_count
 
                 if instr.kind == InstructionKind.TEXT:
                     current_events.append(FN16Event(type="text", raw=line))
@@ -218,11 +225,12 @@ class FN16Parser:
                     if match and instr.variables and instr.specs:
                         for index, var in enumerate(instr.variables):
                             raw_value = match.group(index + 1)
-                            spec = instr.specs[index].upper()
+                            spec = instr.specs[index]
 
-                            if spec.endswith(("D", "I")):
+                            type_code = spec[-1]
+                            if type_code in ("d", "i", "I"):
                                 values[var] = int(raw_value)
-                            elif spec.endswith("F"):
+                            elif type_code in ("D", "F", "f"):
                                 values[var] = float(raw_value)
                             else:
                                 values[var] = raw_value.strip()

@@ -88,7 +88,7 @@ def test_fn16_parser_multiline_with_append():
         output_path = pathlib.Path(tmp_dir) / "output.txt"
         format_path.write_text(format_content, encoding="utf-8")
         output_path.write_text(output_content, encoding="utf-8")
- 
+
         parser = FN16Parser(format_path)
         document = parser.parse_output(output_path)
 
@@ -142,3 +142,33 @@ def test_fn16_parser_consecutive_widthed_integers():
         assert len(document.blocks) == 1
         data_event = document.blocks[0].events[0]
         assert data_event.values == {"DAY": 30, "MONTH": 5}
+
+
+def test_fn16_parser_manual_double_and_escaped_literals():
+    format_content = '"Value: %D %% %\\" \\\\ %s", Q1, QS1;\nM_CLOSE;\n'
+    output_content = 'Value: 1.25 % " \\ text\n'
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        format_path = pathlib.Path(tmp_dir) / "format.txt"
+        output_path = pathlib.Path(tmp_dir) / "output.txt"
+        format_path.write_text(format_content, encoding="utf-8")
+        output_path.write_text(output_content, encoding="utf-8")
+
+        document = FN16Parser(format_path).parse_output(output_path)
+
+        assert document.blocks[0].events[0].values == {"Q1": 1.25, "QS1": "text"}
+
+
+def test_fn16_parser_manual_escaped_line_break():
+    format_content = '"First\\nSecond: %D", Q1;\nM_CLOSE;\n'
+    output_content = "First\nSecond: 2.5\n"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        format_path = pathlib.Path(tmp_dir) / "format.txt"
+        output_path = pathlib.Path(tmp_dir) / "output.txt"
+        format_path.write_text(format_content, encoding="utf-8")
+        output_path.write_text(output_content, encoding="utf-8")
+
+        document = FN16Parser(format_path).parse_output(output_path)
+
+        assert document.blocks[0].events[0].values == {"Q1": 2.5}

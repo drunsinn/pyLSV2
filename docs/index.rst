@@ -18,6 +18,7 @@ Welcome to pyLSV2's documentation!
    package
    protocol
    lsv2-toolbox
+   fn16
    faq
 
 Indices and tables
