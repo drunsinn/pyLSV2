@@ -1022,7 +1022,7 @@ class LSV2:
         )
 
         payload = lm.ustr_to_ba(remote_directory + lc.PATH_SEP + remote_file_name)
-        
+
         config_bit = 0x00
         if binary_mode or lm.is_file_binary(local_path):
             config_bit = lc.MODE_BINARY

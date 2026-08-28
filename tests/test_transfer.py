@@ -142,7 +142,6 @@ def test_recive_with_path_formating(address: str, timeout: float, port: int):
     lsv2.disconnect()
 
 
-
 def test_table_merge_functions(address: str, timeout: float, port: int):
     """test if functions for manipulating the remote file system work"""
     files = resources.files(test_files)
@@ -204,7 +203,7 @@ def test_table_merge_functions(address: str, timeout: float, port: int):
             assert tool500 is not None, "Tool 500 was removed from table"
             assert tool500["NAME"] == "TESTTOOL500_2", "Name of tool 500 was not updated"
 
-            #lsv2.copy_remote_file(source_path="TNC:/TOOL_BAK.T", target_path="TOOL.T")
-            #lsv2.delete_file("TNC:/TOOL_BAK.T")
+            # lsv2.copy_remote_file(source_path="TNC:/TOOL_BAK.T", target_path="TOOL.T")
+            # lsv2.delete_file("TNC:/TOOL_BAK.T")
 
     lsv2.disconnect()

@@ -7,7 +7,7 @@ from enum import Enum, IntEnum
 #: enable/disable binary file transfer for C_FL and R_FL
 MODE_BINARY = 0x01
 MODE_NON_BIN = 0x00
-MODE_MERGE = 0x03 # or 0x02?
+MODE_MERGE = 0x03  # or 0x02?
 
 PATH_SEP = "\\"
 
