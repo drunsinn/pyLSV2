@@ -961,7 +961,8 @@ class LSV2:
         :param override_file: flag if file should be replaced if it already exists
         :param binary_mode: flag if binary transfer mode should be used, if not set the
                             file name is checked for known binary file type
-        :param merge_mode: flag if file should be merged with existing file, merge happens on control
+        :param merge_mode: flag if file should be merged with existing file, merge happens
+                            on control. Check last_error if merge was successful.
 
         :raises LSV2StateException: if local file could not be opened,
                                     destination directory could not be accessed or
@@ -1010,7 +1011,7 @@ class LSV2:
                         "something went wrong while deleting file {}".format(remote_directory + lc.PATH_SEP + remote_file_name)
                     )
             elif merge_mode:
-                self._logger.debug("remote file exists and merege mode was selected")
+                self._logger.debug("remote file exists and merge mode was selected")
             else:
                 self._logger.warning("remote file already exists, override was not set")
                 return False
