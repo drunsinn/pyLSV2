@@ -949,6 +949,7 @@ class LSV2:
         remote_path: str,
         override_file: bool = False,
         binary_mode: bool = False,
+        merge_mode: bool = False,
     ) -> bool:
         """
         Upload a file to control
@@ -960,6 +961,8 @@ class LSV2:
         :param override_file: flag if file should be replaced if it already exists
         :param binary_mode: flag if binary transfer mode should be used, if not set the
                             file name is checked for known binary file type
+        :param merge_mode: flag if file should be merged with existing file, merge happens
+                            on control. Check last_error if merge was successful.
 
         :raises LSV2StateException: if local file could not be opened,
                                     destination directory could not be accessed or
@@ -1007,6 +1010,8 @@ class LSV2:
                     raise LSV2StateException(
                         "something went wrong while deleting file {}".format(remote_directory + lc.PATH_SEP + remote_file_name)
                     )
+            elif merge_mode:
+                self._logger.debug("remote file exists and merge mode was selected")
             else:
                 self._logger.warning("remote file already exists, override was not set")
                 return False
@@ -1018,12 +1023,20 @@ class LSV2:
         )
 
         payload = lm.ustr_to_ba(remote_directory + lc.PATH_SEP + remote_file_name)
+
+        config_bit = 0x00
         if binary_mode or lm.is_file_binary(local_path):
-            payload.append(lc.MODE_BINARY)
+            config_bit = lc.MODE_BINARY
             self._logger.debug("selecting binary transfer mode")
         else:
-            payload.append(lc.MODE_NON_BIN)
+            config_bit = lc.MODE_NON_BIN
             self._logger.debug("selecting non binary transfer mode")
+
+        if merge_mode:
+            config_bit |= lc.MODE_MERGE
+            self._logger.debug("selecting merge mode")
+
+        payload.append(config_bit)
 
         self._llcom.telegram(
             lc.CMD.C_FL,

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """tests for file transfer functions"""
 
-import importlib
+from importlib import resources
 import tempfile
 from pathlib import Path
 import hashlib
@@ -41,7 +41,7 @@ def test_file_recive(address: str, timeout: float, port: int):
 
 def test_file_transfer_binary(address: str, timeout: float, port: int):
     """test if transferring a file in binary mode works"""
-    files = importlib.resources.files(test_files)
+    files = resources.files(test_files)
     local_send_path = files.joinpath("testdata.bmp")
 
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
@@ -91,7 +91,7 @@ def test_file_transfer_binary(address: str, timeout: float, port: int):
 def test_file_transfer_comp_mode(address: str, timeout: float, port: int):
     """test if transferring a file with active compatibility mode works. This is to test if transfer without
     secure file transfer works as expected."""
-    files = importlib.resources.files(test_files)
+    files = resources.files(test_files)
     local_send_path = files.joinpath("testdata.bmp")
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True, compatibility_mode=True)
     lsv2.connect()
@@ -138,5 +138,72 @@ def test_recive_with_path_formating(address: str, timeout: float, port: int):
     with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
         local_mdi_path = Path(tmp_dir_name).joinpath("mdi.h")
         assert lsv2.recive_file(local_path=str(local_mdi_path), remote_path=mdi_path, binary_mode=False) is True
+
+    lsv2.disconnect()
+
+
+def test_table_merge_functions(address: str, timeout: float, port: int):
+    """test if functions for manipulating the remote file system work"""
+    files = resources.files(test_files)
+    mt500 = files.joinpath("mergetool500.t")
+    mt500_up = files.joinpath("mergetool500up.t")
+    mt501 = files.joinpath("mergetool501.t")
+
+    lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)
+    lsv2.connect()
+
+    if lsv2.versions.is_itnc():
+        # this function only works on iTNC530
+        with tempfile.TemporaryDirectory(suffix=None, prefix="pyLSV2_") as tmp_dir_name:
+            local_recive_path = Path(tmp_dir_name).joinpath("ORGTOOL.T")
+            local_table_path = Path(tmp_dir_name).joinpath("TEMP.T")
+
+            lsv2.copy_remote_file(source_path="TNC:/TOOL.T", target_path="TOOL_BAK.T")
+
+            lsv2.recive_file(remote_path="TNC:/TOOL.T", local_path=local_recive_path)
+            nc_table = pyLSV2.table_reader.NCTable.parse_table(local_recive_path)
+            assert len(nc_table.rows) > 0
+
+            tool500 = next((tool for tool in nc_table.rows if tool.get("T") == "500"), None)
+            tool501 = next((tool for tool in nc_table.rows if tool.get("T") == "501"), None)
+            assert tool500 is None, "Tool 500 already exists in tool table"
+            assert tool501 is None, "Tool 501 already exists in tool table"
+
+            with mt500.open("r") as tab_resource:
+                tmp_tab_path = Path(tmp_dir_name).joinpath("TEMPTOOL.T")
+                with open(tmp_tab_path, "w") as destination:
+                    destination.write(tab_resource.read())
+                lsv2.send_file(local_path=tmp_tab_path, remote_path="TNC:/TOOL.T", merge_mode=True)
+            lsv2.recive_file(remote_path="TNC:/TOOL.T", local_path=local_table_path, override_file=True)
+            nc_table = pyLSV2.table_reader.NCTable.parse_table(local_table_path)
+            tool500 = next((tool for tool in nc_table.rows if tool.get("T") == "500"), None)
+            assert tool500 is not None, "Tool 500 wasn't added to tool table"
+
+            with mt501.open("r") as tab_resource:
+                tmp_tab_path = Path(tmp_dir_name).joinpath("TEMPTOOL.T")
+                with open(tmp_tab_path, "w") as destination:
+                    destination.write(tab_resource.read())
+                lsv2.send_file(local_path=tmp_tab_path, remote_path="TNC:/TOOL.T", merge_mode=True)
+            lsv2.recive_file(remote_path="TNC:/TOOL.T", local_path=local_table_path, override_file=True)
+            nc_table = pyLSV2.table_reader.NCTable.parse_table(local_table_path)
+            tool500 = next((tool for tool in nc_table.rows if tool.get("T") == "500"), None)
+            tool501 = next((tool for tool in nc_table.rows if tool.get("T") == "501"), None)
+            assert tool500 is not None, "Tool 500 was removed from table"
+            assert tool500["NAME"] == "TESTTOOL500"
+            assert tool501 is not None, "Tool 501 wasn't added to tool table"
+
+            with mt500_up.open("r") as tab_resource:
+                tmp_tab_path = Path(tmp_dir_name).joinpath("TEMPTOOL.T")
+                with open(tmp_tab_path, "w") as destination:
+                    destination.write(tab_resource.read())
+                lsv2.send_file(local_path=tmp_tab_path, remote_path="TNC:/TOOL.T", merge_mode=True)
+            lsv2.recive_file(remote_path="TNC:/TOOL.T", local_path=local_table_path, override_file=True)
+            nc_table = pyLSV2.table_reader.NCTable.parse_table(local_table_path)
+            tool500 = next((tool for tool in nc_table.rows if tool.get("T") == "500"), None)
+            assert tool500 is not None, "Tool 500 was removed from table"
+            assert tool500["NAME"] == "TESTTOOL500_2", "Name of tool 500 was not updated"
+
+            # lsv2.copy_remote_file(source_path="TNC:/TOOL_BAK.T", target_path="TOOL.T")
+            # lsv2.delete_file("TNC:/TOOL_BAK.T")
 
     lsv2.disconnect()
