@@ -266,6 +266,10 @@ msgid "LSV2_ERROR_LSV2_BAD_BACKUP_LIST"
 msgstr "backup list file corrupt"
 
 #: translate_error.py:163
+msgid "LSV2_ERROR_LSV2_SAFE_MODE_BLOCKED"
+msgstr "safe mode blocked login; no telegram was sent"
+
+#: translate_error.py:164
 msgid "LSV2_ERROR_LSV2_UNKNOWN_ERROR"
 msgstr "unknown error"
 

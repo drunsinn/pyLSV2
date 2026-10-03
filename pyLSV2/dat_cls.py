@@ -1005,7 +1005,14 @@ class LSV2Error:
 
     @e_code.setter
     def e_code(self, value: LSV2StatusCode):
-        self._error_code = value
+        if isinstance(value, LSV2StatusCode):
+            self._error_code = value
+            return
+
+        try:
+            self._error_code = LSV2StatusCode(value)
+        except ValueError:
+            self._error_code = LSV2StatusCode.T_ER_NON
 
     @staticmethod
     def from_ba(err_bytes: bytearray):
