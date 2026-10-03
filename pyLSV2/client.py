@@ -358,7 +358,15 @@ class LSV2:
             return True
 
         if login not in self._known_logins:
-            self._logger.warning("unknown or unsupported login")
+            if login in lc.Login:
+                self._logger.warning(
+                    "safe mode blocked login '%s'; no telegram was sent",
+                    login.value,
+                )
+                self._llcom._last_error.e_type = 1
+                self._llcom._last_error.e_code = lc.LSV2StatusCode.LSV2_SAFE_MODE_BLOCKED
+                return False
+            self._logger.warning("unknown or unsupported login %s", login.value)
             return False
 
         payload = lm.ustr_to_ba(login.value)

@@ -320,6 +320,9 @@ class LSV2StatusCode(IntEnum):
     # plain error message (TODO see global var usererrortext)
     T_USER_ERROR = 255
 
+    # custom error codes
+    LSV2_SAFE_MODE_BLOCKED = 1000
+
     T_ER_NON = -1
     """not an valid error code. default value if no error occurred"""
 
