@@ -61,7 +61,27 @@
  - Klikini
 
 ## Usage
- See [demo.py](pyLSV2/scripts/demo.py) for a demonstration of some of the functions.
+ See [demo.py](pyLSV2/scripts/demo.py) for a topic-based demonstration of the library.
+
+ The demo script is organized into subcommands so you can run a single functional area at a time instead of executing every example in one batch. Examples:
+
+```
+python -m pyLSV2.scripts.demo basics 192.168.56.111
+python -m pyLSV2.scripts.demo machine 192.168.56.111
+python -m pyLSV2.scripts.demo rri 192.168.56.111
+python -m pyLSV2.scripts.demo plc-memory 192.168.56.111
+python -m pyLSV2.scripts.demo scope 192.168.56.111
+python -m pyLSV2.scripts.demo all 192.168.56.111
+```
+
+ If you install the package, the console scripts are available as well:
+
+```
+lsv2demo basics 192.168.56.111
+lsv2demo machine 192.168.56.111
+lsv2demo rri 192.168.56.111
+lsv2demo_scope 192.168.56.111
+```
 
  Since the whole protocol isn't documented there can always be problems with certain corner cases. Especially during file transfer a lot of stuff can go wrong.
  In case the control doesn't accept a command it returns an error. Some of these errors are checked internally but not everything is covered as of now. It is therefore
@@ -110,7 +130,7 @@ These changes where made intentionally to make further development easier. See t
 ```
  con.read_plc_memory(32, pyLSV2.MemoryType.MARKER, 15)
 ```
- See [demo.py](pyLSV2/scripts/demo.py#L101) for more examples.
+ See [demo.py](pyLSV2/scripts/demo.py) for more examples.
 
  The available memory areas and their python data type
 | Memory Type              | Python Type |
@@ -138,7 +158,7 @@ These changes where made intentionally to make further development easier. See t
  con.read_data_path('/TABLE/TOOL/T/1/DOC')
 ```
 
- See [demo.py](pyLSV2/scripts/demo.py#L130) for more examples.
+ See [demo.py](pyLSV2/scripts/demo.py) for more examples.
 
  Note that reading values from memory does not take into account the actual size in the control memory. This leads to an offset between the values read with `read_data_path` and `read_plc_memory`. As a workaround you have to multiply the address value with the number of bytes the data type requires. The following example tries to show how this can be accomplished:
 
