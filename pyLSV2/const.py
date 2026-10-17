@@ -969,7 +969,7 @@ class ParRRI(IntEnum):
     """enum of parameters used with command R_RI"""
 
     AXIS_CONF_NAMES = 20
-    AXIS_PHYSICAL_NAMES = 21
+    AXIS_PHY_NAMES = 21
     AXIS_LOCATION = 22
     EXEC_STATE = 23
     SELECTED_PGM = 24 # selected program, only with DNC also current block number

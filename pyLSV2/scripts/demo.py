@@ -15,6 +15,7 @@ import time
 
 import pyLSV2
 from pyLSV2 import const as lc
+from pyLSV2 import misc as lm
 from pyLSV2.const import MemoryType
 
 
@@ -141,12 +142,14 @@ def demo_rri_parameters(args):
 
         parameter_examples = [
             (lc.ParRRI.AXIS_CONF_NAMES, "axis configuration names"),
-            (lc.ParRRI.AXIS_PHYSICAL_NAMES, "axis physical names"),
+            (lc.ParRRI.AXIS_PHY_NAMES, "axis physical names"),
             (lc.ParRRI.AXIS_LOCATION, "axis location"),
             (lc.ParRRI.EXEC_STATE, "execution state"),
             (lc.ParRRI.SELECTED_PGM, "selected program / current block"),
             (lc.ParRRI.OVERRIDE, "override values"),
             (lc.ParRRI.PGM_STATE, "program state"),
+            (lc.ParRRI.FIRST_ERROR, "first error"),
+            (lc.ParRRI.NEXT_ERROR, "next error"),
             (lc.ParRRI.NC_UPTIME, "NC uptime"),
             (lc.ParRRI.MACH_UPTIME, "machine uptime"),
             (lc.ParRRI.MACH_RUNTIME, "machine runtime"),
@@ -154,6 +157,17 @@ def demo_rri_parameters(args):
             (lc.ParRRI.SPINDLE_RUNTIME_1, "spindle 1 runtime"),
             (lc.ParRRI.CURRENT_TOOL, "current tool"),
         ]
+
+        decoders = {
+            lc.ParRRI.AXIS_CONF_NAMES: lm.decode_axis_conf_names,
+            lc.ParRRI.AXIS_PHY_NAMES: lm.decode_axis_phy_names,
+            lc.ParRRI.AXIS_LOCATION: lm.decode_axis_location,
+            lc.ParRRI.SELECTED_PGM: lm.decode_stack_info,
+            lc.ParRRI.OVERRIDE: lm.decode_override_state,
+            lc.ParRRI.FIRST_ERROR: lm.decode_error_message,
+            lc.ParRRI.NEXT_ERROR: lm.decode_error_message,
+            lc.ParRRI.CURRENT_TOOL: lm.decode_tool_info,
+        }
 
         for parameter, label in parameter_examples:
             if not con.login(login=lc.Login.DNC):
@@ -163,11 +177,22 @@ def demo_rri_parameters(args):
             payload = struct.pack("!H", parameter.value)
             result = con._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
             if isinstance(result, (bytearray,)) and len(result) > 0:
-                if len(result) == 2:
-                    value = struct.unpack("!H", result)[0]
-                    print(f"## {parameter.name} ({parameter.value}) -> {label}: {value}")
+                if parameter in decoders:
+                    value = decoders[parameter](result)
+                    if parameter == lc.ParRRI.CURRENT_TOOL:
+                        value = (
+                            f"number={value.number}, index={value.index}, axis={value.axis}, "
+                            f"length={value.length}, radius={value.radius}"
+                        )
+                elif parameter == lc.ParRRI.EXEC_STATE:
+                    state = lc.ExecState(struct.unpack("!H", result)[0])
+                    value = f"{state.name} ({state.value})"
+                elif parameter == lc.ParRRI.PGM_STATE:
+                    state = lc.PgmState(struct.unpack("!H", result)[0])
+                    value = f"{state.name} ({state.value})"
                 else:
-                    print(f"## {parameter.name} ({parameter.value}) -> {label}: {result!r}")
+                    value = result
+                print(f"## {parameter.name} ({parameter.value}) -> {label}: {value}")
             else:
                 print(f"## {parameter.name} ({parameter.value}) -> {label}: not supported or no data")
 
