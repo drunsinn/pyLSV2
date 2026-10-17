@@ -4,9 +4,13 @@ ME101 Magnetic Tape Transfer Interface
 Overview
 --------
 
-The ME101 is a magnetic tape transfer interface used with Heidenhain TNC controls for reading and writing CNC programs to/from magnetic tape storage. The ``me101.py`` script provides a command-line interface to communicate with ME101 devices via serial connection.
+The ME101 is a magnetic tape transfer interface used with Heidenhain TNC
+controls to read and write CNC programs on magnetic tape. The ``me101.py``
+script provides a command-line interface for communicating with ME101
+devices over a serial connection.
 
-The ME101 uses a simple serial protocol based on control characters and handshaking. It is typically used for:
+The ME101 uses a simple serial protocol based on control characters and
+handshaking. It is typically used for:
 
 - Archiving CNC programs on magnetic tape
 - Transferring programs between TNC controls via tape

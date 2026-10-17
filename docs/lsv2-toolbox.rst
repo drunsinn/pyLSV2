@@ -6,10 +6,11 @@ discovered. Since it is dated July 1993 it shows some differences between the im
 current controls and the controls that where around in 1993. Nevertheless here are some parts of
 the document which might be of interest in the future.
 
-The original document found by NeeXoo can be found on [yumpu.com](https://www.yumpu.com/de/document/read/18882603/-f-heidenhain).
+The original document found by NeeXoo is available on
+`Yumpu <https://www.yumpu.com/de/document/read/18882603/-f-heidenhain>`_.
 
-Since the original document is in german, most of the translation was done using (deepl.com)[https://www.deepl.com]. Thanks for their
-great free service!
+Since the original document is in German, most of the translation was done
+using `DeepL <https://www.deepl.com>`_. Thanks for their great free service!
 
 LSV2-Telegrams
 --------------
@@ -29,44 +30,64 @@ LSV2-Telegrams
 
 Datatypes
 ---------
-WORD (16 bit) and LONG (32 bit) data types are always transmitted in MOTOROLA format: The byte with the highest significance first,
-the byte with the lowest significance last.
+WORD (16 bit) and LONG (32 bit) data types are always transmitted in
+MOTOROLA format: the byte with the highest significance first and the byte
+with the lowest significance last.
 
-WORD (16 bit) and LONG (32 bit) data types are always placed at word boundaries in the telegram structure. If necessary
-a dummy byte is inserted. This is necessary, because with software generation not all controllers have the WORD and
-LONG data types between word boundaries (so-called word alignment).
+WORD (16 bit) and LONG (32 bit) data types are always placed at word
+boundaries in the telegram structure. If necessary, a dummy byte is
+inserted. This is necessary because software generation does not place
+these data types between word boundaries on all controllers (so-called
+word alignment).
 
-If character strings (strings) such as file names are to be transmitted this is done as a zero terminated ASCII 
-string. The string is always terminated with the zero byte (0x00) (Null terminated string).
-Strings that do not have a fixed length are, if possible, placed at the end of the telegram. Only the actual
-string (including zero byte) is transmitted. So there is no padding necessary.
-If several character strings are to be transmitted as parameters in one telegram (e.g. for file renaming), these
-are combined in a character field at the end of the telegram. Only the character strings (including the zero byte) are
-entered without padding.
+If character strings such as file names are transmitted, they are sent as
+zero-terminated ASCII strings. Each string ends with the zero byte (0x00).
+Strings without a fixed length are placed at the end of the telegram where
+possible. Only the actual string, including the zero byte, is transmitted,
+so no padding is necessary.
+If several strings are transmitted as parameters in one telegram (e.g. for
+file renaming), they are combined in a character field at the end of the
+telegram. Only the strings, including their zero bytes, are included,
+without padding.
 
 Important constants
 -------------------
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| CMD LENGTH    | 4    | Length of the LSV2 telegram command identifier                                                                                                 |
-+===============+======+================================================================================================================================================+
-| MAXTELEGRAM   | 256  | maximum telegram length (effectively only 128 characters including command identifier)                                                         |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXERROR      | 256  | maximum number of error numbers                                                                                                                |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXPATH       | 80   | maximum file name length (including path)                                                                                                      |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXATTR       | 32   | maximum allowed number of attributes                                                                                                           |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXPASSWORD   | 16   | maximum password length                                                                                                                        |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXFILENAME   | 21   | maximum file name length (max. 16 characters for name, 1 character for file name extension "." and max. 3 characters for file name extension)  |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXMP         | 20   | maximum length of a machine parameter string                                                                                                   |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXVERSION    | 16   | maximum length of a version string                                                                                                             |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAXDNCMSGSTR  | 128  | Maximum length of a DNC plain text message                                                                                                     |
-+---------------+------+------------------------------------------------------------------------------------------------------------------------------------------------+
+.. list-table::
+   :header-rows: 0
+
+   * - CMD LENGTH
+     - 4
+     - Length of the LSV2 telegram command identifier
+   * - MAXTELEGRAM
+     - 256
+     - Maximum telegram length (effectively only 128 characters including
+       the command identifier)
+   * - MAXERROR
+     - 256
+     - Maximum number of error numbers
+   * - MAXPATH
+     - 80
+     - Maximum file name length (including path)
+   * - MAXATTR
+     - 32
+     - Maximum allowed number of attributes
+   * - MAXPASSWORD
+     - 16
+     - Maximum password length
+   * - MAXFILENAME
+     - 21
+     - Maximum file name length (max. 16 characters for the name,
+       1 character for the file name extension ".", and max. 3 characters
+       for the file name extension)
+   * - MAXMP
+     - 20
+     - Maximum length of a machine parameter string
+   * - MAXVERSION
+     - 16
+     - Maximum length of a version string
+   * - MAXDNCMSGSTR
+     - 128
+     - Maximum length of a DNC plain text message
 
 
 Overview of commands ordered by function
@@ -99,7 +120,7 @@ Overview of commands ordered by login
 +-------------+----------------------+-----------------------------------+
 | INSPECT     | R_SS                 | Request Active Screen             |
 +-------------+----------------------+-----------------------------------+
-| DIAGNOSTICS | R_LB                 | Request Logbuffer                 |
+| DIAGNOSTICS | R_LB                 | Request Logbuffer*                |
 +-------------+----------------------+-----------------------------------+
 | DIAGNOSTICS | R_DT                 | Request Date/Time                 |
 +-------------+----------------------+-----------------------------------+
@@ -172,3 +193,6 @@ Overview of commands ordered by login
 | MONITOR     | all of login INSPECT |                                   |
 +-------------+----------------------+-----------------------------------+
 
+* ``R_LB`` returned ``T_ER_UNKNOWN_TELE`` on the tested iTNC 530 and
+  TNC 640 controls, even with DIAGNOSTICS access. See :doc:`protocol` for
+  details.

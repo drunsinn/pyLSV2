@@ -183,7 +183,7 @@ class LSV2:
             raise LSV2ProtocolException("unknown response received")
 
         if self._llcom.last_response is lc.RSP.T_ER:
-            if self.last_error.e_code is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
+            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
                 # workaround since querying for error messages will also return an error state
                 return True
 
@@ -358,7 +358,15 @@ class LSV2:
             return True
 
         if login not in self._known_logins:
-            self._logger.warning("unknown or unsupported login")
+            if login in lc.Login:
+                self._logger.warning(
+                    "safe mode blocked login '%s'; no telegram was sent",
+                    login.value,
+                )
+                self._llcom.last_error.e_type = 1
+                self._llcom.last_error.e_code = lc.LSV2StatusCode.LSV2_SAFE_MODE_BLOCKED
+                return False
+            self._logger.warning("unknown or unsupported login %s", login.value)
             return False
 
         payload = lm.ustr_to_ba(login.value)
@@ -1605,14 +1613,14 @@ class LSV2:
                 messages.append(lm.decode_error_message(result))
                 result = self._send_recive(lc.CMD.R_RI, payload, lc.RSP.S_RI)
 
-            if self.last_error.e_code is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
+            if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
                 self._logger.debug("successfully read all errors")
             else:
                 self._logger.warning("an error occurred while querying error information.")
 
             return messages
 
-        if self.last_error.e_code is lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
+        if self.last_error.e_code == lc.LSV2StatusCode.T_ER_NO_NEXT_ERROR:
             self._logger.debug("successfully read first error but no error active")
             return messages
 

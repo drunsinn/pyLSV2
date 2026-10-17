@@ -118,6 +118,7 @@ def get_error_text(t_error: LSV2Error, language: str = "", locale_path: Union[st
         LSV2StatusCode.T_BD_OSZI_OVERRUN: _("LSV2_ERROR_T_BD_OSZI_OVERRUN"),
         LSV2StatusCode.T_BD_FD: _("LSV2_ERROR_T_BD_FD"),
         LSV2StatusCode.T_USER_ERROR: _("LSV2_ERROR_T_USER_ERROR"),
+        LSV2StatusCode.LSV2_SAFE_MODE_BLOCKED: _("LSV2_ERROR_LSV2_SAFE_MODE_BLOCKED"),
     }.get(t_error.e_code, _("LSV2_ERROR_UNKNOWN_CODE"))
 
 

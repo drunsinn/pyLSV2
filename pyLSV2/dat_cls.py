@@ -9,10 +9,26 @@ after migration to python 3.7+ these will be changed to @dataclass!
 from datetime import datetime
 import struct
 import re
-from typing import List
+from typing import List, NamedTuple
 
 from .const import ControlType, LSV2StatusCode, ChannelType
 from .err import LSV2DataException
+
+
+class AxisConfigurationName(NamedTuple):
+    """One configured axis name returned by R_RI selector 20."""
+
+    axis_id: int
+    configuration_value: int
+    name: str
+
+
+class AxisPhysicalName(NamedTuple):
+    """One physical axis name returned by R_RI selector 21."""
+
+    axis_id: int
+    value: str
+    name: str
 
 
 class VersionInfo:
@@ -1005,7 +1021,14 @@ class LSV2Error:
 
     @e_code.setter
     def e_code(self, value: LSV2StatusCode):
-        self._error_code = value
+        if isinstance(value, LSV2StatusCode):
+            self._error_code = value
+            return
+
+        try:
+            self._error_code = LSV2StatusCode(value)
+        except ValueError:
+            self._error_code = LSV2StatusCode.T_ER_NON
 
     @staticmethod
     def from_ba(err_bytes: bytearray):

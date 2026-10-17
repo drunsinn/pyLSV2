@@ -13,6 +13,77 @@ from .const import BIN_FILES, PATH_SEP, ControlType, MemoryType
 from .err import LSV2DataException
 
 
+def _decode_rri_strings(data_set: bytearray, count: int, offset: int) -> List[str]:
+    strings = []
+    for _ in range(count):
+        terminator = data_set.find(b"\x00", offset)
+        if terminator < 0:
+            raise LSV2DataException("unterminated string in R_RI axis data: %s" % data_set)
+        strings.append(ba_to_ustr(data_set[offset:terminator]))
+        offset = terminator + 1
+
+    if offset != len(data_set):
+        raise LSV2DataException("unexpected trailing data in R_RI axis data: %s" % data_set)
+
+    return strings
+
+
+def decode_axis_conf_names(data_set: bytearray) -> List[ld.AxisConfigurationName]:
+    """
+    Decode R_RI selector 20 axis configuration names.
+
+    The observed payload contains a 16-bit count, two arrays of 16-bit
+    values, and that many null-terminated names. The meaning of the second
+    value array is not yet known, so it is returned without interpretation.
+
+    :raises LSV2DataException: Error during parsing of data values
+    """
+    if len(data_set) < 2:
+        raise LSV2DataException("unexpected length of R_RI axis configuration data")
+
+    count = struct.unpack_from("!H", data_set)[0]
+    values_length = count * 2
+    if len(data_set) < 2 + values_length * 2 + count:
+        raise LSV2DataException("unexpected length of R_RI axis configuration data")
+
+    axis_ids = struct.unpack_from("!%dH" % count, data_set, 2)
+    config_offset = 2 + values_length
+    configuration_values = struct.unpack_from("!%dH" % count, data_set, config_offset)
+    names = _decode_rri_strings(data_set, count, config_offset + values_length)
+
+    return [
+        ld.AxisConfigurationName(axis_id, configuration_value, name)
+        for axis_id, configuration_value, name in zip(axis_ids, configuration_values, names)
+    ]
+
+
+def decode_axis_phy_names(data_set: bytearray) -> List[ld.AxisPhysicalName]:
+    """
+    Decode R_RI selector 21 physical axis names.
+
+    The observed payload contains a 16-bit count, that many 16-bit axis IDs,
+    then two arrays of null-terminated strings: values and physical names.
+    Values are preserved as text because their meaning is not yet known.
+
+    :raises LSV2DataException: Error during parsing of data values
+    """
+    if len(data_set) < 2:
+        raise LSV2DataException("unexpected length of R_RI physical axis data")
+
+    count = struct.unpack_from("!H", data_set)[0]
+    ids_length = count * 2
+    if len(data_set) < 2 + ids_length + count * 2:
+        raise LSV2DataException("unexpected length of R_RI physical axis data")
+
+    axis_ids = struct.unpack_from("!%dH" % count, data_set, 2)
+    values_offset = 2 + ids_length
+    strings = _decode_rri_strings(data_set, count * 2, values_offset)
+    values = strings[:count]
+    names = strings[count:]
+
+    return [ld.AxisPhysicalName(axis_id, value, name) for axis_id, value, name in zip(axis_ids, values, names)]
+
+
 def decode_system_parameters(result_set: bytearray) -> ld.SystemParameters:
     """
     Decode the result system parameter query

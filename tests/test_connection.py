@@ -5,6 +5,23 @@
 import pyLSV2
 
 
+def test_error_code_from_low_level_response_is_enum_valued():
+    """parsed error codes must stay as LSV2StatusCode values, not raw ints"""
+    err = pyLSV2.LSV2Error()
+    err.e_code = 23
+
+    assert err.e_code == pyLSV2.LSV2StatusCode.T_ER_NO_PRIV
+    assert isinstance(err.e_code, pyLSV2.LSV2StatusCode)
+
+
+def test_safe_mode_blocks_known_login_without_sending_telegram():
+    """known-but-disallowed logins should be marked as safe_mode-blocked instead of silently failing"""
+    lsv2 = pyLSV2.LSV2("127.0.0.1", port=19000, timeout=1.0, safe_mode=True)
+
+    assert lsv2.login(login=pyLSV2.Login.DNC) is False
+    assert lsv2.last_error.e_code == pyLSV2.LSV2StatusCode.LSV2_SAFE_MODE_BLOCKED
+
+
 def test_login(address: str, timeout: float, port: int):
     """test to see if login and safe mode works"""
     lsv2 = pyLSV2.LSV2(address, port=port, timeout=timeout, safe_mode=True)

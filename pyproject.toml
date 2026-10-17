@@ -39,8 +39,8 @@ SSH = ["sshtunnel>=0.4"]
 "Bug Tracker" = "https://github.com/drunsinn/pyLSV2/issues"
 
 [project.scripts]
-lsv2demo = "pyLSV2.scripts.demo:comprehensive_demo"
-lsv2demo_scope = "pyLSV2.scripts.demo:scope_demo"
+lsv2demo = "pyLSV2.scripts.demo:main"
+lsv2demo_scope = "pyLSV2.scripts.demo:main_scope"
 lsv2demo_ssh = "pyLSV2.scripts.ssh_tunnel:main"
 lsv2scope2csv = "pyLSV2.scripts.scope2csv:main"
 lsv2tab2csv = "pyLSV2.scripts.tab2csv:main"

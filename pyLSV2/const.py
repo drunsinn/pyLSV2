@@ -320,6 +320,9 @@ class LSV2StatusCode(IntEnum):
     # plain error message (TODO see global var usererrortext)
     T_USER_ERROR = 255
 
+    # custom error codes
+    LSV2_SAFE_MODE_BLOCKED = 1000
+
     T_ER_NON = -1
     """not an valid error code. default value if no error occurred"""
 
@@ -965,13 +968,20 @@ class ParRVR(IntEnum):
 class ParRRI(IntEnum):
     """enum of parameters used with command R_RI"""
 
+    AXIS_CONF_NAMES = 20
+    AXIS_PHY_NAMES = 21
     AXIS_LOCATION = 22
     EXEC_STATE = 23
-    SELECTED_PGM = 24
-    OVERRIDE = 25
-    PGM_STATE = 26
+    SELECTED_PGM = 24  # selected program, only with DNC also current block number
+    OVERRIDE = 25  # only with DNC, F/R/S override
+    PGM_STATE = 26  # only with DNC, program state
     FIRST_ERROR = 27
     NEXT_ERROR = 28
+    NC_UPTIME = 30  # u32be, +1/s while NC is up
+    MACH_UPTIME = 31  # u32be,
+    MACH_RUNTIME = 32  # u32be, grows only while a program runs
+    SPINDLE_RUNTIME_0 = 33  # u32be
+    SPINDLE_RUNTIME_1 = 34  # u32be, 0 if the second spindle is unused
     CURRENT_TOOL = 51
 
 
