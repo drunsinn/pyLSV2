@@ -59,6 +59,8 @@
  - oxbown
  - patrickschultes
  - Klikini
+ - DmitryBellka
+
 
 ## Usage
  See [demo.py](https://github.com/drunsinn/pyLSV2/blob/master/pyLSV2/scripts/demo.py)
