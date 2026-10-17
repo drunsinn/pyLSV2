@@ -24,4 +24,4 @@ For TNC 320, 620, 640
 If the soft key "External access" is not visible you have to change some parameters that require
 the PLC password:
 - iTNC: uncommented the line "REMOTE.LOCKSOFTKEYVISIBLE = YES" in PLC:/oem.sys
-- TNC 320, 620, 640: add the parameter "denyAllConnections" in "CfgAccessControl" and/or set the value to False
+- TNC 320, 620, 640: add "denyAllConnections" to "CfgAccessControl" or set it to False
